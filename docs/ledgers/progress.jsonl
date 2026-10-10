@@ -1,2 +1,3 @@
 {"ts": "2026-10-10T23:30:43Z", "step": "s001", "slug": "release-package", "event": "dispatched", "detail": "worker dispatched step s001", "state_hash": "db65bf21c594ec5440f82f7d1b9f7d705892c58bc127c16d3c3ac4a4af8d8c3d", "tokens": 0, "cost_usd": 0.0}
 {"ts": "2026-10-10T23:30:43Z", "step": "s002", "slug": "install-registry", "event": "dispatched", "detail": "worker dispatched step s002", "state_hash": "dd897133aaf047f59717fb4e91d8fb445b037b325c342aa41cfd630d410bcaff", "tokens": 0, "cost_usd": 0.0}
+{"ts": "2026-10-10T23:34:18Z", "step": "s003", "slug": "install-registry", "event": "merged", "detail": "gate rc=0", "state_hash": "08050412bc5483f94a67059dea7ccd28428380a2df4b953b534ff717a0c125c1", "tokens": 0, "cost_usd": 0.0}
