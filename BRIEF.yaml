@@ -1,34 +1,28 @@
 mission:
-  goal: "A developer can install the skill-factory package with uv and run skillz new with a paragraph or a small YAML or JSON spec to get a structured spec and a spec-compliant canonical skill under skills/<name>/, with CI running ruff and pytest on Linux and Windows"
+  goal: "A developer can run skillz validate to get a static structure and security verdict for a skill, and skillz render to get Claude and Codex install variants from the one canonical source, each with a JSON report and Markdown summary under skills/<name>/.factory/"
+  base: "mission/01-skeleton-capture"
   requirements:
-    - REQ-001
-    - REQ-008
+    - REQ-002
+    - REQ-003
   deliverables:
-    - pyproject.toml
     - src/skill_factory/
-    - tests/test_capture.py
-    - tests/test_generate.py
+    - tests/test_validate.py
+    - tests/test_render.py
     - tests/fixtures/
-    - LICENSE
-    - .gitignore
-    - .github/workflows/ci.yml
 success_criteria:
   - {kind: test, cmd: "uv run pytest -q", expect: 0}
-  - {kind: test, cmd: "uv run pytest -q tests/test_capture.py tests/test_generate.py", expect: 0}
-  - {kind: test, cmd: "uv run skillz --help", expect: 0}
-  - {kind: test, cmd: "uv run skillz new --help", expect: 0}
-  - {kind: test, cmd: "uv build", expect: 0}
-  - {kind: file, path: LICENSE, must_contain: "MIT License"}
-  - {kind: grep, pattern: "windows-latest", path: .github/workflows/ci.yml}
-  - {kind: judge, rubric: "Tests run skillz new on a real paragraph fixture and on YAML and JSON spec fixtures in a temporary directory and assert on the generated SKILL.md frontmatter: kebab-case name equal to the directory name and at most 64 characters, non-empty description at most 1024 characters, and that scripts/, references/ or assets/ appear only when the spec asks for them; pyproject.toml declares no runtime dependencies, only pytest and ruff as dev dependencies, and a skillz console script; the CI workflow runs ruff and pytest on ubuntu-latest and windows-latest"}
+  - {kind: test, cmd: "uv run pytest -q tests/test_validate.py tests/test_render.py", expect: 0}
+  - {kind: test, cmd: "uv run skillz validate --help", expect: 0}
+  - {kind: test, cmd: "uv run skillz render --help", expect: 0}
+  - {kind: judge, rubric: "Validation tests use bad-skill fixtures and show each rule firing with a non-zero exit: wrong or overlong name, name not matching directory, empty or overlong description, files outside SKILL.md, scripts/, references/, assets/ and .factory/, oversized files, and forbidden patterns (a fake secret, a network call such as curl or urllib, destructive shell such as rm -rf) in scripts, while a clean fixture passes; nothing in the validator executes skill scripts; render tests prove the Claude variant matches the .claude/skills/<name>/ layout, the Codex variant contains agents/openai.yaml, and the canonical skill files are byte-identical before and after rendering"}
 budgets:
-  tokens: 3000000
-  cost_usd: 25
-  wall_clock_min: 50
-  steps: 140
+  tokens: 4000000
+  cost_usd: 35
+  wall_clock_min: 70
+  steps: 200
   stall_limit: 3
   replan_limit: 2
-  critic_rounds: 1
+  critic_rounds: 2
 permissions:
   irreversible:
     default: skip-and-record
