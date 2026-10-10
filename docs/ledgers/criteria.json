@@ -17,11 +17,11 @@
     },
     {
       "kind": "judge",
-      "status": "deferred",
-      "detail": "Tests show case generation is deterministic (same spec gives identical cases), positive prompts match and negative prompts do not for a well-described fixture skill, a deliberately vague description produces failing trigger cases and an improvement proposal naming them, the JSON report and Markdown summary are written under .factory/, the baseline runner is invoked only with an explicit --runner flag and an executable found on PATH (exercised through a fake runner, never the real claude or codex), and without a runner the report says skipped: no runner while the command still exits 0"
+      "status": "pass",
+      "detail": "PASS by reviewer; evidence: reviewer: \"45 passed\"; test_generation_is_deterministic_and_ids_are_stable, test_well_described_positives_match_and_negatives_do_not, test_vague_fixture_fails_triggers_and_gets_proposals, test_well_described_end_to_end (baseline[\"status\"] == \"skipped: no runner\", exit 0), test_factory_not_called_without_runner_flag, test_runner_not_on_path_is_skipped, test_fake_runner_produces_baseline; real run: \"eval general-helper: 7 passed, 2 failed (heuristic); baseline: skipped: no runner\" EXIT=0 with --runner codex"
     }
   ],
-  "passed": 3,
+  "passed": 4,
   "failed": 0,
-  "deferred": 1
+  "deferred": 0
 }
