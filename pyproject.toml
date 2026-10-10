@@ -1,0 +1,35 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "skillz-factory"
+version = "0.1.0"
+description = "Capture, test, package and manage agent skills."
+license = { text = "MIT" }
+authors = [{ name = "Jimmy Carroll" }]
+requires-python = ">=3.12"
+dependencies = []
+
+[project.scripts]
+skillz = "skillz_factory.cli:main"
+
+[dependency-groups]
+dev = [
+    "pytest",
+    "ruff",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/skillz_factory"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+
+[tool.ruff]
+extend-exclude = [
+    "tests/controller.py",
+    "tests/hardening.py",
+    "tests/readiness.py",
+]
