@@ -12,9 +12,9 @@
         ".gitignore",
         ".github/workflows/ci.yml"
       ],
-      "status": "dispatched",
+      "status": "merged",
       "branch": "mission/01-skeleton-capture--pkg-skeleton",
-      "commit": ""
+      "commit": "ffb6b1c"
     },
     {
       "slug": "capture-spec",
