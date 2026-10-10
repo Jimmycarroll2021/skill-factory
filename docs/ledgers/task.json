@@ -25,9 +25,9 @@
         ".gitignore",
         "tests/test_docs.py"
       ],
-      "status": "dispatched",
+      "status": "merged",
       "branch": "mission/05-pipeline-docs--meta-skill-docs",
-      "commit": ""
+      "commit": "6be1ca7"
     },
     {
       "slug": "security-polish",
@@ -41,9 +41,9 @@
         "tests/test_install.py",
         ".github/workflows/ci.yml"
       ],
-      "status": "dispatched",
+      "status": "merged",
       "branch": "mission/05-pipeline-docs--security-polish",
-      "commit": ""
+      "commit": "d9949a4"
     }
   ],
   "facts": [],

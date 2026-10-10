@@ -19,3 +19,5 @@ One line per merged task. Append only; never edit past entries.
 | 2026-10-10 | install-registry | InstallIntegrityError and UnsafeTarget added (exit 1 vs 2); install/rollback verify dist files against the manifest; rollback plans all installs first then swaps; registry written atomically | worker default, recorded |
 | 2026-10-10 | release-package | first package regression status is "no-baseline"; approve verifies checksums before anything else; version chosen and clash checked before any stage writes | worker default, recorded |
 | 2026-10-10 | security-04 | low notes carried to mission 05: semver regex re.ASCII and digit cap; _baseline_cases AttributeError; escape raw registry fields in list output | security PASS, low severity |
+| 2026-10-10 | meta-skill-docs | README documents skillz run from the plan contract; dogfooding install path writes .claude/skills and skills/registry.json into the repo (not ignored) | worker default, recorded |
+| 2026-10-10 | security-polish | control chars in list cells escaped as \xNN; CI actions kept at tags with a pin-by-SHA TODO because no SHA is available offline | worker default, recorded |
