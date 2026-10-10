@@ -7,7 +7,7 @@ import sys
 from collections.abc import Callable
 from pathlib import Path
 
-from skill_factory import __version__
+from skill_factory import __version__, render, validate
 from skill_factory.capture import SpecError, capture
 from skill_factory.generate import GenerateError, generate
 
@@ -34,8 +34,16 @@ def _run_new(args: argparse.Namespace) -> int:
 
 
 # Later missions register a subcommand by adding one function here and one entry in HANDLERS.
-SUBCOMMANDS: tuple[Callable[[argparse._SubParsersAction], None], ...] = (_add_new,)
-HANDLERS: dict[str, Callable[[argparse.Namespace], int]] = {"new": _run_new}
+SUBCOMMANDS: tuple[Callable[[argparse._SubParsersAction], None], ...] = (
+    _add_new,
+    validate.add_parser,
+    render.add_parser,
+)
+HANDLERS: dict[str, Callable[[argparse.Namespace], int]] = {
+    "new": _run_new,
+    "validate": validate.run,
+    "render": render.run,
+}
 
 
 def build_parser() -> argparse.ArgumentParser:
