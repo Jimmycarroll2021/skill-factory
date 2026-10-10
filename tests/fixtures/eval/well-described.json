@@ -1,0 +1,17 @@
+{
+  "name": "csv-data-cleaner",
+  "description": "Clean and tidy CSV spreadsheet files by removing duplicate rows, fixing column headers and normalising dates. Use when the user wants to clean, deduplicate or tidy a CSV file.",
+  "triggers": [
+    "Clean this CSV file",
+    "Remove duplicate rows from my spreadsheet",
+    "Tidy the column headers and dates in a CSV"
+  ],
+  "non_triggers": [
+    "Write a SQL query to join two database tables",
+    "Design a logo for my bakery"
+  ],
+  "behaviours": [
+    "Always ask which columns identify a duplicate before deleting rows",
+    "Must keep a backup copy of the original file"
+  ]
+}

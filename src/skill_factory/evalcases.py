@@ -1,0 +1,246 @@
+"""Deterministic evaluation cases, an offline lexical-overlap matcher, grading and proposals.
+
+Nothing here runs a model or spawns a process. The trigger matcher is a heuristic: it measures
+how many of a prompt's content words also appear in the skill's name and description.
+"""
+
+from __future__ import annotations
+
+import json
+from dataclasses import dataclass, field
+
+from skill_factory.capture import _STOP_WORDS, SkillSpec, _sentences, _words
+
+MATCH_THRESHOLD = 0.3
+MIN_DESCRIPTION_WORDS = 6
+METHOD = (
+    "heuristic lexical overlap: a prompt matches when the share of its content words found "
+    "in the skill name and description reaches the threshold; no model is consulted"
+)
+
+GENERIC_NEGATIVES: tuple[str, ...] = (
+    "What is the weather forecast for tomorrow in Paris?",
+    "Write a haiku about autumn leaves.",
+    "Translate the sentence 'good morning, my friend' into Spanish.",
+    "Explain how photosynthesis works in plants.",
+    "Suggest a recipe for a vegetarian lasagne.",
+)
+
+_MAX_MARKERS = 3
+_MAX_MISSING_WORDS = 8
+_MAX_SUGGESTED_WORDS = 6
+
+
+def _normalise(word: str) -> str:
+    """Light, deterministic suffix normalisation: a plural trailing 's' is dropped."""
+    if len(word) > 3 and word.endswith("s") and not word.endswith(("ss", "us", "is")):
+        return word[:-1]
+    return word
+
+
+def content_words(text: str) -> list[str]:
+    """Lowercase content words in order of first appearance, stop-words and duplicates removed."""
+    seen: list[str] = []
+    for word in _words(text):
+        if word in _STOP_WORDS:
+            continue
+        word = _normalise(word)
+        if word and word not in _STOP_WORDS and word not in seen:
+            seen.append(word)
+    return seen
+
+
+def match_score(prompt: str, name: str, description: str) -> float:
+    """Share of the prompt's content words that also occur in the name plus description."""
+    prompt_words = content_words(prompt)
+    if not prompt_words:
+        return 0.0
+    skill_words = set(content_words(f"{name} {description}"))
+    hits = sum(1 for word in prompt_words if word in skill_words)
+    return round(hits / len(prompt_words), 4)
+
+
+@dataclass
+class Case:
+    id: str
+    kind: str
+    prompt: str
+    source: str
+    expected: list[str] = field(default_factory=list)
+
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "kind": self.kind,
+            "prompt": self.prompt,
+            "source": self.source,
+            "expected": list(self.expected),
+        }
+
+
+@dataclass
+class Grade:
+    id: str
+    kind: str
+    score: float | None
+    matched: bool | None
+    status: str
+
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "kind": self.kind,
+            "score": self.score,
+            "matched": self.matched,
+            "status": self.status,
+        }
+
+
+@dataclass
+class Proposal:
+    area: str
+    problem: str
+    proposal: str
+    cases: list[str]
+
+    def to_dict(self) -> dict:
+        return {
+            "area": self.area,
+            "problem": self.problem,
+            "proposal": self.proposal,
+            "cases": list(self.cases),
+        }
+
+
+def _first_sentence(text: str) -> str:
+    sentences = _sentences(text)
+    return sentences[0] if sentences else text.strip()
+
+
+def _markers(behaviour: str) -> list[str]:
+    words = content_words(behaviour)[:_MAX_MARKERS]
+    return words or [" ".join(behaviour.lower().split())]
+
+
+def generate_cases(spec: SkillSpec) -> list[Case]:
+    """Positive, negative and behavioural cases, in that order, with stable positional ids."""
+    cases: list[Case] = []
+    positives = [(trigger, f"trigger:{i}") for i, trigger in enumerate(spec.triggers)]
+    positives.append((_first_sentence(spec.description), "description"))
+    for n, (prompt, source) in enumerate(positives, start=1):
+        cases.append(Case(f"pos-{n:03d}", "positive", prompt, source))
+    negatives = [(text, f"non_trigger:{i}") for i, text in enumerate(spec.non_triggers)]
+    negatives += [(text, f"generic:{i}") for i, text in enumerate(GENERIC_NEGATIVES)]
+    for n, (prompt, source) in enumerate(negatives, start=1):
+        cases.append(Case(f"neg-{n:03d}", "negative", prompt, source))
+    task = spec.triggers[0] if spec.triggers else _first_sentence(spec.description)
+    for n, behaviour in enumerate(spec.behaviours, start=1):
+        cases.append(
+            Case(f"beh-{n:03d}", "behaviour", task, f"behaviour:{n - 1}", _markers(behaviour))
+        )
+    return cases
+
+
+def cases_json(cases: list[Case]) -> str:
+    """Byte-identical JSON for the same cases."""
+    payload = {"cases": [case.to_dict() for case in cases]}
+    return json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False) + "\n"
+
+
+def grade_offline(
+    cases: list[Case], name: str | SkillSpec, description: str | None = None
+) -> list[Grade]:
+    """Grade each case with the lexical matcher; behaviour cases wait for a runner."""
+    if isinstance(name, SkillSpec):
+        name, description = name.name, name.description
+    description = description or ""
+    grades: list[Grade] = []
+    for case in cases:
+        if case.kind == "behaviour":
+            grades.append(Grade(case.id, case.kind, None, None, "pending-runner"))
+            continue
+        score = match_score(case.prompt, name, description)
+        matched = score >= MATCH_THRESHOLD
+        passed = matched if case.kind == "positive" else not matched
+        grades.append(Grade(case.id, case.kind, score, matched, "pass" if passed else "fail"))
+    return grades
+
+
+def _join(words: list[str]) -> str:
+    return ", ".join(words)
+
+
+def propose_improvements(
+    spec: SkillSpec, cases: list[Case], grades: list[Grade]
+) -> list[Proposal]:
+    """Weak areas with concrete changes, in a fixed order; empty when nothing is weak."""
+    by_id = {case.id: case for case in cases}
+    skill_words = set(content_words(f"{spec.name} {spec.description}"))
+    proposals: list[Proposal] = []
+
+    failing = [g for g in grades if g.kind == "positive" and g.status == "fail"]
+    if failing:
+        missing: list[str] = []
+        for grade in failing:
+            for word in content_words(by_id[grade.id].prompt):
+                if word not in skill_words and word not in missing:
+                    missing.append(word)
+        ids = [g.id for g in failing]
+        proposals.append(
+            Proposal(
+                "trigger-vocabulary",
+                f"{len(ids)} trigger prompt(s) do not match the skill description: {_join(ids)}",
+                "Add these words users will say to the description: "
+                + _join(missing[:_MAX_MISSING_WORDS]),
+                ids,
+            )
+        )
+
+    matching = [g for g in grades if g.kind == "negative" and g.status == "fail"]
+    if matching:
+        overlap: list[str] = []
+        for grade in matching:
+            for word in content_words(by_id[grade.id].prompt):
+                if word in skill_words and word not in overlap:
+                    overlap.append(word)
+        ids = [g.id for g in matching]
+        proposals.append(
+            Proposal(
+                "negative-overlap",
+                f"{len(ids)} prompt(s) that should not trigger the skill match it: {_join(ids)}",
+                f"The prompts share these words with the description: {_join(overlap)}. "
+                "Narrow the description to avoid them, or add the prompts to non_triggers "
+                "so the skill states when not to use it.",
+                ids,
+            )
+        )
+
+    if len(content_words(spec.description)) < MIN_DESCRIPTION_WORDS:
+        wanted = content_words(" ".join(spec.triggers))[:_MAX_SUGGESTED_WORDS]
+        direction = (
+            f"Rewrite the description to say what the skill does and when to use it, "
+            f"including trigger words such as: {_join(wanted)}"
+            if wanted
+            else "Rewrite the description to say what the skill does and when to use it, "
+            "including the words users will say when they need it"
+        )
+        proposals.append(
+            Proposal(
+                "vague-description",
+                f"The description has fewer than {MIN_DESCRIPTION_WORDS} content words.",
+                direction,
+                [],
+            )
+        )
+
+    if not spec.behaviours:
+        proposals.append(
+            Proposal(
+                "no-behaviours",
+                "The spec lists no expected behaviours, so no behavioural cases exist.",
+                "Add expected behaviours, each a sentence naming what the skill must do or "
+                "produce, so they can be checked once a runner is available.",
+                [],
+            )
+        )
+    return proposals
