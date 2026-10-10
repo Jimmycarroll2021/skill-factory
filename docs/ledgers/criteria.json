@@ -37,11 +37,11 @@
     },
     {
       "kind": "judge",
-      "status": "deferred",
-      "detail": "Tests run skillz new on a real paragraph fixture and on YAML and JSON spec fixtures in a temporary directory and assert on the generated SKILL.md frontmatter: kebab-case name equal to the directory name and at most 64 characters, non-empty description at most 1024 characters, and that scripts/, references/ or assets/ appear only when the spec asks for them; pyproject.toml declares no runtime dependencies, only pytest and ruff as dev dependencies, and a skillz console script; the CI workflow runs ruff and pytest on ubuntu-latest and windows-latest"
+      "status": "pass",
+      "detail": "PASS by reviewer; evidence: reviewer: tests/test_generate.py asserts front[\"name\"] == skill_dir.name == expected_name, NAME_RE.match, len(name) <= 64, 0 < len(description.strip()) <= 1024, (skill_dir / resource).is_dir() is (resource in resources); pytest \"collected 49 items ... 49 passed\"; pyproject dependencies = [], dev = [\"pytest\", \"ruff\"], skillz = \"skillz_factory.cli:main\"; ci.yml os: [ubuntu-latest, windows-latest] with uv run ruff check src tests and uv run pytest -q"
     }
   ],
-  "passed": 7,
+  "passed": 8,
   "failed": 0,
-  "deferred": 1
+  "deferred": 0
 }
