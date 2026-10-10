@@ -22,11 +22,11 @@
     },
     {
       "kind": "judge",
-      "status": "deferred",
-      "detail": "Validation tests use bad-skill fixtures and show each rule firing with a non-zero exit: wrong or overlong name, name not matching directory, empty or overlong description, files outside SKILL.md, scripts/, references/, assets/ and .factory/, oversized files, and forbidden patterns (a fake secret, a network call such as curl or urllib, destructive shell such as rm -rf) in scripts, while a clean fixture passes; nothing in the validator executes skill scripts; render tests prove the Claude variant matches the .claude/skills/<name>/ layout, the Codex variant contains agents/openai.yaml, and the canonical skill files are byte-identical before and after rendering"
+      "status": "pass",
+      "detail": "PASS by reviewer; evidence: reviewer: \"54 passed in 2.02s\"; test_fixture_fires_its_rule[...] covers each bad fixture with rule id plus run()==1; test_validation_never_executes_the_skill patches Popen/run/system/popen/exec*/spawn* and asserts the sentinel is absent; test_claude_variant_matches_canonical_files, test_codex_variant_adds_openai_yaml and test_canonical_files_are_byte_identical_across_renders PASSED; real flow: \"validate destructive-shell: FAILED (1 errors, 0 warnings)\" exit 1"
     }
   ],
-  "passed": 4,
+  "passed": 5,
   "failed": 0,
-  "deferred": 1
+  "deferred": 0
 }
