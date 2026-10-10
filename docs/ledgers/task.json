@@ -8,8 +8,8 @@
         "src/skill_factory/release.py",
         "tests/test_release.py"
       ],
-      "status": "pending",
-      "branch": "",
+      "status": "dispatched",
+      "branch": "mission/04-release-install--release-package",
       "commit": ""
     },
     {
@@ -19,8 +19,8 @@
         "src/skill_factory/install.py",
         "tests/test_install.py"
       ],
-      "status": "pending",
-      "branch": "",
+      "status": "dispatched",
+      "branch": "mission/04-release-install--install-registry",
       "commit": ""
     },
     {
