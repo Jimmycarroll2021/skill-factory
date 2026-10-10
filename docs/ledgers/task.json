@@ -1,0 +1,10 @@
+{
+  "goal": "A developer can run skillz eval to get generated positive and negative trigger tests and behavioural cases for a skill, deterministic offline grades, weak areas with concrete improvement proposals, and an opt-in with-skill versus no-skill baseline run through the claude or codex CLI that records skipped when no runner is available",
+  "plan": [],
+  "facts": [],
+  "assumptions": [],
+  "blocked": [],
+  "replan_count": 0,
+  "stall_count": 0,
+  "is_complete": false
+}
