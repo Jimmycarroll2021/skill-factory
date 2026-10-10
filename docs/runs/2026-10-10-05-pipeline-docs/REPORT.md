@@ -40,3 +40,6 @@ Requirements advanced: REQ-007, REQ-008 (completing the split started in mission
 ## Gaps
 - No controller verification or per-mission PR (see mission 01 report). Security review follows on the final commit.
 - Open low notes: CI actions not SHA-pinned; TOCTOU between symlink check and rename on install targets (local write access required).
+
+## Security
+PASS on commit ca7c9b7. Low notes: pipeline _write follows symlinked files inside a real .factory/ (matches earlier stages); SKILL.md could state explicitly that install also waits for the human; CI actions tag-pinned (TODO recorded).

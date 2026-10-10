@@ -22,3 +22,4 @@ One line per merged task. Append only; never edit past entries.
 | 2026-10-10 | meta-skill-docs | README documents skillz run from the plan contract; dogfooding install path writes .claude/skills and skills/registry.json into the repo (not ignored) | worker default, recorded |
 | 2026-10-10 | security-polish | control chars in list cells escaped as \xNN; CI actions kept at tags with a pin-by-SHA TODO because no SHA is available offline | worker default, recorded |
 | 2026-10-10 | pipeline-run | regression stage outcome comes from package_skill; next_steps commands append --out when root is not cwd; symlinked .factory refused before generating | worker default, recorded |
+| 2026-10-10 | security-05 | low notes left open: .factory inner-file symlinks; SKILL.md install wording; CI SHA pinning | security PASS, low severity |
