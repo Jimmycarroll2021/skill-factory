@@ -120,7 +120,7 @@ def _as_list(value, label: str, split: bool = False) -> list[str]:
 
 def validate_spec(spec: SkillSpec) -> SkillSpec:
     """Raise SpecError unless the spec respects the Agent Skills naming and size limits."""
-    if not isinstance(spec.name, str) or not NAME_RE.match(spec.name):
+    if not isinstance(spec.name, str) or not NAME_RE.fullmatch(spec.name):
         raise SpecError(f"invalid name {spec.name!r}: must be kebab-case (a-z, 0-9, hyphens)")
     if len(spec.name) > MAX_NAME:
         raise SpecError(f"name is {len(spec.name)} characters, the limit is {MAX_NAME}")
