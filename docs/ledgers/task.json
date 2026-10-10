@@ -1,0 +1,10 @@
+{
+  "goal": "A developer can run skillz run on a paragraph or spec and get the whole pipeline (capture, generate, validate, render, evaluate, regression, package) ending at awaiting approval with a readable Markdown summary, plus the factory's own meta-skill and a public-ready README, CONTRIBUTING and CHANGELOG",
+  "plan": [],
+  "facts": [],
+  "assumptions": [],
+  "blocked": [],
+  "replan_count": 0,
+  "stall_count": 0,
+  "is_complete": false
+}
