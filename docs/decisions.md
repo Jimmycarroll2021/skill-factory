@@ -14,3 +14,4 @@ One line per merged task. Append only; never edit past entries.
 | 2026-10-10 | security-02 | low notes: skill dir symlink not rejected; pin CI actions by SHA (carried to mission 05) | security PASS, low severity |
 | 2026-10-10 | eval-cases | MATCH_THRESHOLD 0.3, MIN_DESCRIPTION_WORDS 6; plan signatures win over dispatch text: grade_offline(cases, name, description), propose_improvements(spec, cases, grades) | worker followed plan contract |
 | 2026-10-10 | baseline-runner | skill text embedded in the prompt inside <skill> tags for both CLIs; run_baseline(runner, cases, skill_text) per plan; verdicts skill-helps/skill-hurts/no-difference/error | worker followed plan contract |
+| 2026-10-10 | eval-cli | spec fallback from SKILL.md frontmatter yields empty trigger lists; --strict exits 1 on failing trigger cases; baseline records requested runner name when skipped | worker default, recorded |

@@ -3,3 +3,4 @@
 {"ts": "2026-10-10T23:19:39Z", "step": "s003", "slug": "eval-cases", "event": "merged", "detail": "gate rc=0", "state_hash": "60f1eddd1fcbb3f8adb4d94ab4c8f3edb07e01022bb822058cdf1525e84880b2", "tokens": 0, "cost_usd": 0.0}
 {"ts": "2026-10-10T23:19:39Z", "step": "s004", "slug": "baseline-runner", "event": "merged", "detail": "gate rc=0", "state_hash": "60f1eddd1fcbb3f8adb4d94ab4c8f3edb07e01022bb822058cdf1525e84880b2", "tokens": 0, "cost_usd": 0.0}
 {"ts": "2026-10-10T23:19:40Z", "step": "s005", "slug": "eval-cli", "event": "dispatched", "detail": "worker dispatched step s005", "state_hash": "5da5463c6c8c232b5d23b227ecc6463fafc50527fbd561b667069ec5e3de92e5", "tokens": 0, "cost_usd": 0.0}
+{"ts": "2026-10-10T23:21:47Z", "step": "s006", "slug": "eval-cli", "event": "merged", "detail": "gate rc=0", "state_hash": "bd35d1555d5d27a70efdf35e707a45760e0ea8c2e99a395e97a7d4d10d32d92d", "tokens": 0, "cost_usd": 0.0}
