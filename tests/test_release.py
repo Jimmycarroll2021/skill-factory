@@ -292,3 +292,33 @@ def test_release_source_never_mentions_subprocess_or_git():
     assert not re.search(r"\bgit\b", source, re.IGNORECASE)
     for path in SRC.glob("*.py"):
         assert "git push" not in path.read_text(encoding="utf-8"), path.name
+
+
+@pytest.mark.parametrize("bad", ["\u0661.\u0662.\u0663", "1234567890.0.0", "0.0.1234567890", "1.2"])
+def test_set_version_rejects_non_ascii_digits_and_long_parts(root, bad):
+    assert cli(root, "package", NAME, "--set-version", bad) == 2
+    assert version_dirs(root) == []
+    with pytest.raises(release.ReleaseError):
+        release.parse_semver(bad)
+
+
+def test_set_version_accepts_nine_digit_parts(root):
+    assert cli(root, "package", NAME, "--set-version", "999999999.0.1") == 0
+    assert version_dirs(root) == ["999999999.0.1"]
+
+
+@pytest.mark.parametrize(
+    ("report", "payload"),
+    [
+        ("cases.json", {"cases": ["not", "dicts"]}),
+        ("eval.json", {"results": ["not", "dicts"]}),
+    ],
+)
+def test_malformed_baseline_reports_raise_integrity_error(root, report, payload):
+    assert cli(root, "package", NAME) == 0
+    assert cli(root, "approve", NAME, "0.1.0") == 0
+    path = versions_dir(root) / "0.1.0" / "reports" / report
+    path.write_text(json.dumps(payload), encoding="utf-8")
+    with pytest.raises(release.IntegrityError):
+        release.regression_check(skill_dir(root), "0.1.1")
+

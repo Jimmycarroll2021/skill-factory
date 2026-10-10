@@ -347,6 +347,24 @@ def test_list_table_names_skill_version_and_status(root, capsys):
     assert re.search(rf"{NAME}\s+0\.1\.0\s+approved\s", out)
 
 
+def test_list_table_escapes_control_characters_but_json_is_unchanged(root, capsys):
+    make_version(root, NAME, "0.1.0")
+    assert _install(root) == 0
+    registry_path = root / "skills" / "registry.json"
+    registry = json.loads(registry_path.read_text(encoding="utf-8"))
+    evil = "/tmp/\x1b[31mred\x07\x7f"
+    for record in (*registry["installs"], *registry["current"].values()):
+        record["path"] = evil
+    registry_path.write_text(json.dumps(registry), encoding="utf-8")
+    capsys.readouterr()
+    assert run(root, "list") == 0
+    out = capsys.readouterr().out
+    assert "\x1b" not in out and "\x07" not in out and "\x7f" not in out
+    assert "/tmp/\\x1b[31mred\\x07\\x7f" in out
+    assert run(root, "list", "--json") == 0
+    assert json.loads(capsys.readouterr().out)["installed"][0]["path"] == evil
+
+
 def test_list_empty_project_exits_0(root, capsys):
     assert run(root, "list") == 0
     assert run(root, "list", "--json") == 0
@@ -364,6 +382,16 @@ def test_invalid_names_exit_2_and_write_nothing(root, home, bad):
     assert (tree(root), tree(home)) == before
     with pytest.raises(install.InstallError):
         install.install_skill(root, bad, "claude", "project")
+
+
+def test_non_ascii_or_overlong_versions_exit_2_and_install_nothing(root, home):
+    make_version(root, NAME, "1234567890.0.0")
+    make_version(root, NAME, "0.1.0")
+    before = (tree(root), tree(home))
+    for bad in ("\u0661.\u0662.\u0663", "1234567890.0.0", "0.0.1234567890", "1.2"):
+        assert _install(root, "claude", "project", "--version", bad) == 2
+    assert (tree(root), tree(home)) == before
+    assert _install(root, "claude", "project") == 0  # the overlong directory is ignored
 
 
 def test_missing_skill_and_missing_version_exit_2(root, home):

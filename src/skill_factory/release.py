@@ -31,7 +31,7 @@ APPROVAL = "approval.json"
 INDEX = "index.json"
 AWAITING = "awaiting-approval"
 APPROVED = "approved"
-_SEMVER_RE = re.compile(r"\d+\.\d+\.\d+")
+_SEMVER_RE = re.compile(r"[0-9]{1,9}\.[0-9]{1,9}\.[0-9]{1,9}", re.ASCII)
 _REPORT_FILES = (
     "validate.json",
     "validate.md",
@@ -274,7 +274,7 @@ def _baseline_cases(baseline: Version) -> tuple[list[evalcases.Case], set[str]]:
             for item in cases_data["cases"]
         ]
         passed = {r["id"] for r in eval_data["results"] if r.get("status") == "pass"}
-    except (KeyError, TypeError) as exc:
+    except (KeyError, TypeError, AttributeError) as exc:
         raise IntegrityError(f"version {baseline.version} has malformed reports: {exc}") from exc
     return cases, passed
 

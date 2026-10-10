@@ -27,8 +27,9 @@ SCOPES = ("project", "user")
 AWAITING = "awaiting-approval"
 APPROVED = "approved"
 
-_SEMVER_RE = re.compile(r"[0-9]+\.[0-9]+\.[0-9]+", re.ASCII)
+_SEMVER_RE = re.compile(r"[0-9]{1,9}\.[0-9]{1,9}\.[0-9]{1,9}", re.ASCII)
 _ROW_GAP = "  "
+_CONTROL_RE = re.compile(r"[\x00-\x1f\x7f]")
 
 
 class InstallError(ValueError):
@@ -419,8 +420,15 @@ def list_skills(root: Path) -> dict:
     return {"installed": installed, "skills": skills}
 
 
+def _printable(value: object) -> str:
+    """Text for a table cell; control characters (including ESC) become ``\\xNN`` escapes."""
+    if value is None:
+        return "-"
+    return _CONTROL_RE.sub(lambda m: f"\\x{ord(m.group()):02x}", str(value))
+
+
 def _table(headers: tuple[str, ...], rows: list[tuple]) -> list[str]:
-    cells = [[str(c) if c is not None else "-" for c in row] for row in rows]
+    cells = [[_printable(c) for c in row] for row in rows]
     widths = [max([len(h), *(len(r[i]) for r in cells)]) for i, h in enumerate(headers)]
     lines = [
         _ROW_GAP.join(h.ljust(w) for h, w in zip(headers, widths, strict=True)).rstrip()

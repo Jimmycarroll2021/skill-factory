@@ -59,7 +59,7 @@ class ClaudeRunner:
         self.timeout = timeout
 
     def argv(self, prompt: str) -> list[str]:
-        return [self.executable, "-p", prompt, "--output-format", "text"]
+        return [self.executable, "-p", "--output-format", "text", "--", prompt]
 
     def run(self, prompt: str) -> str:
         return _execute(self.argv(prompt), self.timeout)
@@ -73,7 +73,7 @@ class CodexRunner:
         self.timeout = timeout
 
     def argv(self, prompt: str) -> list[str]:
-        return [self.executable, "exec", prompt]
+        return [self.executable, "exec", "--", prompt]
 
     def run(self, prompt: str) -> str:
         return _execute(self.argv(prompt), self.timeout)
