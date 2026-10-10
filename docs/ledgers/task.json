@@ -11,9 +11,9 @@
         "src/skill_factory/capture.py",
         "tests/test_capture.py"
       ],
-      "status": "pending",
-      "branch": "",
-      "commit": ""
+      "status": "merged",
+      "branch": "mission/02-validate-render--validate-skill",
+      "commit": "c675aaf"
     },
     {
       "slug": "render-variants",
@@ -23,9 +23,9 @@
         "tests/test_render.py",
         ".github/workflows/ci.yml"
       ],
-      "status": "pending",
-      "branch": "",
-      "commit": ""
+      "status": "merged",
+      "branch": "mission/02-validate-render--render-variants",
+      "commit": "7e68e22"
     },
     {
       "slug": "cli-validate-render",
@@ -35,8 +35,8 @@
         "tests/test_cli.py",
         "README.md"
       ],
-      "status": "pending",
-      "branch": "",
+      "status": "dispatched",
+      "branch": "mission/02-validate-render--cli-validate-render",
       "commit": ""
     }
   ],
