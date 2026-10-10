@@ -1,0 +1,10 @@
+{
+  "goal": "A developer can run skillz improve to build a challenger candidate of a skill from its evaluation proposals and captured failures, skillz capture-failure to record a real failure as a persistent evaluation case, skillz challenge to compare candidate and stable on the same evaluations with a regression and security comparison, and skillz promote to make the candidate the new stable version only by explicit command when the challenge did not get worse, with the factory's own meta-skill improved the same way",
+  "plan": [],
+  "facts": [],
+  "assumptions": [],
+  "blocked": [],
+  "replan_count": 0,
+  "stall_count": 0,
+  "is_complete": false
+}
