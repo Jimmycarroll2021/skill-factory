@@ -36,6 +36,16 @@
       "status": "merged",
       "branch": "mission/03-evaluation--eval-cli",
       "commit": "75ba0cd"
+    },
+    {
+      "slug": "eval-cli-fix",
+      "goal": "Add the missing test for the .factory symlink refusal in evaluate_skill (reviewer finding)",
+      "owns": [
+        "tests/test_evaluate.py"
+      ],
+      "status": "merged",
+      "branch": "mission/03-evaluation--eval-cli-fix",
+      "commit": "2d84ee6"
     }
   ],
   "facts": [],
