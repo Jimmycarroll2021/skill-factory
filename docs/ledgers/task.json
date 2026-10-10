@@ -27,9 +27,9 @@
         "tests/fixtures/spec.yaml",
         "tests/fixtures/spec.json"
       ],
-      "status": "dispatched",
+      "status": "merged",
       "branch": "mission/01-skeleton-capture--capture-spec",
-      "commit": ""
+      "commit": "766e7c0"
     },
     {
       "slug": "generate-cli",
@@ -40,9 +40,9 @@
         "src/skillz_factory/__main__.py",
         "tests/test_generate.py"
       ],
-      "status": "pending",
-      "branch": "",
-      "commit": ""
+      "status": "merged",
+      "branch": "mission/01-skeleton-capture--generate-cli",
+      "commit": "c6542f9"
     }
   ],
   "facts": [],

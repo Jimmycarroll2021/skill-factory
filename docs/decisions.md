@@ -5,3 +5,5 @@ One line per merged task. Append only; never edit past entries.
 | date | task | change | why |
 |---|---|---|---|
 | 2026-10-10 | pkg-skeleton | smoke test tests/test_package.py added to task ownership | gate needs a real pytest test before the other tasks merge |
+| 2026-10-10 | capture-spec | spec files are strict (unknown keys and non-string metadata raise SpecError); fixture names draft-release-notes-software, api-doc-reviewer, csv-data-cleaner | worker default, recorded |
+| 2026-10-10 | generate-cli | allowed-tools written as space-delimited string per Agent Skills spec; --force rewrites only SKILL.md and .factory/spec.json | worker default, recorded |

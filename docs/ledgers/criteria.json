@@ -1,0 +1,47 @@
+{
+  "results": [
+    {
+      "kind": "test",
+      "status": "pass",
+      "detail": "exit 0"
+    },
+    {
+      "kind": "test",
+      "status": "pass",
+      "detail": "exit 0"
+    },
+    {
+      "kind": "test",
+      "status": "pass",
+      "detail": "exit 0"
+    },
+    {
+      "kind": "test",
+      "status": "pass",
+      "detail": "exit 0"
+    },
+    {
+      "kind": "test",
+      "status": "pass",
+      "detail": "exit 0"
+    },
+    {
+      "kind": "file",
+      "status": "pass",
+      "detail": "exists: LICENSE"
+    },
+    {
+      "kind": "grep",
+      "status": "pass",
+      "detail": "matched: windows-latest"
+    },
+    {
+      "kind": "judge",
+      "status": "deferred",
+      "detail": "Tests run skillz new on a real paragraph fixture and on YAML and JSON spec fixtures in a temporary directory and assert on the generated SKILL.md frontmatter: kebab-case name equal to the directory name and at most 64 characters, non-empty description at most 1024 characters, and that scripts/, references/ or assets/ appear only when the spec asks for them; pyproject.toml declares no runtime dependencies, only pytest and ruff as dev dependencies, and a skillz console script; the CI workflow runs ruff and pytest on ubuntu-latest and windows-latest"
+    }
+  ],
+  "passed": 7,
+  "failed": 0,
+  "deferred": 1
+}
