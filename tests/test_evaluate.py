@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 from pathlib import Path
 
@@ -191,3 +192,19 @@ def test_missing_skill_md_returns_two(tmp_path, capsys):
 def test_invalid_name_returns_two(tmp_path, capsys):
     assert main(["eval", "../escape", "--out", str(tmp_path)]) == 2
     assert "skillz: error:" in capsys.readouterr().err
+
+
+def test_symlinked_factory_dir_is_refused(tmp_path, capsys):
+    skill_dir = _make(tmp_path, "well-described.json", "csv-data-cleaner")
+    target = tmp_path / "elsewhere"
+    (skill_dir / ".factory").rename(target)
+    try:
+        os.symlink(target, skill_dir / ".factory", target_is_directory=True)
+    except (OSError, NotImplementedError):
+        pytest.skip("symlinks are not available on this platform")
+    capsys.readouterr()
+    assert main(["eval", "csv-data-cleaner", "--out", str(tmp_path)]) == 2
+    err = capsys.readouterr().err
+    assert "skillz: error:" in err and "symlink" in err
+    for filename in ("eval.json", "cases.json", "eval.md"):
+        assert not (target / filename).exists()
