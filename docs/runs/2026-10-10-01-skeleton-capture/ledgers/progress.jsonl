@@ -4,3 +4,4 @@
 {"ts": "2026-10-10T22:53:32Z", "step": "s004", "slug": "capture-spec", "event": "merged", "detail": "gate rc=0", "state_hash": "0e836ae2e01daf53d415ea311863e868877595664f9665d2332e59342a4c9ba7", "tokens": 0, "cost_usd": 0.0}
 {"ts": "2026-10-10T22:53:32Z", "step": "s005", "slug": "generate-cli", "event": "dispatched", "detail": "worker dispatched step s005", "state_hash": "61cd49959a9ebca62decd538b319ed0466e5592050e88e16450f5c0e34b204aa", "tokens": 0, "cost_usd": 0.0}
 {"ts": "2026-10-10T22:55:12Z", "step": "s006", "slug": "generate-cli", "event": "merged", "detail": "gate rc=0", "state_hash": "37cde7c0056de9a8f56024bc25f0ff1f95ac268d9f7f9bfbf041ecaf0e996d76", "tokens": 0, "cost_usd": 0.0}
+{"ts": "2026-10-10T22:57:33Z", "step": "s007", "slug": "security", "event": "merged", "detail": "security PASS on 51c5c8c, 4 low notes", "state_hash": "37cde7c0056de9a8f56024bc25f0ff1f95ac268d9f7f9bfbf041ecaf0e996d76", "tokens": 0, "cost_usd": 0.0}

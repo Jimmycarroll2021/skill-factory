@@ -46,3 +46,6 @@ Not run (see above). The lead reran the gate and `check_criteria.py` on the fina
 ## Gaps
 - No controller verification or PR; publication is handled outside quickship for this program (single branch, one PR at the end).
 - Security review runs on the final commit after this report (see docs/ledgers/handoff.md).
+
+## Security
+PASS on commit 51c5c8c. Low notes (not blocking, carried forward): capture.py NAME_RE should use re.fullmatch; generate.py overwrite guard checks only SKILL.md; ci.yml lacks a top-level `permissions: contents: read` block and pins actions by tag.
