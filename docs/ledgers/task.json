@@ -1,0 +1,10 @@
+{
+  "goal": "A developer can package a skill as an immutable checksummed version with a regression comparison against the last approved version, approve it explicitly, install only approved versions into the Claude or Codex project or user directory, see them in a registry of proven skills, and roll back to the previous approved version",
+  "plan": [],
+  "facts": [],
+  "assumptions": [],
+  "blocked": [],
+  "replan_count": 0,
+  "stall_count": 0,
+  "is_complete": false
+}
