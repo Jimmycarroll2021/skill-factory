@@ -78,12 +78,13 @@ def test_detect_runner_builds_claude_and_codex(monkeypatch):
     assert isinstance(claude, ClaudeRunner)
     assert claude.name == "claude"
     assert claude.timeout == 5
-    assert claude.argv("hi")[:2] == ["/fake/bin/claude", "-p"]
+    assert claude.argv("hi") == [
+        "/fake/bin/claude", "-p", "--output-format", "text", "--", "hi"
+    ]
     assert isinstance(codex, CodexRunner)
     assert codex.name == "codex"
     assert codex.timeout == DEFAULT_TIMEOUT
-    assert codex.argv("hi")[:2] == ["/fake/bin/codex", "exec"]
-    assert codex.argv("hi")[-1] == "hi"
+    assert codex.argv("hi") == ["/fake/bin/codex", "exec", "--", "hi"]
 
 
 def test_detect_runner_unknown_name_raises():
@@ -101,6 +102,15 @@ def test_run_uses_list_argv_timeout_and_no_shell(monkeypatch, cls):
     assert kwargs["timeout"] == 7
     assert not kwargs.get("shell", False)
     assert kwargs["capture_output"] is True and kwargs["text"] is True
+
+
+@pytest.mark.parametrize("cls", [ClaudeRunner, CodexRunner])
+def test_dash_prompt_is_passed_verbatim_after_double_dash(monkeypatch, cls):
+    calls = _record(monkeypatch, stdout="ok")
+    cls("/x/tool").run("--dangerously-skip-permissions")
+    argv, _ = calls[0]
+    assert argv[-2:] == ["--", "--dangerously-skip-permissions"]
+    assert argv.count("--dangerously-skip-permissions") == 1
 
 
 @pytest.mark.parametrize("cls", [ClaudeRunner, CodexRunner])
