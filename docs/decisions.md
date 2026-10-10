@@ -17,3 +17,4 @@ One line per merged task. Append only; never edit past entries.
 | 2026-10-10 | eval-cli | spec fallback from SKILL.md frontmatter yields empty trigger lists; --strict exits 1 on failing trigger cases; baseline records requested runner name when skipped | worker default, recorded |
 | 2026-10-10 | security-03 | low notes: add -- before prompts in runner argv (carry to mission 05); .factory inner-file symlinks; runner stderr excerpt in eval.json | security PASS, low severity |
 | 2026-10-10 | install-registry | InstallIntegrityError and UnsafeTarget added (exit 1 vs 2); install/rollback verify dist files against the manifest; rollback plans all installs first then swaps; registry written atomically | worker default, recorded |
+| 2026-10-10 | release-package | first package regression status is "no-baseline"; approve verifies checksums before anything else; version chosen and clash checked before any stage writes | worker default, recorded |

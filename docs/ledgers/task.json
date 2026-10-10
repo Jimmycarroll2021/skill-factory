@@ -8,9 +8,9 @@
         "src/skill_factory/release.py",
         "tests/test_release.py"
       ],
-      "status": "dispatched",
+      "status": "merged",
       "branch": "mission/04-release-install--release-package",
-      "commit": ""
+      "commit": "edf728c"
     },
     {
       "slug": "install-registry",
@@ -30,8 +30,8 @@
         "src/skill_factory/cli.py",
         "tests/test_cli_release.py"
       ],
-      "status": "pending",
-      "branch": "",
+      "status": "dispatched",
+      "branch": "mission/04-release-install--release-cli",
       "commit": ""
     }
   ],
