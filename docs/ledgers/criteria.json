@@ -37,11 +37,11 @@
     },
     {
       "kind": "judge",
-      "status": "deferred",
-      "detail": "Tests in temporary directories (HOME and USERPROFILE redirected) prove: package creates a new semver version with a SHA-256 manifest and never modifies an existing version; regression re-runs the previous approved version's cases and reports a newly failing case; install refuses an unapproved version with a non-zero exit and writes nothing; an approved install lands exactly in .claude/skills/<name>/ or .agents/skills/<name>/ (project) or the home equivalent (user) and nowhere else; registry.json records name, version, platform, scope and approval; rollback reinstalls the previous approved version without deleting any version; no code path calls git push"
+      "status": "pass",
+      "detail": "PASS by reviewer; evidence: reviewer: \"50 passed in 1.15s\"; test_first_package_writes_manifest recomputes sha256; test_repackage_bumps_and_leaves_existing_version_untouched; test_regression_blocks_package_and_names_failing_cases (pos-002 before=pass after=fail, exit 1, no 0.1.1); test_unapproved_explicit_version_installs_nothing (exit 1, identical tree); test_project_install_lands_exactly_in_target[claude|codex]; test_user_scope_uses_home_and_nothing_in_project; test_registry_records_install_and_approval; test_rollback_reinstalls_previous_approved_version (.factory byte-identical); test_source_never_mentions_git_push; real flow: install before approve \"has no approved version\" EXIT=1, rollback EXIT=0, versions 0.1.0 and 0.1.1 both present"
     }
   ],
-  "passed": 7,
+  "passed": 8,
   "failed": 0,
-  "deferred": 1
+  "deferred": 0
 }
