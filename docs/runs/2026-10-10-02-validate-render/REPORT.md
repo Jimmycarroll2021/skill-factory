@@ -38,3 +38,6 @@ Requirements advanced: REQ-002, REQ-003. Mission 01 security low notes (NAME_RE 
 
 ## Gaps
 - No controller verification or per-mission PR (see mission 01 report). Security review follows on the final commit.
+
+## Security
+PASS on commit 78f6d92. Low notes: skills/<name> directory itself may be a symlink (operator-supplied local path); CI actions pinned by tag not SHA (carried to mission 05); BRIEF.yaml change is the mission brief written by program flow from docs/missions/02-validate-render.yaml.
