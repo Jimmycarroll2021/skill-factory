@@ -7,7 +7,15 @@ import sys
 from collections.abc import Callable
 from pathlib import Path
 
-from skill_factory import __version__, evaluate, install, release, render, validate
+from skill_factory import (
+    __version__,
+    evaluate,
+    install,
+    pipeline,
+    release,
+    render,
+    validate,
+)
 from skill_factory.capture import SpecError, capture
 from skill_factory.generate import GenerateError, generate
 
@@ -44,6 +52,7 @@ SUBCOMMANDS: tuple[Callable[[argparse._SubParsersAction], None], ...] = (
     install.add_install_parser,
     install.add_rollback_parser,
     install.add_list_parser,
+    pipeline.add_parser,
 )
 HANDLERS: dict[str, Callable[[argparse.Namespace], int]] = {
     "new": _run_new,
@@ -55,6 +64,7 @@ HANDLERS: dict[str, Callable[[argparse.Namespace], int]] = {
     "install": install.run_install,
     "rollback": install.run_rollback,
     "list": install.run_list,
+    "run": pipeline.run,
 }
 
 
