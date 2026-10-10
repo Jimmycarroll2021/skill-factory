@@ -1,29 +1,32 @@
 mission:
-  goal: "A developer can package a skill as an immutable checksummed version with a regression comparison against the last approved version, approve it explicitly, install only approved versions into the Claude or Codex project or user directory, see them in a registry of proven skills, and roll back to the previous approved version"
-  base: "mission/03-evaluation"
+  goal: "A developer can run skillz run on a paragraph or spec and get the whole pipeline (capture, generate, validate, render, evaluate, regression, package) ending at awaiting approval with a readable Markdown summary, plus the factory's own meta-skill and a public-ready README, CONTRIBUTING and CHANGELOG"
+  base: "mission/04-release-install"
   requirements:
-    - REQ-005
-    - REQ-006
+    - REQ-007
+    - REQ-008
   deliverables:
     - src/skill_factory/
-    - tests/test_release.py
-    - tests/test_install.py
+    - tests/test_pipeline.py
+    - skills/skill-factory/SKILL.md
+    - README.md
+    - CONTRIBUTING.md
+    - CHANGELOG.md
 success_criteria:
   - {kind: test, cmd: "uv run pytest -q", expect: 0}
-  - {kind: test, cmd: "uv run pytest -q tests/test_release.py tests/test_install.py", expect: 0}
-  - {kind: test, cmd: "uv run skillz package --help", expect: 0}
-  - {kind: test, cmd: "uv run skillz approve --help", expect: 0}
-  - {kind: test, cmd: "uv run skillz install --help", expect: 0}
-  - {kind: test, cmd: "uv run skillz rollback --help", expect: 0}
-  - {kind: test, cmd: "uv run skillz list --help", expect: 0}
-  - {kind: judge, rubric: "Tests in temporary directories (HOME and USERPROFILE redirected) prove: package creates a new semver version with a SHA-256 manifest and never modifies an existing version; regression re-runs the previous approved version's cases and reports a newly failing case; install refuses an unapproved version with a non-zero exit and writes nothing; an approved install lands exactly in .claude/skills/<name>/ or .agents/skills/<name>/ (project) or the home equivalent (user) and nowhere else; registry.json records name, version, platform, scope and approval; rollback reinstalls the previous approved version without deleting any version; no code path calls git push"}
+  - {kind: test, cmd: "uv run pytest -q tests/test_pipeline.py", expect: 0}
+  - {kind: test, cmd: "uv run skillz run --help", expect: 0}
+  - {kind: test, cmd: "uv run skillz validate skill-factory", expect: 0}
+  - {kind: test, cmd: "uv build", expect: 0}
+  - {kind: file, path: README.md, must_contain: "skillz run"}
+  - {kind: file, path: CHANGELOG.md, must_contain: "0.1.0"}
+  - {kind: judge, rubric: "The pipeline test runs skillz run end to end on a paragraph fixture in a temporary directory with no model runner on PATH, asserts every stage wrote its JSON report under .factory/, the evaluation stage records skipped: no runner, a version exists in awaiting-approval state, nothing was installed, and the Markdown summary names each stage's verdict; the README has a quickstart a new user can follow and a pipeline diagram listing the stages in order including the human approval gate; skills/skill-factory/SKILL.md is a short, valid skill telling Claude Code or Codex how to drive skillz"}
 budgets:
-  tokens: 6000000
-  cost_usd: 60
-  wall_clock_min: 100
-  steps: 320
+  tokens: 4000000
+  cost_usd: 40
+  wall_clock_min: 75
+  steps: 220
   stall_limit: 3
-  replan_limit: 3
+  replan_limit: 2
   critic_rounds: 2
 permissions:
   irreversible:
