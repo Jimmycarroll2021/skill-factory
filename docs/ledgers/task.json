@@ -10,9 +10,9 @@
         "tests/fixtures/eval/well-described.json",
         "tests/fixtures/eval/vague.json"
       ],
-      "status": "pending",
-      "branch": "",
-      "commit": ""
+      "status": "merged",
+      "branch": "mission/03-evaluation--eval-cases",
+      "commit": "29a00d9"
     },
     {
       "slug": "baseline-runner",
@@ -21,9 +21,9 @@
         "src/skill_factory/runner.py",
         "tests/test_runner.py"
       ],
-      "status": "pending",
-      "branch": "",
-      "commit": ""
+      "status": "merged",
+      "branch": "mission/03-evaluation--baseline-runner",
+      "commit": "97f730a"
     },
     {
       "slug": "eval-cli",
@@ -33,8 +33,8 @@
         "src/skill_factory/cli.py",
         "tests/test_evaluate.py"
       ],
-      "status": "pending",
-      "branch": "",
+      "status": "dispatched",
+      "branch": "mission/03-evaluation--eval-cli",
       "commit": ""
     }
   ],
