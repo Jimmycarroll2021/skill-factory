@@ -92,3 +92,11 @@ No design language section: the product is a CLI with no UI.
 - Windows support: paths via `pathlib`, no symlinks, UTF-8 file I/O with explicit encoding, LF line endings in generated files.
 - The "meta-skill" is delivered as the CLI plus a small Agent Skill at `skills/skill-factory/SKILL.md` (part of REQ-007, mission 05) that tells Claude Code or Codex how to drive `skillz`; it must itself pass `skillz validate`.
 - Single-user, local, offline-first tool; no telemetry.
+
+## Post-MVP: self-improvement (added 2026-10-10 after the MVP shipped)
+
+- **REQ-009 Challenger loop:** `skillz improve <name>` builds a challenger candidate of a skill under `skills/<name>/.factory/candidates/<id>/` by applying the evaluation's improvement proposals and any captured failures, never touching the stable canonical skill; `skillz capture-failure <name>` records a real-world failure (a prompt that should or should not have triggered, or an expected behaviour marker) as a persistent case that every later eval, challenge and regression includes; `skillz challenge <name> <candidate>` runs the same validation and the union of stable and candidate evaluation cases against both, compares trigger grades, weak areas and security findings, and writes `challenge.json` and `challenge.md` with a verdict (candidate-better, no-difference, candidate-worse, candidate-unsafe); `skillz promote <name> <candidate>` is the only way a candidate replaces the stable skill, it refuses unless the challenge verdict is candidate-better or no-difference, it packages the result as a new version (the previous stable stays available for rollback) and it is an explicit human command, never run by the pipeline. The factory's own meta-skill `skills/skill-factory` is improved through the same loop.
+
+| Mission | Requirements | Reviewable outcome |
+| --- | --- | --- |
+| `docs/missions/06-self-improve.yaml` | REQ-009 | improve, capture-failure, challenge and promote subcommands with reports; meta-skill run through the loop; README and CHANGELOG updated |
