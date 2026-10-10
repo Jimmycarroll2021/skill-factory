@@ -1,0 +1,4 @@
+.claude/worktrees/
+.claude/state/
+work/_untrusted/
+__pycache__/
