@@ -9,9 +9,9 @@
         "src/skill_factory/cli.py",
         "tests/test_pipeline.py"
       ],
-      "status": "dispatched",
+      "status": "merged",
       "branch": "mission/05-pipeline-docs--pipeline-run",
-      "commit": ""
+      "commit": "6908812"
     },
     {
       "slug": "meta-skill-docs",

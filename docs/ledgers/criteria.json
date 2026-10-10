@@ -1,0 +1,47 @@
+{
+  "results": [
+    {
+      "kind": "test",
+      "status": "pass",
+      "detail": "exit 0"
+    },
+    {
+      "kind": "test",
+      "status": "pass",
+      "detail": "exit 0"
+    },
+    {
+      "kind": "test",
+      "status": "pass",
+      "detail": "exit 0"
+    },
+    {
+      "kind": "test",
+      "status": "pass",
+      "detail": "exit 0"
+    },
+    {
+      "kind": "test",
+      "status": "pass",
+      "detail": "exit 0"
+    },
+    {
+      "kind": "file",
+      "status": "pass",
+      "detail": "exists: README.md"
+    },
+    {
+      "kind": "file",
+      "status": "pass",
+      "detail": "exists: CHANGELOG.md"
+    },
+    {
+      "kind": "judge",
+      "status": "deferred",
+      "detail": "The pipeline test runs skillz run end to end on a paragraph fixture in a temporary directory with no model runner on PATH, asserts every stage wrote its JSON report under .factory/, the evaluation stage records skipped: no runner, a version exists in awaiting-approval state, nothing was installed, and the Markdown summary names each stage's verdict; the README has a quickstart a new user can follow and a pipeline diagram listing the stages in order including the human approval gate; skills/skill-factory/SKILL.md is a short, valid skill telling Claude Code or Codex how to drive skillz"
+    }
+  ],
+  "passed": 7,
+  "failed": 0,
+  "deferred": 1
+}
