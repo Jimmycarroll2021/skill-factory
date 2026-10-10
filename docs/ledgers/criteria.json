@@ -1,0 +1,47 @@
+{
+  "results": [
+    {
+      "kind": "test",
+      "status": "pass",
+      "detail": "exit 0"
+    },
+    {
+      "kind": "test",
+      "status": "pass",
+      "detail": "exit 0"
+    },
+    {
+      "kind": "test",
+      "status": "pass",
+      "detail": "exit 0"
+    },
+    {
+      "kind": "test",
+      "status": "pass",
+      "detail": "exit 0"
+    },
+    {
+      "kind": "test",
+      "status": "pass",
+      "detail": "exit 0"
+    },
+    {
+      "kind": "test",
+      "status": "pass",
+      "detail": "exit 0"
+    },
+    {
+      "kind": "test",
+      "status": "pass",
+      "detail": "exit 0"
+    },
+    {
+      "kind": "judge",
+      "status": "deferred",
+      "detail": "Tests in temporary directories (HOME and USERPROFILE redirected) prove: package creates a new semver version with a SHA-256 manifest and never modifies an existing version; regression re-runs the previous approved version's cases and reports a newly failing case; install refuses an unapproved version with a non-zero exit and writes nothing; an approved install lands exactly in .claude/skills/<name>/ or .agents/skills/<name>/ (project) or the home equivalent (user) and nowhere else; registry.json records name, version, platform, scope and approval; rollback reinstalls the previous approved version without deleting any version; no code path calls git push"
+    }
+  ],
+  "passed": 7,
+  "failed": 0,
+  "deferred": 1
+}

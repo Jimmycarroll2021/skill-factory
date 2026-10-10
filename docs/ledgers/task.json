@@ -30,9 +30,9 @@
         "src/skill_factory/cli.py",
         "tests/test_cli_release.py"
       ],
-      "status": "dispatched",
+      "status": "merged",
       "branch": "mission/04-release-install--release-cli",
-      "commit": ""
+      "commit": "d2f739c"
     }
   ],
   "facts": [],

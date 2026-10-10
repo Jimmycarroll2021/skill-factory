@@ -3,3 +3,4 @@
 {"ts": "2026-10-10T23:34:18Z", "step": "s003", "slug": "install-registry", "event": "merged", "detail": "gate rc=0", "state_hash": "08050412bc5483f94a67059dea7ccd28428380a2df4b953b534ff717a0c125c1", "tokens": 0, "cost_usd": 0.0}
 {"ts": "2026-10-10T23:34:39Z", "step": "s004", "slug": "release-package", "event": "merged", "detail": "gate rc=0", "state_hash": "fcb43daac691382ba55ebccec7773d6c6f6e0d94a574d3e0bbf9f70ea8646ca7", "tokens": 0, "cost_usd": 0.0}
 {"ts": "2026-10-10T23:34:39Z", "step": "s005", "slug": "release-cli", "event": "dispatched", "detail": "worker dispatched step s005", "state_hash": "bb6b722615fd7bb8a125bce1f0cf55629cecbf833bd536e0c6b6859a48913d17", "tokens": 0, "cost_usd": 0.0}
+{"ts": "2026-10-10T23:35:56Z", "step": "s006", "slug": "release-cli", "event": "merged", "detail": "gate rc=0", "state_hash": "cc3a8a7ea6041b903069917c05e74193493570ef69baccfd6c35197ccf4e1266", "tokens": 0, "cost_usd": 0.0}
