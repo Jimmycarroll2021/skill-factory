@@ -41,3 +41,6 @@ Round 1: FAIL on one item (symlink guard without a test); judge PASS. Fixed by e
 
 ## Gaps
 - No controller verification or per-mission PR (see mission 01 report). Security review follows on the final commit.
+
+## Security
+PASS on commit 0508262. Low notes: first 200 chars of runner stderr stored in eval.json error field; codex argv has no `--` separator before the prompt; files inside a real .factory/ may be symlinks; --runner sends SKILL.md to an external model CLI (opt-in, prompt-injection vector by design). The `--` separator note is carried to mission 05 polish.
