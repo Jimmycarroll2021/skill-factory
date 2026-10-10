@@ -38,3 +38,6 @@ Requirements advanced: REQ-005, REQ-006.
 
 ## Gaps
 - No controller verification or per-mission PR (see mission 01 report). Security review follows on the final commit.
+
+## Security
+PASS on commit 97272f8. Low notes carried to mission 05 polish: _SEMVER_RE should use re.ASCII and parse_semver should cap digit length; _baseline_cases should also catch AttributeError; registry fields printed raw by list; TOCTOU between symlink check and rename on install targets (local attacker with write access only).
