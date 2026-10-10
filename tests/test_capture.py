@@ -218,3 +218,11 @@ def test_validate_rejects_unknown_resource_and_bad_metadata():
     with pytest.raises(cap.SpecError, match="metadata"):
         cap.validate_spec(_good_spec(metadata={"version": 1}))
     cap.validate_spec(_good_spec(resources=["scripts", "references", "assets"]))
+
+
+def test_name_with_trailing_newline_is_rejected():
+    # "$" matches before a trailing newline, so the name check must be a fullmatch.
+    with pytest.raises(cap.SpecError, match="kebab-case"):
+        cap.validate_spec(_good_spec(name="abc\n"))
+    with pytest.raises(cap.SpecError, match="kebab-case"):
+        cap.capture_paragraph(_paragraph(), name="abc\n")
