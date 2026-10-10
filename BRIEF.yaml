@@ -1,25 +1,29 @@
 mission:
-  goal: "A developer can run skillz eval to get generated positive and negative trigger tests and behavioural cases for a skill, deterministic offline grades, weak areas with concrete improvement proposals, and an opt-in with-skill versus no-skill baseline run through the claude or codex CLI that records skipped when no runner is available"
-  base: "mission/02-validate-render"
+  goal: "A developer can package a skill as an immutable checksummed version with a regression comparison against the last approved version, approve it explicitly, install only approved versions into the Claude or Codex project or user directory, see them in a registry of proven skills, and roll back to the previous approved version"
+  base: "mission/03-evaluation"
   requirements:
-    - REQ-004
+    - REQ-005
+    - REQ-006
   deliverables:
     - src/skill_factory/
-    - tests/test_eval.py
-    - tests/test_runner.py
-    - tests/fixtures/
+    - tests/test_release.py
+    - tests/test_install.py
 success_criteria:
   - {kind: test, cmd: "uv run pytest -q", expect: 0}
-  - {kind: test, cmd: "uv run pytest -q tests/test_eval.py tests/test_runner.py", expect: 0}
-  - {kind: test, cmd: "uv run skillz eval --help", expect: 0}
-  - {kind: judge, rubric: "Tests show case generation is deterministic (same spec gives identical cases), positive prompts match and negative prompts do not for a well-described fixture skill, a deliberately vague description produces failing trigger cases and an improvement proposal naming them, the JSON report and Markdown summary are written under .factory/, the baseline runner is invoked only with an explicit --runner flag and an executable found on PATH (exercised through a fake runner, never the real claude or codex), and without a runner the report says skipped: no runner while the command still exits 0"}
+  - {kind: test, cmd: "uv run pytest -q tests/test_release.py tests/test_install.py", expect: 0}
+  - {kind: test, cmd: "uv run skillz package --help", expect: 0}
+  - {kind: test, cmd: "uv run skillz approve --help", expect: 0}
+  - {kind: test, cmd: "uv run skillz install --help", expect: 0}
+  - {kind: test, cmd: "uv run skillz rollback --help", expect: 0}
+  - {kind: test, cmd: "uv run skillz list --help", expect: 0}
+  - {kind: judge, rubric: "Tests in temporary directories (HOME and USERPROFILE redirected) prove: package creates a new semver version with a SHA-256 manifest and never modifies an existing version; regression re-runs the previous approved version's cases and reports a newly failing case; install refuses an unapproved version with a non-zero exit and writes nothing; an approved install lands exactly in .claude/skills/<name>/ or .agents/skills/<name>/ (project) or the home equivalent (user) and nowhere else; registry.json records name, version, platform, scope and approval; rollback reinstalls the previous approved version without deleting any version; no code path calls git push"}
 budgets:
-  tokens: 5000000
-  cost_usd: 45
-  wall_clock_min: 80
-  steps: 240
+  tokens: 6000000
+  cost_usd: 60
+  wall_clock_min: 100
+  steps: 320
   stall_limit: 3
-  replan_limit: 2
+  replan_limit: 3
   critic_rounds: 2
 permissions:
   irreversible:
