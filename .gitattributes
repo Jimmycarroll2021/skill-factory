@@ -1,0 +1,7 @@
+# Scripts and hooks must be LF so they run on Linux cloud VMs as well as Git Bash.
+* text=auto eol=lf
+*.sh text eol=lf
+*.py text eol=lf
+*.md text eol=lf
+*.json text eol=lf
+*.yaml text eol=lf

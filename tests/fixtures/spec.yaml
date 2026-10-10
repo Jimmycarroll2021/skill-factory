@@ -1,0 +1,18 @@
+# Spec for a skill that asks for a references/ directory only.
+name: api-doc-reviewer
+description: Review API documentation for completeness and consistency with the code it describes.
+license: MIT
+allowed-tools: [Read, Grep]
+metadata:
+  author: skillz-factory
+  version: "1.0"
+resources:
+  - references
+triggers:
+  - review the API docs
+  - check that endpoint documentation matches the implementation
+non_triggers:
+  - write a new tutorial from scratch
+behaviours:
+  - list undocumented endpoints before style issues
+  - cite the file and line for every finding
