@@ -89,7 +89,7 @@ wheels = [
 ]
 
 [[package]]
-name = "skillz-factory"
+name = "skill-factory"
 version = "0.1.0"
 source = { editable = "." }
 

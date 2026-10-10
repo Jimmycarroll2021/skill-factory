@@ -4,9 +4,9 @@ mission:
     - REQ-007
     - REQ-008
   deliverables:
-    - src/skillz_factory/
+    - src/skill_factory/
     - tests/test_pipeline.py
-    - skills/skillz-factory/SKILL.md
+    - skills/skill-factory/SKILL.md
     - README.md
     - CONTRIBUTING.md
     - CHANGELOG.md
@@ -14,11 +14,11 @@ success_criteria:
   - {kind: test, cmd: "uv run pytest -q", expect: 0}
   - {kind: test, cmd: "uv run pytest -q tests/test_pipeline.py", expect: 0}
   - {kind: test, cmd: "uv run skillz run --help", expect: 0}
-  - {kind: test, cmd: "uv run skillz validate skillz-factory", expect: 0}
+  - {kind: test, cmd: "uv run skillz validate skill-factory", expect: 0}
   - {kind: test, cmd: "uv build", expect: 0}
   - {kind: file, path: README.md, must_contain: "skillz run"}
   - {kind: file, path: CHANGELOG.md, must_contain: "0.1.0"}
-  - {kind: judge, rubric: "The pipeline test runs skillz run end to end on a paragraph fixture in a temporary directory with no model runner on PATH, asserts every stage wrote its JSON report under .factory/, the evaluation stage records skipped: no runner, a version exists in awaiting-approval state, nothing was installed, and the Markdown summary names each stage's verdict; the README has a quickstart a new user can follow and a pipeline diagram listing the stages in order including the human approval gate; skills/skillz-factory/SKILL.md is a short, valid skill telling Claude Code or Codex how to drive skillz"}
+  - {kind: judge, rubric: "The pipeline test runs skillz run end to end on a paragraph fixture in a temporary directory with no model runner on PATH, asserts every stage wrote its JSON report under .factory/, the evaluation stage records skipped: no runner, a version exists in awaiting-approval state, nothing was installed, and the Markdown summary names each stage's verdict; the README has a quickstart a new user can follow and a pipeline diagram listing the stages in order including the human approval gate; skills/skill-factory/SKILL.md is a short, valid skill telling Claude Code or Codex how to drive skillz"}
 budgets:
   tokens: 4000000
   cost_usd: 40

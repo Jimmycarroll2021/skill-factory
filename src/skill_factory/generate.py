@@ -5,8 +5,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from skillz_factory import yamlish
-from skillz_factory.capture import RESOURCE_DIRS, SkillSpec, validate_spec
+from skill_factory import yamlish
+from skill_factory.capture import RESOURCE_DIRS, SkillSpec, validate_spec
 
 _MAX_BULLETS = 20
 

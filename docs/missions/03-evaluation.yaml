@@ -3,7 +3,7 @@ mission:
   requirements:
     - REQ-004
   deliverables:
-    - src/skillz_factory/
+    - src/skill_factory/
     - tests/test_eval.py
     - tests/test_runner.py
     - tests/fixtures/

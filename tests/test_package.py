@@ -1,7 +1,7 @@
 """Smoke test: the package imports and reports its version."""
 
-import skillz_factory
+import skill_factory
 
 
 def test_version():
-    assert skillz_factory.__version__ == "0.1.0"
+    assert skill_factory.__version__ == "0.1.0"

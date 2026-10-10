@@ -8,10 +8,10 @@ from pathlib import Path
 
 import pytest
 
-from skillz_factory import capture as cap
-from skillz_factory import generate as gen
-from skillz_factory import yamlish
-from skillz_factory.cli import main
+from skill_factory import capture as cap
+from skill_factory import generate as gen
+from skill_factory import yamlish
+from skill_factory.cli import main
 
 FIXTURES = Path(__file__).parent / "fixtures"
 NAME_RE = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
@@ -68,7 +68,7 @@ def test_optional_frontmatter_only_when_given(tmp_path):
     rich = _frontmatter(tmp_path / "skills" / "api-doc-reviewer" / "SKILL.md")
     assert rich["license"] == "MIT"
     assert rich["allowed-tools"] == "Read Grep"
-    assert rich["metadata"] == {"author": "skillz-factory", "version": "1.0"}
+    assert rich["metadata"] == {"author": "skill-factory", "version": "1.0"}
 
 
 def test_body_sections_and_size(tmp_path):

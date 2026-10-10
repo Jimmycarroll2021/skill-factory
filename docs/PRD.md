@@ -1,8 +1,8 @@
-# Product Requirements Document: skillz-factory
+# Product Requirements Document: skill-factory
 
 ## Idea
 
-skillz-factory is a meta-skill and CLI (`skillz`) that turns a one-paragraph description of a capability into a complete, statically validated, tested and versioned Agent Skill for Claude Code and Codex. One canonical skill source is rendered into thin platform-specific install variants, tested against trigger and behaviour cases (and, when asked, against a no-skill baseline via the `claude` or `codex` CLI), held as a versioned package until a human approves it, then installed and recorded in a registry of proven skills with rollback. The evaluation engine, regression suite, version history and registry are the product; the drafting prompt is not.
+skill-factory is a meta-skill and CLI (`skillz`) that turns a one-paragraph description of a capability into a complete, statically validated, tested and versioned Agent Skill for Claude Code and Codex. One canonical skill source is rendered into thin platform-specific install variants, tested against trigger and behaviour cases (and, when asked, against a no-skill baseline via the `claude` or `codex` CLI), held as a versioned package until a human approves it, then installed and recorded in a registry of proven skills with rollback. The evaluation engine, regression suite, version history and registry are the product; the drafting prompt is not.
 
 ## User and pain
 
@@ -47,7 +47,7 @@ Every stage works offline and deterministically. Model-backed baseline runs are 
 - **REQ-004 Evaluation:** `skillz eval <name>` generates positive and negative trigger tests and behavioural evaluation cases from the spec, runs the trigger tests with a deterministic offline matcher, grades results, lists weak areas with concrete improvement proposals, and, only when `--runner claude` or `--runner codex` is given and that executable is on PATH, runs each case with and without the skill and grades the difference; otherwise it records "skipped: no runner". JSON report plus Markdown summary.
 - **REQ-005 Versioned release:** `skillz package <name>` snapshots the canonical skill, rendered variants and reports into an immutable, checksummed version under `skills/<name>/.factory/versions/<semver>/`, running regression: the previous approved version's trigger and behaviour cases are re-run against the candidate, and any newly failing case is reported. `skillz approve <name> <version>` is the only way a version becomes installable.
 - **REQ-006 Install, registry and rollback:** `skillz install <name> --platform claude|codex --scope project|user` installs only an approved version into the platform directory, records it in a registry of proven skills (`skills/registry.json`), and refuses to write anywhere else. `skillz rollback <name>` reinstalls the previous approved version; `skillz list` shows the registry and version history.
-- **REQ-007 One-command pipeline:** `skillz run` takes a paragraph or spec through capture, generation, validation, rendering, evaluation, regression and packaging in one go, stops at "awaiting approval" with a Markdown summary of every stage, and completes even when no model runner is available. The factory ships its own meta-skill, `skills/skillz-factory/`, which tells Claude Code or Codex how to drive `skillz` and passes `skillz validate`.
+- **REQ-007 One-command pipeline:** `skillz run` takes a paragraph or spec through capture, generation, validation, rendering, evaluation, regression and packaging in one go, stops at "awaiting approval" with a Markdown summary of every stage, and completes even when no model runner is available. The factory ships its own meta-skill, `skills/skill-factory/`, which tells Claude Code or Codex how to drive `skillz` and passes `skillz validate`.
 - **REQ-008 Public-ready repository:** MIT `LICENSE`, `README.md` with quickstart and pipeline diagram, `CONTRIBUTING.md`, `CHANGELOG.md`, a GitHub Actions workflow running ruff and pytest on Linux and Windows, `.gitignore`, and `uv build` producing a wheel.
 
 No design language section: the product is a CLI with no UI.
@@ -90,5 +90,5 @@ No design language section: the product is a CLI with no UI.
 - Rollback reinstalls the previous approved version into the same platform and scope and records the rollback in the registry; it never deletes a version.
 - Size limits: `SKILL.md` body at most 500 lines (warning above), any single file at most 1 MB (error), total skill at most 5 MB (error).
 - Windows support: paths via `pathlib`, no symlinks, UTF-8 file I/O with explicit encoding, LF line endings in generated files.
-- The "meta-skill" is delivered as the CLI plus a small Agent Skill at `skills/skillz-factory/SKILL.md` (part of REQ-007, mission 05) that tells Claude Code or Codex how to drive `skillz`; it must itself pass `skillz validate`.
+- The "meta-skill" is delivered as the CLI plus a small Agent Skill at `skills/skill-factory/SKILL.md` (part of REQ-007, mission 05) that tells Claude Code or Codex how to drive `skillz`; it must itself pass `skillz validate`.
 - Single-user, local, offline-first tool; no telemetry.

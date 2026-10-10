@@ -7,9 +7,9 @@ import sys
 from collections.abc import Callable
 from pathlib import Path
 
-from skillz_factory import __version__
-from skillz_factory.capture import SpecError, capture
-from skillz_factory.generate import GenerateError, generate
+from skill_factory import __version__
+from skill_factory.capture import SpecError, capture
+from skill_factory.generate import GenerateError, generate
 
 
 def _add_new(sub: argparse._SubParsersAction) -> None:

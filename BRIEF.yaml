@@ -1,11 +1,11 @@
 mission:
-  goal: "A developer can install the skillz-factory package with uv and run skillz new with a paragraph or a small YAML or JSON spec to get a structured spec and a spec-compliant canonical skill under skills/<name>/, with CI running ruff and pytest on Linux and Windows"
+  goal: "A developer can install the skill-factory package with uv and run skillz new with a paragraph or a small YAML or JSON spec to get a structured spec and a spec-compliant canonical skill under skills/<name>/, with CI running ruff and pytest on Linux and Windows"
   requirements:
     - REQ-001
     - REQ-008
   deliverables:
     - pyproject.toml
-    - src/skillz_factory/
+    - src/skill_factory/
     - tests/test_capture.py
     - tests/test_generate.py
     - tests/fixtures/

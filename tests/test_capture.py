@@ -8,8 +8,8 @@ from pathlib import Path
 
 import pytest
 
-from skillz_factory import capture as cap
-from skillz_factory import yamlish
+from skill_factory import capture as cap
+from skill_factory import yamlish
 
 FIXTURES = Path(__file__).parent / "fixtures"
 NAME_RE = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
@@ -72,7 +72,7 @@ def test_yaml_fixture():
     assert spec.resources == ["references"]
     assert spec.source_kind == "yaml"
     assert spec.allowed_tools == ["Read", "Grep"]
-    assert spec.metadata == {"author": "skillz-factory", "version": "1.0"}
+    assert spec.metadata == {"author": "skill-factory", "version": "1.0"}
     assert spec.license == "MIT"
     assert len(spec.triggers) == 2
 

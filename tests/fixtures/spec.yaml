@@ -4,7 +4,7 @@ description: Review API documentation for completeness and consistency with the 
 license: MIT
 allowed-tools: [Read, Grep]
 metadata:
-  author: skillz-factory
+  author: skill-factory
   version: "1.0"
 resources:
   - references

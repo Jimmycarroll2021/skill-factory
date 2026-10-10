@@ -4,7 +4,7 @@ mission:
     - REQ-005
     - REQ-006
   deliverables:
-    - src/skillz_factory/
+    - src/skill_factory/
     - tests/test_release.py
     - tests/test_install.py
 success_criteria:

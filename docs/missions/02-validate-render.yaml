@@ -4,7 +4,7 @@ mission:
     - REQ-002
     - REQ-003
   deliverables:
-    - src/skillz_factory/
+    - src/skill_factory/
     - tests/test_validate.py
     - tests/test_render.py
     - tests/fixtures/

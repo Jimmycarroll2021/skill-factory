@@ -8,7 +8,7 @@ import unicodedata
 from dataclasses import dataclass, field, fields
 from pathlib import Path
 
-from skillz_factory import yamlish
+from skill_factory import yamlish
 
 NAME_RE = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
 MAX_NAME = 64

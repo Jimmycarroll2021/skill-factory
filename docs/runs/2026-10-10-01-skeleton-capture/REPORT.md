@@ -8,7 +8,7 @@ Three file-disjoint tasks, each in its own worktree, merged in order:
 
 | task | outcome | commit |
 |---|---|---|
-| pkg-skeleton | uv package `skillz_factory` (hatchling, src layout, no runtime deps, dev group pytest+ruff, `skillz` console script, uv.lock), MIT LICENSE, Python .gitignore entries, `.github/workflows/ci.yml` (ruff + pytest on ubuntu-latest and windows-latest), smoke test | 027f9cc |
+| pkg-skeleton | uv package `skill_factory` (hatchling, src layout, no runtime deps, dev group pytest+ruff, `skillz` console script, uv.lock), MIT LICENSE, Python .gitignore entries, `.github/workflows/ci.yml` (ruff + pytest on ubuntu-latest and windows-latest), smoke test | 027f9cc |
 | capture-spec | `yamlish.py` YAML-subset reader/writer, `capture.py` (paragraph / YAML / JSON -> `SkillSpec`, deterministic name and description, `validate_spec`), 28 tests, three fixtures | 60539c3 |
 | generate-cli | `generate.py` (spec -> `skills/<name>/SKILL.md`, `.factory/spec.json`, resource dirs only when requested, `--force`), argparse `cli.py` with `skillz new`, `__main__.py`, 25 tests | 931a9c9 |
 
