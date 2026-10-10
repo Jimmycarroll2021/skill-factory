@@ -6,6 +6,7 @@ build-backend = "hatchling.build"
 name = "skill-factory"
 version = "0.1.0"
 description = "Capture, test, package and manage agent skills."
+readme = "README.md"
 license = { text = "MIT" }
 authors = [{ name = "Jimmy Carroll" }]
 requires-python = ">=3.12"
