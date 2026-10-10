@@ -1,0 +1,32 @@
+{
+  "results": [
+    {
+      "kind": "test",
+      "status": "pass",
+      "detail": "exit 0"
+    },
+    {
+      "kind": "test",
+      "status": "pass",
+      "detail": "exit 0"
+    },
+    {
+      "kind": "test",
+      "status": "pass",
+      "detail": "exit 0"
+    },
+    {
+      "kind": "test",
+      "status": "pass",
+      "detail": "exit 0"
+    },
+    {
+      "kind": "judge",
+      "status": "deferred",
+      "detail": "Validation tests use bad-skill fixtures and show each rule firing with a non-zero exit: wrong or overlong name, name not matching directory, empty or overlong description, files outside SKILL.md, scripts/, references/, assets/ and .factory/, oversized files, and forbidden patterns (a fake secret, a network call such as curl or urllib, destructive shell such as rm -rf) in scripts, while a clean fixture passes; nothing in the validator executes skill scripts; render tests prove the Claude variant matches the .claude/skills/<name>/ layout, the Codex variant contains agents/openai.yaml, and the canonical skill files are byte-identical before and after rendering"
+    }
+  ],
+  "passed": 4,
+  "failed": 0,
+  "deferred": 1
+}

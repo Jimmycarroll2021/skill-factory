@@ -35,9 +35,9 @@
         "tests/test_cli.py",
         "README.md"
       ],
-      "status": "dispatched",
+      "status": "merged",
       "branch": "mission/02-validate-render--cli-validate-render",
-      "commit": ""
+      "commit": "a26011d"
     }
   ],
   "facts": [],
