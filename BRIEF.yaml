@@ -1,35 +1,43 @@
-# The mission: what the lead is trying to accomplish and the files it must produce.
 mission:
-  goal: "Add a README that describes quickship"
-  # Optional traceability back to stable requirement IDs in docs/PRD.md.
+  goal: "A developer can install the skillz-factory package with uv and run skillz new with a paragraph or a small YAML or JSON spec to get a structured spec and a spec-compliant canonical skill under skills/<name>/, with CI running ruff and pytest on Linux and Windows"
   requirements:
     - REQ-001
+    - REQ-008
   deliverables:
-    - README.md
-# How the lead knows it is done: each item is checked by check_criteria.py.
+    - pyproject.toml
+    - src/skillz_factory/
+    - tests/test_capture.py
+    - tests/test_generate.py
+    - tests/fixtures/
+    - LICENSE
+    - .gitignore
+    - .github/workflows/ci.yml
 success_criteria:
-  - {kind: test, cmd: "bash tests/run.sh", expect: 0}
-  - {kind: file, path: README.md, must_contain: "quickship"}
-  - {kind: grep, pattern: "## Lead loop", path: CLAUDE.md}
-  - {kind: judge, rubric: "README explains what a Mission Brief is"}
-# Resource limits that stop the run when exceeded (see budget.py); stall_limit/replan_limit/critic_rounds are counts, not resources.
+  - {kind: test, cmd: "uv run pytest -q", expect: 0}
+  - {kind: test, cmd: "uv run pytest -q tests/test_capture.py tests/test_generate.py", expect: 0}
+  - {kind: test, cmd: "uv run skillz --help", expect: 0}
+  - {kind: test, cmd: "uv run skillz new --help", expect: 0}
+  - {kind: test, cmd: "uv build", expect: 0}
+  - {kind: file, path: LICENSE, must_contain: "MIT License"}
+  - {kind: grep, pattern: "windows-latest", path: .github/workflows/ci.yml}
+  - {kind: judge, rubric: "Tests run skillz new on a real paragraph fixture and on YAML and JSON spec fixtures in a temporary directory and assert on the generated SKILL.md frontmatter: kebab-case name equal to the directory name and at most 64 characters, non-empty description at most 1024 characters, and that scripts/, references/ or assets/ appear only when the spec asks for them; pyproject.toml declares no runtime dependencies, only pytest and ruff as dev dependencies, and a skillz console script; the CI workflow runs ruff and pytest on ubuntu-latest and windows-latest"}
 budgets:
-  tokens: 5000000    # input + output + cache-creation tokens; cache reads are not counted. Cost and wall clock are the caps that bite
-  cost_usd: 40
-  wall_clock_min: 480
-  steps: 400          # every tool call counts, including the subagents': a one-file mission uses ~70; keep this >= 60
+  tokens: 3000000
+  cost_usd: 25
+  wall_clock_min: 50
+  steps: 140
   stall_limit: 3
-  replan_limit: 5
-  critic_rounds: 2
-# What the lead may do without asking: irreversible actions default to skip-and-record unless they match an allow pattern.
+  replan_limit: 2
+  critic_rounds: 1
 permissions:
   irreversible:
     default: skip-and-record
     allow:
       - "git push origin mission/*"
       - "gh pr create*"
-# How the lead resolves ambiguity when it is not covered above: always pick a sensible default and write it to the ledger as an assumption.
 ambiguity_policy: choose-default-and-record
-
 quality:
-  profile: docs
+  profile: code
+  lint: "uv run ruff check src tests"
+  test: "uv run pytest -q"
+  build: "uv build"
