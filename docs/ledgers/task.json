@@ -1,0 +1,54 @@
+{
+  "goal": "A developer can install the skillz-factory package with uv and run skillz new with a paragraph or a small YAML or JSON spec to get a structured spec and a spec-compliant canonical skill under skills/<name>/, with CI running ruff and pytest on Linux and Windows",
+  "plan": [
+    {
+      "slug": "pkg-skeleton",
+      "goal": "Installable buildable uv package skillz_factory with no runtime deps, pytest+ruff dev deps, skillz console script, uv.lock, scoped pytest/ruff config, MIT LICENSE, Python .gitignore entries and CI running ruff and pytest on ubuntu-latest and windows-latest",
+      "owns": [
+        "pyproject.toml",
+        "uv.lock",
+        "src/skillz_factory/__init__.py",
+        "LICENSE",
+        ".gitignore",
+        ".github/workflows/ci.yml"
+      ],
+      "status": "dispatched",
+      "branch": "mission/01-skeleton-capture--pkg-skeleton",
+      "commit": ""
+    },
+    {
+      "slug": "capture-spec",
+      "goal": "Deterministic capture of a paragraph or small YAML/JSON spec file into a validated structured skill spec, with an in-package YAML subset reader/writer, fixtures and tests/test_capture.py",
+      "owns": [
+        "src/skillz_factory/yamlish.py",
+        "src/skillz_factory/capture.py",
+        "tests/test_capture.py",
+        "tests/fixtures/paragraph.txt",
+        "tests/fixtures/spec.yaml",
+        "tests/fixtures/spec.json"
+      ],
+      "status": "dispatched",
+      "branch": "mission/01-skeleton-capture--capture-spec",
+      "commit": ""
+    },
+    {
+      "slug": "generate-cli",
+      "goal": "skillz CLI with new subcommand that captures input, writes skills/<name>/.factory/spec.json and generates a spec-compliant skills/<name>/SKILL.md with resource dirs only when requested, tested in tests/test_generate.py",
+      "owns": [
+        "src/skillz_factory/generate.py",
+        "src/skillz_factory/cli.py",
+        "src/skillz_factory/__main__.py",
+        "tests/test_generate.py"
+      ],
+      "status": "pending",
+      "branch": "",
+      "commit": ""
+    }
+  ],
+  "facts": [],
+  "assumptions": [],
+  "blocked": [],
+  "replan_count": 0,
+  "stall_count": 0,
+  "is_complete": false
+}
