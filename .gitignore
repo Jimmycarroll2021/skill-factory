@@ -2,3 +2,8 @@
 .claude/state/
 work/_untrusted/
 __pycache__/
+.venv/
+dist/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
