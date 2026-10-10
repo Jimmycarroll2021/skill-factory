@@ -9,8 +9,8 @@
         "src/skill_factory/cli.py",
         "tests/test_pipeline.py"
       ],
-      "status": "pending",
-      "branch": "",
+      "status": "dispatched",
+      "branch": "mission/05-pipeline-docs--pipeline-run",
       "commit": ""
     },
     {
@@ -25,8 +25,8 @@
         ".gitignore",
         "tests/test_docs.py"
       ],
-      "status": "pending",
-      "branch": "",
+      "status": "dispatched",
+      "branch": "mission/05-pipeline-docs--meta-skill-docs",
       "commit": ""
     },
     {
@@ -41,8 +41,8 @@
         "tests/test_install.py",
         ".github/workflows/ci.yml"
       ],
-      "status": "pending",
-      "branch": "",
+      "status": "dispatched",
+      "branch": "mission/05-pipeline-docs--security-polish",
       "commit": ""
     }
   ],
