@@ -1,0 +1,10 @@
+{
+  "goal": "A developer can run skillz validate to get a static structure and security verdict for a skill, and skillz render to get Claude and Codex install variants from the one canonical source, each with a JSON report and Markdown summary under skills/<name>/.factory/",
+  "plan": [],
+  "facts": [],
+  "assumptions": [],
+  "blocked": [],
+  "replan_count": 0,
+  "stall_count": 0,
+  "is_complete": false
+}
