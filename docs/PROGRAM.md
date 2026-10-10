@@ -16,4 +16,4 @@ under `docs/runs/`. All missions were delivered on one branch and one pull reque
 
 Every mission: gate PASS (ruff, pytest, uv build), all objective criteria PASS, judge rubric graded PASS by a
 reviewer on evidence it produced itself, security PASS on the final commit (low notes only, recorded in each
-report and in `docs/decisions.md`). Final test count: 220.
+report and in `docs/decisions.md`). Final test count: 242.
