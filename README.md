@@ -25,6 +25,11 @@ flowchart LR
     H --> I{{human approval gate}}
     I --> J[install]
     J --> K[registry and rollback]
+    K --> L[capture-failure]
+    L --> M[improve]
+    M --> N[challenge]
+    N --> O{{human promote}}
+    O --> H
 ```
 
 The same stages as a plain list:
@@ -42,7 +47,9 @@ The same stages as a plain list:
 11. registry and rollback: installs are recorded; `skillz rollback` reinstalls the previous version
 
 `skillz run` performs stages 2 to 8 in one command and stops at the approval gate. It never
-approves and never installs.
+approves and never installs. The lower branch of the diagram is the optional challenger loop
+described under [Self-improvement](#self-improvement-the-challenger-loop): it feeds a
+promoted candidate back into `package`.
 
 ## Quickstart
 
@@ -91,6 +98,51 @@ directory).
 | `skillz install <name> --platform {claude,codex} --scope {project,user} [--version X.Y.Z]` | Install an approved version (default: highest approved) and record it in `skills/registry.json`. |
 | `skillz rollback <name> [--platform {claude,codex}] [--scope {project,user}]` | Reinstall the highest approved version below the installed one. Versions are never deleted. |
 | `skillz list [--json]` | Show the registry and each skill's versions with their status. |
+| `skillz capture-failure <name> --prompt TEXT (--should-trigger \| --should-not-trigger \| --expect MARKER ...) [--note TEXT]` | Record a real failure as a persistent eval case in `.factory/cases/captured.json`. Exit 0 recorded, 2 input error. |
+| `skillz improve <name>` | Build a challenger candidate under `.factory/candidates/<id>/` from eval proposals and captured failures; stable files are untouched. Exit 0 created, 1 nothing to improve, 2 input error. |
+| `skillz challenge <name> <candidate-id>` | Validate the stable skill and the candidate, grade the union of cases on both sides and write `challenge.json` and `challenge.md`. Exit 0 for every verdict, 2 on missing or invalid input. |
+| `skillz promote <name> <candidate-id>` | Explicit human command. Replace the canonical files with a challenged candidate and package a new version that waits for approval. Exit 0 promoted, 1 refused (stale, missing or non-acceptable challenge, or packaging failed and was rolled back), 2 input error. |
+
+## Self-improvement (the challenger loop)
+
+When a skill gets a prompt wrong, record it and let a challenger candidate prove a fix before
+anything stable changes. Every step is offline and deterministic.
+
+```bash
+# 1. record the failure; every later eval, package and challenge includes it
+uv run skillz capture-failure <name> --prompt "Help me write a SKILL.md file" --should-trigger
+
+# 2. build a candidate under skills/<name>/.factory/candidates/<id>/ (stable files untouched)
+uv run skillz improve <name>
+
+# 3. compare candidate with stable and read the verdict in challenge.md
+uv run skillz challenge <name> c001
+
+# 4. a human decides: promote, then approve the new version as usual
+uv run skillz promote <name> c001
+uv run skillz approve <name> <new-version>
+```
+
+- `capture-failure` appends to `.factory/cases/captured.json` with `--should-trigger`,
+  `--should-not-trigger` or `--expect MARKER ...` (a behaviour case). Records are never rewritten.
+- `improve` applies the eval proposals and the captured failures deterministically: it extends
+  the frontmatter `description` with the missing trigger words (never past 1024 characters),
+  adds captured prompts to the spec's trigger lists and copies the body unchanged.
+- `challenge` validates the stable skill and the candidate, grades the union of both sides'
+  cases plus the captured ones, and gives one verdict, by precedence:
+  `candidate-unsafe` (the candidate has a validation error), `candidate-worse` (a case that
+  passed on stable fails on the candidate), `candidate-better` (a case improved, none regressed)
+  or `no-difference`.
+- `promote` refuses unless the challenge is current and the verdict is `candidate-better` or
+  `no-difference`. It then replaces the canonical files, packages a new `awaiting-approval`
+  version and leaves earlier versions byte-identical. A refused or failed promote changes no
+  canonical file, and the same candidate cannot be promoted twice.
+
+Promotion is an explicit human command. `skillz run` and the pipeline never promote, approve
+or install. Grading is the same lexical-overlap heuristic as `skillz eval`: a better verdict
+is a signal about the description, not proof that a model will behave better. This repository
+dogfooded the loop on `skills/skill-factory`; the committed challenge report is
+[docs/evidence/skill-factory-challenge.md](docs/evidence/skill-factory-challenge.md).
 
 ## What the factory checks
 

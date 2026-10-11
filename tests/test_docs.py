@@ -7,7 +7,7 @@ import shutil
 import tomllib
 from pathlib import Path
 
-from skill_factory import cli, validate, yamlish
+from skill_factory import cli, evalcases, validate, yamlish
 
 REPO = Path(__file__).resolve().parents[1]
 SKILL_DIR = REPO / "skills" / "skill-factory"
@@ -24,6 +24,9 @@ STAGES = [
     "install",
     "registry",
 ]
+# Captured with `skillz capture-failure --should-trigger` on skills/skill-factory (dogfooding).
+CAPTURED_PROMPTS = ["Help me write a SKILL.md file so my agent learns this workflow"]
+EVIDENCE = "docs/evidence/skill-factory-challenge.md"
 
 
 def _read(name: str) -> str:
@@ -112,3 +115,38 @@ def test_pyproject_declares_readme_that_exists():
 
 def test_gitignore_hides_factory_output_of_skills():
     assert "skills/*/.factory/" in _read(".gitignore").splitlines()
+
+
+def test_readme_documents_the_challenger_loop():
+    readme = _read("README.md")
+    assert "## Self-improvement (the challenger loop)" in readme
+    for command in ("capture-failure", "improve", "challenge", "promote"):
+        assert f"skillz {command}" in readme, command
+    for verdict in ("candidate-unsafe", "candidate-worse", "candidate-better", "no-difference"):
+        assert verdict in readme, verdict
+    assert "never promote" in readme
+
+
+def test_meta_skill_documents_the_loop_and_keeps_promote_human_only():
+    body = (SKILL_DIR / "SKILL.md").read_text(encoding="utf-8")
+    for command in ("capture-failure", "improve", "challenge"):
+        assert f"skillz {command}" in body, command
+    assert "Never run `skillz promote" in body
+
+
+def test_dogfood_evidence_has_an_acceptable_verdict():
+    evidence = REPO / EVIDENCE
+    assert evidence.is_file()
+    text = evidence.read_text(encoding="utf-8")
+    assert "Verdict: **candidate-better**" in text or "Verdict: **no-difference**" in text
+    for prompt in CAPTURED_PROMPTS:
+        assert prompt in text
+
+
+def test_captured_prompts_match_the_committed_meta_skill_description():
+    text = (SKILL_DIR / "SKILL.md").read_text(encoding="utf-8")
+    meta = yamlish.loads(text.split("---\n", 2)[1])
+    for prompt in CAPTURED_PROMPTS:
+        case = evalcases.Case("cap", "positive", prompt, "captured")
+        (grade,) = evalcases.grade_offline([case], meta["name"], meta["description"])
+        assert grade.score >= evalcases.MATCH_THRESHOLD, prompt
