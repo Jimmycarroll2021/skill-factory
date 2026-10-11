@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import os
 import subprocess
+from pathlib import Path
 
 import pytest
 
@@ -124,6 +126,72 @@ def test_run_failures_become_runner_error(monkeypatch, cls):
     _record(monkeypatch, raises=FileNotFoundError("gone"))
     with pytest.raises(RunnerError, match="cannot run"):
         cls("/x/tool").run("p")
+
+
+def _record_isolation(monkeypatch, *, raises=None):
+    """Recorder that inspects cwd and env while the (fake) child is 'running'."""
+    seen = []
+
+    def fake(argv, **kwargs):
+        cwd = Path(kwargs["cwd"])
+        seen.append(
+            {
+                "cwd": cwd,
+                "existed": cwd.is_dir(),
+                "empty": not any(cwd.iterdir()),
+                "env": kwargs["env"],
+            }
+        )
+        if raises is not None:
+            raise raises
+        return subprocess.CompletedProcess(argv, 0, stdout="ok", stderr="")
+
+    monkeypatch.setattr(runner_mod.subprocess, "run", fake)
+    return seen
+
+
+@pytest.mark.parametrize("cls", [ClaudeRunner, CodexRunner])
+def test_run_uses_fresh_empty_temp_cwd_removed_afterwards(monkeypatch, cls):
+    seen = _record_isolation(monkeypatch)
+    cls("/x/tool").run("p")
+    cls("/x/tool").run("p")
+    first, second = seen
+    for entry in seen:
+        assert entry["existed"] and entry["empty"]
+        assert entry["cwd"].name.startswith("skillz-run-")
+        assert entry["cwd"].resolve() != Path.cwd().resolve()
+        assert not entry["cwd"].exists()
+    assert first["cwd"] != second["cwd"]
+
+
+@pytest.mark.parametrize("cls", [ClaudeRunner, CodexRunner])
+def test_run_env_drops_claude_session_vars_but_keeps_home_and_path(monkeypatch, cls):
+    monkeypatch.setenv("CLAUDECODE", "1")
+    monkeypatch.setenv("CLAUDE_CODE_SESSION_ID", "abc")
+    monkeypatch.setenv("HOME", "/some/home")
+    monkeypatch.setenv("PATH", "/some/bin")
+    seen = _record_isolation(monkeypatch)
+    cls("/x/tool").run("p")
+    env = seen[0]["env"]
+    assert "CLAUDECODE" not in env and "CLAUDE_CODE_SESSION_ID" not in env
+    assert env["HOME"] == "/some/home" and env["PATH"] == "/some/bin"
+    # the caller's own environment is untouched
+    assert os.environ["CLAUDECODE"] == "1"
+
+
+@pytest.mark.parametrize(
+    "raises",
+    [
+        subprocess.TimeoutExpired(cmd="x", timeout=1),
+        FileNotFoundError("gone"),
+    ],
+)
+def test_failing_subprocess_still_removes_temp_cwd(monkeypatch, raises):
+    seen = _record_isolation(monkeypatch, raises=raises)
+    with pytest.raises(RunnerError):
+        ClaudeRunner("/x/tool").run("p")
+    assert seen[0]["existed"]
+    assert not seen[0]["cwd"].exists()
 
 
 def test_skipped_baseline_literal():
