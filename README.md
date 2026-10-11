@@ -282,22 +282,28 @@ skills/
 
 ```mermaid
 flowchart TB
-    cli[cli.py<br/>skillz, argparse, one handler per command]
-    cli --> pipeline[pipeline.py<br/>skillz run]
-    cli --> capture[capture.py<br/>paragraph / YAML / JSON → SkillSpec]
-    cli --> generate[generate.py<br/>SkillSpec → SKILL.md]
-    cli --> validate[validate.py<br/>14 static rules]
-    cli --> render[render.py<br/>Claude + Codex variants]
-    cli --> evaluate[evaluate.py<br/>skillz eval]
-    cli --> release[release.py<br/>package, approve, regression]
-    cli --> install[install.py<br/>install, rollback, list, registry]
-    cli --> loop[captured.py improve.py challenge.py promote.py<br/>the challenger loop]
+    cli[cli.py<br/>the skillz command: argparse, one handler per subcommand]
+    cli --> pipeline[pipeline.py<br/>skillz run: chains the stages, stops at the gate]
+    cli --> stages
+    cli --> ship
+    cli --> loop
+    subgraph stages["stage modules (one subcommand each)"]
+        direction LR
+        capture[capture.py<br/>paragraph / YAML / JSON to SkillSpec] --> generate[generate.py<br/>SkillSpec to SKILL.md] --> validate[validate.py<br/>14 static rules] --> render[render.py<br/>Claude + Codex variants] --> evaluate[evaluate.py<br/>cases, offline grades, proposals] --> release[release.py<br/>package, approve, regression]
+    end
+    pipeline --> stages
+    subgraph ship["install and registry"]
+        install[install.py<br/>install, rollback, list, registry.json]
+    end
+    subgraph loop["challenger loop"]
+        direction LR
+        captured[captured.py<br/>capture-failure] --> improve[improve.py] --> challenge[challenge.py] --> promote[promote.py]
+    end
     evaluate --> evalcases[evalcases.py<br/>case generation, lexical matcher, proposals]
     evaluate --> runner[runner.py<br/>opt-in claude / codex baseline]
     capture --> yamlish[yamlish.py<br/>YAML subset reader and writer]
-    generate --> yamlish
-    pipeline --> capture & generate & validate & render & evaluate & release
-    loop --> evalcases & validate & release
+    loop -.-> evalcases
+    loop -.-> release
 ```
 
 - One canonical skill source in `skills/<name>/`; the Claude and Codex variants are thin renderings of it and are never edited by hand.
