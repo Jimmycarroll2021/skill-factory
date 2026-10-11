@@ -30,3 +30,4 @@ One line per merged task. Append only; never edit past entries.
 | 2026-10-11 | security-06 | low notes left open: cap captured prompt length; escape Markdown in challenge.md cells; promote TOCTOU | security PASS, low severity |
 | 2026-10-11 | behaviour-cases | prompt template "<trigger>. Please work through the request end to end and show me the result."; guard falls back to a generic prompt if a behaviour sentence appears verbatim; specs with no triggers and no behaviours produce no behaviour cases | worker default, recorded |
 | 2026-10-11 | docs-quality-tier | README quality-tier section placed before Quickstart; evidence files referenced as code spans until the lead produces them | worker default, recorded |
+| 2026-10-11 | judge-core | verdict follows the judge winner not the score delta; transcripts truncated to TRANSCRIPT_LIMIT before judging; runner found but judge missing gives skipped: no judge | worker default, recorded |

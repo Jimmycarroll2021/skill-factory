@@ -34,9 +34,9 @@
         "src/skill_factory/cli.py",
         "tests/test_judge.py"
       ],
-      "status": "dispatched",
+      "status": "merged",
       "branch": "mission/07-quality-tier--judge-core",
-      "commit": ""
+      "commit": "b78ace1"
     },
     {
       "slug": "quality-integration",
@@ -49,8 +49,8 @@
         "tests/test_challenge.py",
         "tests/test_pipeline.py"
       ],
-      "status": "pending",
-      "branch": "",
+      "status": "dispatched",
+      "branch": "mission/07-quality-tier--quality-integration",
       "commit": ""
     }
   ],
