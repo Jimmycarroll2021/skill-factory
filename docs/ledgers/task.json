@@ -51,9 +51,9 @@
         "docs/evidence/skill-factory-challenge.md",
         "docs/evidence/skill-factory-challenge.json"
       ],
-      "status": "dispatched",
+      "status": "merged",
       "branch": "mission/06-self-improve--loop-cli-docs",
-      "commit": ""
+      "commit": "3f0bee3"
     }
   ],
   "facts": [],

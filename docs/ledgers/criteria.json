@@ -1,0 +1,52 @@
+{
+  "results": [
+    {
+      "kind": "test",
+      "status": "pass",
+      "detail": "exit 0"
+    },
+    {
+      "kind": "test",
+      "status": "pass",
+      "detail": "exit 0"
+    },
+    {
+      "kind": "test",
+      "status": "pass",
+      "detail": "exit 0"
+    },
+    {
+      "kind": "test",
+      "status": "pass",
+      "detail": "exit 0"
+    },
+    {
+      "kind": "test",
+      "status": "pass",
+      "detail": "exit 0"
+    },
+    {
+      "kind": "test",
+      "status": "pass",
+      "detail": "exit 0"
+    },
+    {
+      "kind": "test",
+      "status": "pass",
+      "detail": "exit 0"
+    },
+    {
+      "kind": "file",
+      "status": "pass",
+      "detail": "exists: README.md"
+    },
+    {
+      "kind": "judge",
+      "status": "deferred",
+      "detail": "Tests in temporary directories prove that improve writes a candidate under .factory/candidates/ and leaves every stable canonical file byte-identical; that capture-failure appends a persistent case which a later eval and challenge both include; that challenge runs validation and the union of stable and candidate cases against both sides, writes challenge.json and challenge.md, and returns candidate-worse when a trigger case that passed on stable fails on the candidate and candidate-unsafe when the candidate has a validation error; that promote refuses a candidate-worse or candidate-unsafe verdict with a non-zero exit and changes nothing, and on an acceptable verdict replaces the stable skill, packages a new awaiting-approval version and keeps the previous version directory intact; that nothing in the pipeline or run command calls promote; and that skills/skill-factory/SKILL.md was improved through the loop with its challenge report committed as evidence and still passes skillz validate"
+    }
+  ],
+  "passed": 8,
+  "failed": 0,
+  "deferred": 1
+}
