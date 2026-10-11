@@ -5,17 +5,27 @@ executable is on PATH, and every run goes through `subprocess.run` with an argv 
 and no shell. The skill text reaches the model by being embedded in the prompt
 (`with_skill_prompt`), so both CLIs are driven identically. This module takes plain case dicts
 and does not import evalcases.py.
+
+The child runs in a fresh empty temporary directory, not the caller's working directory. A
+project that carries its own agent instructions or hooks (a CLAUDE.md, `.claude/settings.json`)
+would otherwise be picked up by the model CLI, and the model would act on the project instead
+of answering the prompt. A judged transcript must reflect the skill text and the prompt only.
+`CLAUDECODE` and `CLAUDE_CODE_SESSION_ID` are dropped from the child environment so a factory
+started from inside Claude Code can still spawn the CLI; `HOME` is left alone so auth works.
 """
 
 from __future__ import annotations
 
+import os
 import shutil
 import subprocess
+import tempfile
 from typing import Protocol
 
 SKIPPED_NO_RUNNER = "skipped: no runner"
 EXECUTABLES = {"claude": "claude", "codex": "codex"}
 DEFAULT_TIMEOUT = 120.0  # seconds per model call
+_DROPPED_ENV = ("CLAUDECODE", "CLAUDE_CODE_SESSION_ID")
 
 
 class RunnerError(RuntimeError):
@@ -30,7 +40,12 @@ class Runner(Protocol):
         ...
 
 
+def _child_env() -> dict[str, str]:
+    return {k: v for k, v in os.environ.items() if k not in _DROPPED_ENV}
+
+
 def _execute(argv: list[str], timeout: float) -> str:
+    workdir = tempfile.mkdtemp(prefix="skillz-run-")
     try:
         proc = subprocess.run(
             argv,
@@ -40,11 +55,15 @@ def _execute(argv: list[str], timeout: float) -> str:
             timeout=timeout,
             check=False,
             stdin=subprocess.DEVNULL,
+            cwd=workdir,
+            env=_child_env(),
         )
     except subprocess.TimeoutExpired as exc:
         raise RunnerError(f"{argv[0]} timed out after {timeout} seconds") from exc
     except OSError as exc:
         raise RunnerError(f"cannot run {argv[0]}: {exc}") from exc
+    finally:
+        shutil.rmtree(workdir, ignore_errors=True)
     if proc.returncode != 0:
         detail = " ".join((proc.stderr or "").split())[:200]
         raise RunnerError(f"{argv[0]} exited with status {proc.returncode}: {detail}")
