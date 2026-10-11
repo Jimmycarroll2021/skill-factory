@@ -1,9 +1,10 @@
 """One-command pipeline: ``skillz run`` goes from a paragraph or spec to a packaged version.
 
-The stages run in order (capture, generate, validate, render, evaluate, regression, package) and
-the run then stops at ``awaiting-approval``. It never approves and never installs. The result is
-written to ``<skill>/.factory/pipeline.json`` and ``pipeline.md``. Nothing here spawns a process;
-a model runner is only used when ``--runner`` is given and the evaluate stage finds it on PATH.
+The stages run in order (capture, generate, validate, render, evaluate, judge, regression,
+package) and the run then stops at ``awaiting-approval``. It never approves and never installs.
+The result is written to ``<skill>/.factory/pipeline.json`` and ``pipeline.md``. Nothing here
+spawns a process; a model runner is only used when ``--runner`` is given and it is found on PATH,
+by the evaluate baseline and by the judge stage (whose report package reuses).
 """
 
 from __future__ import annotations
@@ -15,7 +16,7 @@ import sys
 from collections.abc import Callable
 from pathlib import Path
 
-from skill_factory import release, render, validate
+from skill_factory import judge, release, render, validate
 from skill_factory.capture import capture
 from skill_factory.evaluate import evaluate_skill
 from skill_factory.generate import GenerateError, generate
@@ -31,6 +32,7 @@ STAGES = (
     "validate",
     "render",
     "evaluate",
+    "judge",
     "regression",
     "package",
     "approval",
@@ -130,6 +132,7 @@ def run_pipeline(
     runner_name: str | None = None,
     force: bool = False,
     runner_factory: Callable[[str], Runner | None] | None = None,
+    judge_name: str | None = None,
 ) -> dict:
     """Run every stage and return the pipeline.json dict.
 
@@ -179,11 +182,26 @@ def run_pipeline(
     report = evaluate_skill(skill_dir, runner_name, runner_factory)
     entries["evaluate"] = _entry("evaluate", "ok", _eval_verdict(report), f"{FACTORY_DIR}/eval.json")
 
+    if runner_name is None:
+        judged = None
+        entries["judge"] = _entry("judge", "skipped", judge.SKIPPED_NO_RUNNER, None)
+    else:
+        judged = judge.judge_skill(skill_dir, runner_name, judge_name, runner_factory)
+        entries["judge"] = _entry(
+            "judge",
+            "ok" if judged["status"] == "completed" else "skipped",
+            judge.summary_line(judged),
+            f"{FACTORY_DIR}/judge.json",
+        )
+
     # package_skill re-validates, re-renders and re-evaluates offline, then runs the regression
-    # check; its two outcomes become the regression and package stages.
+    # check (including the judge report, so the model is not called twice); its two outcomes
+    # become the regression and package stages.
     retry = [f"skillz package {name}{out}"]
+    if runner_name is not None:
+        retry[0] += f" --runner {runner_name}" + (f" --judge {judge_name}" if judge_name else "")
     try:
-        version = release.package_skill(skill_dir)
+        version = release.package_skill(skill_dir, judge_report=judged)
     except release.RegressionFailed as exc:
         return stop(
             "regression", _regression_verdict(exc.report), f"{FACTORY_DIR}/regression.json", retry
@@ -218,8 +236,9 @@ def add_parser(sub: argparse._SubParsersAction) -> None:
         "run",
         help="run the whole pipeline and stop at awaiting approval",
         description=(
-            "Capture, generate, validate, render, evaluate, check regression and package a skill "
-            "from a paragraph or a .txt/.yaml/.yml/.json spec, then stop at awaiting approval. "
+            "Capture, generate, validate, render, evaluate, judge, check regression and package a "
+            "skill from a paragraph or a .txt/.yaml/.yml/.json spec, then stop at awaiting "
+            "approval. "
             "It never approves or installs. Writes skills/<name>/.factory/pipeline.json and "
             "pipeline.md."
         ),
@@ -233,7 +252,13 @@ def add_parser(sub: argparse._SubParsersAction) -> None:
         "--runner",
         choices=sorted(EXECUTABLES),
         default=None,
-        help="opt in to a with/without-skill baseline using this CLI, if it is on PATH",
+        help="opt in to a with/without-skill baseline and a judge using this CLI, if on PATH",
+    )
+    parser.add_argument(
+        "--judge",
+        choices=sorted(EXECUTABLES),
+        default=None,
+        help="CLI that judges (default: the other model if both are on PATH, else the runner)",
     )
     parser.add_argument("--force", action="store_true", help="regenerate an existing skill")
 
@@ -241,7 +266,9 @@ def add_parser(sub: argparse._SubParsersAction) -> None:
 def run(args: argparse.Namespace) -> int:
     root = args.out if args.out is not None else Path.cwd()
     try:
-        result = run_pipeline(args.source, root, args.name, args.runner, args.force)
+        result = run_pipeline(
+            args.source, root, args.name, args.runner, args.force, judge_name=args.judge
+        )
     except (ValueError, OSError) as exc:  # SpecError, GenerateError, RenderError, ReleaseError
         print(f"skillz: error: {exc}", file=sys.stderr)
         return 2

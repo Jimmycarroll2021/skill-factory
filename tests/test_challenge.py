@@ -22,7 +22,8 @@ OFF_TOPIC = "Design a logo for my bakery"
 DEDUPE = "Remove duplicate rows from my spreadsheet"
 KEYS = {
     "schema", "skill", "candidate", "created_at", "method", "threshold", "verdict",
-    "validation", "cases", "summary", "regressions", "improvements", "weak_areas", "sha256",
+    "validation", "cases", "summary", "regressions", "improvements", "behaviour", "weak_areas",
+    "sha256",
 }  # fmt: skip
 
 

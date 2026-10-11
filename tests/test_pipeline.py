@@ -20,6 +20,7 @@ STAGES = [
     "validate",
     "render",
     "evaluate",
+    "judge",
     "regression",
     "package",
     "approval",
@@ -111,13 +112,20 @@ def test_paragraph_runs_to_awaiting_approval(root, tmp_path, capsys):
     assert result["stopped_at"] is None
     assert result["version"] == "0.1.0"
     assert [item["stage"] for item in result["stages"]] == STAGES
-    assert all(item["status"] == "ok" for item in result["stages"])
+    assert all(item["status"] == "ok" for item in result["stages"] if item["stage"] != "judge")
+    assert stage_of(result, "judge") == {
+        "stage": "judge",
+        "status": "skipped",
+        "verdict": "skipped: no runner",
+        "report": None,
+    }
     assert [stage_of(result, s)["report"] for s in STAGES] == [
         ".factory/spec.json",
         "SKILL.md",
         ".factory/validate.json",
         ".factory/render.json",
         ".factory/eval.json",
+        None,
         ".factory/regression.json",
         ".factory/versions/0.1.0/manifest.json",
         None,
@@ -229,7 +237,7 @@ def test_patched_regression_stops_at_regression(root, monkeypatch):
     skill_dir = only_skill(root)
     release.approve(skill_dir, "0.1.0", user="tester")
 
-    def regressed(skill, candidate):
+    def regressed(skill, candidate, judge_report=None):
         return {
             "candidate": candidate,
             "baseline": "0.1.0",
@@ -256,7 +264,7 @@ def test_patched_regression_stops_at_regression(root, monkeypatch):
 
 
 def test_integrity_error_stops_at_regression(root, monkeypatch):
-    def broken(skill, candidate):
+    def broken(skill, candidate, judge_report=None):
         raise release.IntegrityError("baseline is damaged")
 
     monkeypatch.setattr(release, "regression_check", broken)
@@ -308,5 +316,5 @@ def test_help_mentions_options(capsys):
         cli.main(["run", "--help"])
     assert info.value.code == 0
     out = capsys.readouterr().out
-    for option in ("--runner", "--out", "--name", "--force"):
+    for option in ("--runner", "--judge", "--out", "--name", "--force"):
         assert option in out
