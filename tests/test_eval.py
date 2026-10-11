@@ -68,14 +68,14 @@ def test_cases_come_from_the_right_sources(good):
     assert [c.source for c in positives] == ["trigger:0", "trigger:1", "trigger:2", "description"]
     assert [c.prompt for c in negatives[: len(good.non_triggers)]] == good.non_triggers
     assert negatives[0].source == "non_trigger:0"
-    assert len(behaviours) == len(good.behaviours)
-    assert [c.id for c in behaviours] == ["beh-001", "beh-002"]
+    assert len(behaviours) == len(good.behaviours) + len(good.triggers)
+    assert [c.id for c in behaviours] == ["beh-001", "beh-002", "beh-t001", "beh-t002", "beh-t003"]
     for case in behaviours:
         assert case.expected
         assert all(m == m.lower() and m for m in case.expected)
     assert all(c.expected == [] for c in positives + negatives)
     assert [c.kind for c in cases] == (
-        ["positive"] * len(positives) + ["negative"] * len(negatives) + ["behaviour"] * 2
+        ["positive"] * len(positives) + ["negative"] * len(negatives) + ["behaviour"] * 5
     )
     assert set(positives[0].to_dict()) == {"id", "kind", "prompt", "source", "expected"}
 
@@ -106,7 +106,7 @@ def test_well_described_positives_match_and_negatives_do_not(good):
 def test_behaviour_grades_are_pending_runner(good):
     _, grades = _grades(good)
     behaviour = [g for g in grades if g.kind == "behaviour"]
-    assert len(behaviour) == 2
+    assert len(behaviour) == 5
     for grade in behaviour:
         assert grade.status == "pending-runner"
         assert grade.score is None
