@@ -1,1 +1,4 @@
 {"ts": "2026-10-11T00:05:55Z", "step": "s001", "slug": "loop-foundation", "event": "dispatched", "detail": "worker dispatched step s001", "state_hash": "998284a1f24ad632cb9441c068a7cb18d022703285c5c9f0cf96706f5107a074", "tokens": 0, "cost_usd": 0.0}
+{"ts": "2026-10-11T00:08:17Z", "step": "s002", "slug": "loop-foundation", "event": "merged", "detail": "gate rc=0", "state_hash": "671d905f09e811c9a55cf82d143208aa5320cd8f138aa40402e0891701afe073", "tokens": 0, "cost_usd": 0.0}
+{"ts": "2026-10-11T00:08:17Z", "step": "s003", "slug": "improve-challenge", "event": "dispatched", "detail": "worker dispatched step s003", "state_hash": "ed595177d3853704117b2fde065585660d9d05fa4e034ed8520c4b8913671452", "tokens": 0, "cost_usd": 0.0}
+{"ts": "2026-10-11T00:08:17Z", "step": "s004", "slug": "promote-cmd", "event": "dispatched", "detail": "worker dispatched step s004", "state_hash": "f190bcdf99b6dd3eafd0de54c4c21a63698b0afe614bb0d09a3439e52e64b491", "tokens": 0, "cost_usd": 0.0}

@@ -10,9 +10,9 @@
         "src/skill_factory/evaluate.py",
         "tests/test_capture_failure.py"
       ],
-      "status": "dispatched",
+      "status": "merged",
       "branch": "mission/06-self-improve--loop-foundation",
-      "commit": ""
+      "commit": "a39fe95"
     },
     {
       "slug": "improve-challenge",
@@ -23,8 +23,8 @@
         "tests/test_improve.py",
         "tests/test_challenge.py"
       ],
-      "status": "pending",
-      "branch": "",
+      "status": "dispatched",
+      "branch": "mission/06-self-improve--improve-challenge",
       "commit": ""
     },
     {
@@ -34,8 +34,8 @@
         "src/skill_factory/promote.py",
         "tests/test_promote.py"
       ],
-      "status": "pending",
-      "branch": "",
+      "status": "dispatched",
+      "branch": "mission/06-self-improve--promote-cmd",
       "commit": ""
     },
     {
