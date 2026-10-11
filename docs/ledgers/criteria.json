@@ -27,11 +27,11 @@
     },
     {
       "kind": "judge",
-      "status": "deferred",
-      "detail": "Tests prove that case generation yields a behaviour case with a task prompt, a rubric and expected markers for every spec behaviour and trigger, deterministically; that skillz judge without a runner records skipped no runner and exits 0, and with a fake runner and fake judge produces judge.json and judge.md with per-case scores for both sides, a winner and a reason, and that a malformed judge reply is rejected with a clear error rather than a crash; that the judge defaults to the other model when both executables are found on PATH and to the same model otherwise, and the report names which; that skillz challenge with a runner counts a behaviour case the judge scores lower on the candidate as a regression and higher as an improvement, and that skillz package with a runner stores judge results in the version reports and the next regression compares them; that no test ever spawns the real claude or codex; and that docs/evidence contains a judge report produced by a real Claude CLI run whose runner field says claude"
+      "status": "pass",
+      "detail": "PASS by reviewer; evidence: reviewer: \"133 passed in 2.15s\"; test_one_case_per_behaviour_and_per_trigger, test_generation_and_cases_json_are_byte_identical; test_cli_without_runner_is_skipped_and_exits_zero; test_cli_with_fakes_writes_scores_for_both_sides; test_parse_verdict_names_the_bad_field (\"a.task_quality must be an integer 0-5, got 7\"), test_cli_malformed_judge_reply_is_per_case_error_with_exit_zero; test_choose_judge_is_cross_model_when_both_executables_exist / same_model_when_one; test_a_lower_candidate_score_is_a_regression_and_candidate_worse, test_a_higher_candidate_score_is_an_improvement_and_candidate_better; test_package_with_a_runner_stores_the_judge_report_in_the_version, test_a_lower_score_than_the_approved_version_is_a_behaviour_regression ((before, after, score) == (10, 4, 4), exit 1); test_judge_source_never_mentions_subprocess; docs/evidence/judge-claude.json \"runner\": \"claude\", \"status\": \"completed\", summary {\"cases\": 5, \"skill_better\": 5, \"skill_worse\": 0, \"tie\": 0, \"errors\": 0}"
     }
   ],
-  "passed": 5,
+  "passed": 6,
   "failed": 0,
-  "deferred": 1
+  "deferred": 0
 }
