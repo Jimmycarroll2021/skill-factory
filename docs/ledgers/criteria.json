@@ -42,11 +42,11 @@
     },
     {
       "kind": "judge",
-      "status": "deferred",
-      "detail": "Tests in temporary directories prove that improve writes a candidate under .factory/candidates/ and leaves every stable canonical file byte-identical; that capture-failure appends a persistent case which a later eval and challenge both include; that challenge runs validation and the union of stable and candidate cases against both sides, writes challenge.json and challenge.md, and returns candidate-worse when a trigger case that passed on stable fails on the candidate and candidate-unsafe when the candidate has a validation error; that promote refuses a candidate-worse or candidate-unsafe verdict with a non-zero exit and changes nothing, and on an acceptable verdict replaces the stable skill, packages a new awaiting-approval version and keeps the previous version directory intact; that nothing in the pipeline or run command calls promote; and that skills/skill-factory/SKILL.md was improved through the loop with its challenge report committed as evidence and still passes skillz validate"
+      "status": "pass",
+      "detail": "PASS by reviewer; evidence: reviewer: \"88 passed in 2.47s\"; test_vague_skill_gets_vocabulary_and_stable_files_stay_identical; test_evaluate_includes_captured_cases; test_a_failure_captured_after_improve_is_graded_on_both_sides; test_a_gutted_candidate_is_worse_and_names_the_regressed_case; test_a_destructive_script_makes_the_candidate_unsafe_even_with_regressions; test_unacceptable_verdict_is_refused_and_changes_nothing; test_acceptable_verdict_promotes_and_packages_a_new_version (0.1.1 awaiting, 0.1.0 byte-identical); test_pipeline_and_run_never_mention_promote; docs/evidence/skill-factory-challenge.md \"Verdict: **candidate-better**\", cap-001 fail -> pass; validate skill-factory \"ok (0 errors, 0 warnings)\"; real loop: promote \"promoted csv-data-cleaner c001 as 0.1.0 (awaiting-approval)\""
     }
   ],
-  "passed": 8,
+  "passed": 9,
   "failed": 0,
-  "deferred": 1
+  "deferred": 0
 }
