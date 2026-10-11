@@ -1,24 +1,22 @@
 mission:
-  goal: "A developer can run skillz improve to build a challenger candidate of a skill from its evaluation proposals and captured failures, skillz capture-failure to record a real failure as a persistent evaluation case, skillz challenge to compare candidate and stable on the same evaluations with a regression and security comparison, and skillz promote to make the candidate the new stable version only by explicit command when the challenge did not get worse, with the factory's own meta-skill improved the same way"
-  base: "mission/05-pipeline-docs"
+  goal: "A developer can run skillz judge to have a model score with-skill and without-skill transcripts of every behaviour case against an explicit rubric, cross-model by default when both claude and codex are available, and when a runner is given skillz challenge and skillz package fold those behavioural scores into their verdicts and regressions, so the factory proves skill quality rather than only trigger wording, while every test still runs offline with fake runners"
+  base: "main"
   requirements:
-    - REQ-009
+    - REQ-010
   deliverables:
     - src/skill_factory/
-    - tests/test_improve.py
-    - tests/test_challenge.py
+    - tests/test_judge.py
+    - tests/test_behaviour_cases.py
+    - docs/evidence/
     - README.md
     - CHANGELOG.md
 success_criteria:
   - {kind: test, cmd: "uv run pytest -q", expect: 0}
-  - {kind: test, cmd: "uv run pytest -q tests/test_improve.py tests/test_challenge.py", expect: 0}
-  - {kind: test, cmd: "uv run skillz improve --help", expect: 0}
-  - {kind: test, cmd: "uv run skillz capture-failure --help", expect: 0}
-  - {kind: test, cmd: "uv run skillz challenge --help", expect: 0}
-  - {kind: test, cmd: "uv run skillz promote --help", expect: 0}
+  - {kind: test, cmd: "uv run pytest -q tests/test_judge.py tests/test_behaviour_cases.py", expect: 0}
+  - {kind: test, cmd: "uv run skillz judge --help", expect: 0}
   - {kind: test, cmd: "uv run skillz validate skill-factory", expect: 0}
-  - {kind: file, path: README.md, must_contain: "skillz challenge"}
-  - {kind: judge, rubric: "Tests in temporary directories prove that improve writes a candidate under .factory/candidates/ and leaves every stable canonical file byte-identical; that capture-failure appends a persistent case which a later eval and challenge both include; that challenge runs validation and the union of stable and candidate cases against both sides, writes challenge.json and challenge.md, and returns candidate-worse when a trigger case that passed on stable fails on the candidate and candidate-unsafe when the candidate has a validation error; that promote refuses a candidate-worse or candidate-unsafe verdict with a non-zero exit and changes nothing, and on an acceptable verdict replaces the stable skill, packages a new awaiting-approval version and keeps the previous version directory intact; that nothing in the pipeline or run command calls promote; and that skills/skill-factory/SKILL.md was improved through the loop with its challenge report committed as evidence and still passes skillz validate"}
+  - {kind: file, path: README.md, must_contain: "skillz judge"}
+  - {kind: judge, rubric: "Tests prove that case generation yields a behaviour case with a task prompt, a rubric and expected markers for every spec behaviour and trigger, deterministically; that skillz judge without a runner records skipped no runner and exits 0, and with a fake runner and fake judge produces judge.json and judge.md with per-case scores for both sides, a winner and a reason, and that a malformed judge reply is rejected with a clear error rather than a crash; that the judge defaults to the other model when both executables are found on PATH and to the same model otherwise, and the report names which; that skillz challenge with a runner counts a behaviour case the judge scores lower on the candidate as a regression and higher as an improvement, and that skillz package with a runner stores judge results in the version reports and the next regression compares them; that no test ever spawns the real claude or codex; and that docs/evidence contains a judge report produced by a real Claude CLI run whose runner field says claude"}
 budgets:
   tokens: 6000000
   cost_usd: 60
