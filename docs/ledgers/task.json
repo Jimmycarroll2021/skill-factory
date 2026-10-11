@@ -10,9 +10,9 @@
         "tests/test_eval.py",
         "tests/test_evaluate.py"
       ],
-      "status": "dispatched",
+      "status": "merged",
       "branch": "mission/07-quality-tier--behaviour-cases",
-      "commit": ""
+      "commit": "e5c51b8"
     },
     {
       "slug": "docs-quality-tier",
@@ -22,9 +22,9 @@
         "CHANGELOG.md",
         "tests/test_docs.py"
       ],
-      "status": "dispatched",
+      "status": "merged",
       "branch": "mission/07-quality-tier--docs-quality-tier",
-      "commit": ""
+      "commit": "6a6577a"
     },
     {
       "slug": "judge-core",
