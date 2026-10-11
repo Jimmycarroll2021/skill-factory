@@ -1,6 +1,59 @@
 {
   "goal": "A developer can run skillz judge to have a model score with-skill and without-skill transcripts of every behaviour case against an explicit rubric, cross-model by default when both claude and codex are available, and when a runner is given skillz challenge and skillz package fold those behavioural scores into their verdicts and regressions, so the factory proves skill quality rather than only trigger wording, while every test still runs offline with fake runners",
-  "plan": [],
+  "plan": [
+    {
+      "slug": "behaviour-cases",
+      "goal": "Case generation yields one deterministic behaviour case per spec behaviour and per trigger, each with a realistic task prompt, a rubric list and expected markers",
+      "owns": [
+        "src/skill_factory/evalcases.py",
+        "tests/test_behaviour_cases.py",
+        "tests/test_eval.py",
+        "tests/test_evaluate.py"
+      ],
+      "status": "pending",
+      "branch": "",
+      "commit": ""
+    },
+    {
+      "slug": "docs-quality-tier",
+      "goal": "README and CHANGELOG document the model-backed quality tier and skillz judge, with a docs test that fails without the section",
+      "owns": [
+        "README.md",
+        "CHANGELOG.md",
+        "tests/test_docs.py"
+      ],
+      "status": "pending",
+      "branch": "",
+      "commit": ""
+    },
+    {
+      "slug": "judge-core",
+      "goal": "skillz judge scores with-skill and without-skill transcripts of every behaviour case through a runner and a strictly parsed judge, cross-model by default",
+      "owns": [
+        "src/skill_factory/judge.py",
+        "src/skill_factory/cli.py",
+        "tests/test_judge.py"
+      ],
+      "status": "pending",
+      "branch": "",
+      "commit": ""
+    },
+    {
+      "slug": "quality-integration",
+      "goal": "With --runner, skillz challenge, package and run fold judge scores into verdicts, version reports and regressions",
+      "owns": [
+        "src/skill_factory/challenge.py",
+        "src/skill_factory/release.py",
+        "src/skill_factory/pipeline.py",
+        "tests/test_quality_tier.py",
+        "tests/test_challenge.py",
+        "tests/test_pipeline.py"
+      ],
+      "status": "pending",
+      "branch": "",
+      "commit": ""
+    }
+  ],
   "facts": [],
   "assumptions": [],
   "blocked": [],
