@@ -34,9 +34,9 @@
         "src/skill_factory/promote.py",
         "tests/test_promote.py"
       ],
-      "status": "dispatched",
+      "status": "merged",
       "branch": "mission/06-self-improve--promote-cmd",
-      "commit": ""
+      "commit": "87df50c"
     },
     {
       "slug": "loop-cli-docs",

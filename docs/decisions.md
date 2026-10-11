@@ -24,3 +24,4 @@ One line per merged task. Append only; never edit past entries.
 | 2026-10-10 | pipeline-run | regression stage outcome comes from package_skill; next_steps commands append --out when root is not cwd; symlinked .factory refused before generating | worker default, recorded |
 | 2026-10-10 | security-05 | low notes left open: .factory inner-file symlinks; SKILL.md install wording; CI SHA pinning | security PASS, low severity |
 | 2026-10-11 | loop-foundation | candidates.worst_verdict added; captured.json validated strictly on load and append; eval.json keys unchanged | worker default, recorded |
+| 2026-10-11 | promote-cmd | refuses a second promotion of the same candidate; only differing files replaced, removed files listed; backups under the candidate dir; any exception during replace or package restores stable files and exits 1 | worker default, recorded |
