@@ -14,6 +14,7 @@ from skill_factory import (
     evaluate,
     improve,
     install,
+    judge,
     pipeline,
     promote,
     release,
@@ -61,6 +62,7 @@ SUBCOMMANDS: tuple[Callable[[argparse._SubParsersAction], None], ...] = (
     improve.add_parser,
     challenge.add_parser,
     promote.add_parser,
+    judge.add_parser,
 )
 HANDLERS: dict[str, Callable[[argparse.Namespace], int]] = {
     "new": _run_new,
@@ -77,6 +79,7 @@ HANDLERS: dict[str, Callable[[argparse.Namespace], int]] = {
     "improve": improve.run,
     "challenge": challenge.run,
     "promote": promote.run,
+    "judge": judge.run,
 }
 
 
