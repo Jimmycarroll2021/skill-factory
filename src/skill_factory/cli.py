@@ -9,9 +9,13 @@ from pathlib import Path
 
 from skill_factory import (
     __version__,
+    captured,
+    challenge,
     evaluate,
+    improve,
     install,
     pipeline,
+    promote,
     release,
     render,
     validate,
@@ -53,6 +57,10 @@ SUBCOMMANDS: tuple[Callable[[argparse._SubParsersAction], None], ...] = (
     install.add_rollback_parser,
     install.add_list_parser,
     pipeline.add_parser,
+    captured.add_parser,
+    improve.add_parser,
+    challenge.add_parser,
+    promote.add_parser,
 )
 HANDLERS: dict[str, Callable[[argparse.Namespace], int]] = {
     "new": _run_new,
@@ -65,6 +73,10 @@ HANDLERS: dict[str, Callable[[argparse.Namespace], int]] = {
     "rollback": install.run_rollback,
     "list": install.run_list,
     "run": pipeline.run,
+    "capture-failure": captured.run,
+    "improve": improve.run,
+    "challenge": challenge.run,
+    "promote": promote.run,
 }
 
 

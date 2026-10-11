@@ -4,6 +4,20 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+### Added
+
+- The challenger loop (mission 06): `skillz capture-failure` records a failed prompt as a
+  persistent eval case that every later eval, package, regression check and challenge includes;
+  `skillz improve` builds a candidate under `.factory/candidates/<id>/` without touching stable
+  files; `skillz challenge` validates both sides, grades the union of cases and gives a verdict
+  (`candidate-unsafe`, `candidate-worse`, `candidate-better`, `no-difference`); `skillz promote`
+  is the explicit human command that replaces the canonical files with an acceptable candidate
+  and packages a new awaiting-approval version. The pipeline and `skillz run` never promote.
+- The meta-skill documents the loop and was improved through it; the challenge report is
+  committed under `docs/evidence/`.
+
 ## 0.1.0 - 2026-10-10
 
 First release, built in five missions.

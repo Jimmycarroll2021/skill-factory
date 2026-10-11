@@ -1,6 +1,6 @@
 ---
 name: skill-factory
-description: "Turns a plain-language description into a validated, tested and versioned agent skill for Claude Code or Codex, using the skillz CLI. Use when the user asks to create a skill, make a skill for a task, test or evaluate a skill, package a skill, or install a skill for Claude Code or Codex. Also covers listing installed skills and rolling back to an earlier version. Never approves a version without the human's explicit say-so."
+description: "Turns a plain-language description into a validated, tested and versioned agent skill for Claude Code or Codex, using the skillz CLI. Use when the user asks to create a skill, make a skill for a task, test or evaluate a skill, package a skill, or install a skill for Claude Code or Codex. Also covers listing installed skills and rolling back to an earlier version. Never approves a version without the human's explicit say-so. Also use when the user mentions: help, write, md, file, learn, workflow."
 license: MIT
 ---
 
@@ -49,6 +49,24 @@ Claude Code installs to `.claude/skills/<name>/` (project) or `~/.claude/skills/
 - `skillz validate <name>` static checks; `skillz render <name>` builds the two variants.
 - `skillz eval <name> [--strict]` regenerates trigger and behaviour cases and grades them.
 - `skillz package <name> [--minor|--major]` snapshots a new immutable version.
+
+## Improve a skill that got something wrong
+
+When a skill missed a prompt it should have handled (or fired on one it should not have),
+record it and let the challenger loop propose a fix. Stable files are never changed until a
+human promotes a candidate.
+
+1. `skillz capture-failure <name> --prompt "<what went wrong>" --should-trigger`
+   (or `--should-not-trigger`, or `--expect MARKER ...` for a behaviour case). Every later
+   eval, package and challenge includes the case.
+2. `skillz improve <name>` builds a candidate under `skills/<name>/.factory/candidates/<id>/`
+   from the eval proposals and captured failures. It exits 1 when there is nothing to improve.
+3. `skillz challenge <name> <id>` validates both sides, grades the union of cases and writes
+   `challenge.md`. Verdicts: candidate-unsafe, candidate-worse, candidate-better,
+   no-difference. Read it to the human; grading is the offline heuristic.
+4. Never run `skillz promote <name> <id>` on your own initiative. Run it only when the human
+   explicitly names that skill and that candidate. It refuses worse or unsafe candidates,
+   packages a new version that still waits for `skillz approve`, and exits 1 when refused.
 
 ## Never
 
