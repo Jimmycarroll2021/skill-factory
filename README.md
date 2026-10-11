@@ -57,22 +57,9 @@ The two failed cases are the point: the evaluation found trigger prompts the des
 
 ## The pipeline
 
-```mermaid
-flowchart LR
-    you([You]) -->|paragraph or spec| A[describe]
-    A --> B[capture<br/>spec.json]
-    B --> C[generate<br/>SKILL.md]
-    C --> D[validate<br/>static checks]
-    D --> E[render<br/>Claude + Codex variants]
-    E --> F[evaluate<br/>trigger + behaviour cases]
-    F --> G[regression<br/>vs last approved]
-    G --> H[package<br/>immutable version]
-    H --> I{{human approval gate<br/>skillz approve}}
-    I --> J[install<br/>.claude/skills or .agents/skills]
-    J --> K[(registry<br/>skills/registry.json)]
-    K -.->|skillz rollback| J
-    style I fill:#2b5a4a,stroke:#5fd3a8,color:#eef4f2
-```
+<p align="center">
+  <img src="docs/assets/pipeline.svg" alt="The pipeline: describe, capture, generate, validate, render, evaluate, regression, package, human approval gate, install, registry and rollback" width="100%">
+</p>
 
 The same stages as a plain list:
 
@@ -94,18 +81,9 @@ The same stages as a plain list:
 
 Claude Code and Codex both read the open Agent Skills format, so there is one canonical skill and two thin renderings of it. The canonical files are never edited per platform; `skillz render` proves they are byte-identical before and after rendering.
 
-```mermaid
-flowchart LR
-    subgraph canonical["skills/&lt;name&gt;/ (canonical, the only thing you edit)"]
-        direction TB
-        S[SKILL.md<br/>frontmatter: name, description, optional license, allowed-tools, metadata]
-        R[references/ scripts/ assets/<br/>only when the spec asks for them]
-    end
-    canonical -->|skillz render| C["Claude variant<br/>.factory/dist/claude/ → .claude/skills/&lt;name&gt;/"]
-    canonical -->|skillz render| X["Codex variant<br/>.factory/dist/codex/ → .agents/skills/&lt;name&gt;/<br/>+ agents/openai.yaml"]
-    C -->|skillz install --platform claude| P1[project: ./.claude/skills/&lt;name&gt;/<br/>user: ~/.claude/skills/&lt;name&gt;/]
-    X -->|skillz install --platform codex| P2[project: ./.agents/skills/&lt;name&gt;/<br/>user: ~/.agents/skills/&lt;name&gt;/]
-```
+<p align="center">
+  <img src="docs/assets/platforms.svg" alt="One canonical skill rendered into a Claude variant and a Codex variant, installed into .claude/skills or .agents/skills" width="100%">
+</p>
 
 | Layer | Shared (canonical) | Claude variant | Codex variant |
 |---|---|---|---|
@@ -116,40 +94,15 @@ flowchart LR
 
 ## A release, step by step
 
-```mermaid
-sequenceDiagram
-    autonumber
-    actor You
-    participant S as skillz
-    participant F as skills/<name>/.factory/
-    participant P as .claude/skills or .agents/skills
-    You->>S: skillz run "paragraph"
-    S->>F: spec.json, validate.json, render.json, eval.json, regression.json
-    S->>F: versions/0.1.0/ (manifest.json with sha256 of every file)
-    S-->>You: pipeline.md: awaiting approval
-    You->>You: read pipeline.md and eval.md
-    You->>S: skillz approve <name> 0.1.0
-    S->>F: versions/0.1.0/approval.json (who, when)
-    You->>S: skillz install <name> --platform claude --scope project
-    S->>F: verify checksums against manifest.json
-    S->>P: copy the rendered variant (atomic swap)
-    S->>F: skills/registry.json: name, version, platform, scope, approval
-    You->>S: skillz rollback <name>
-    S->>P: reinstall the previous approved version
-    Note over You,P: No version is ever deleted. Nothing is ever pushed.
-```
+<p align="center">
+  <img src="docs/assets/release.svg" alt="A release step by step: run, read the reports, approve, install, rollback" width="100%">
+</p>
 
 ## Version lifecycle
 
-```mermaid
-stateDiagram-v2
-    state "awaiting-approval" as awaiting_approval
-    [*] --> awaiting_approval: skillz package / skillz run
-    awaiting_approval --> approved: skillz approve (human)
-    approved --> installed: skillz install
-    installed --> installed: skillz rollback (previous approved version)
-    awaiting_approval --> awaiting_approval: skillz package again (new version, old one untouched)
-```
+<p align="center">
+  <img src="docs/assets/lifecycle.svg" alt="Version lifecycle: awaiting-approval, approved, installed, rolled back" width="100%">
+</p>
 
 - A version directory is never modified after creation. `skillz approve`, `install` and `rollback` all re-verify the SHA-256 manifest first, so a tampered version cannot be approved or installed.
 - `skillz package` re-runs the previous approved version's trigger cases against the new candidate. A case that passed before and fails now stops the package unless you pass `--allow-regression`.
@@ -159,20 +112,9 @@ stateDiagram-v2
 
 When a skill gets a prompt wrong in real use, you do not edit the stable skill. You record the failure, build a challenger, and let the challenge decide.
 
-```mermaid
-flowchart LR
-    F([a real failure]) -->|skillz capture-failure| C[(captured.json<br/>persistent case, included by every later eval, package and challenge)]
-    C --> I[skillz improve<br/>candidate under .factory/candidates/&lt;id&gt;/<br/>stable files untouched]
-    I --> CH[skillz challenge<br/>validate both, grade the union of cases on both sides]
-    CH --> V{verdict}
-    V -->|candidate-unsafe| STOP1[refused]
-    V -->|candidate-worse| STOP2[refused]
-    V -->|candidate-better or no-difference| PR{{skillz promote<br/>explicit human command}}
-    PR --> PK[package a new awaiting-approval version<br/>previous versions byte-identical]
-    PK --> AP{{skillz approve}}
-    style PR fill:#2b5a4a,stroke:#5fd3a8,color:#eef4f2
-    style AP fill:#2b5a4a,stroke:#5fd3a8,color:#eef4f2
-```
+<p align="center">
+  <img src="docs/assets/loop.svg" alt="The challenger loop: capture-failure, improve, challenge, verdict, human promote, new version awaiting approval" width="100%">
+</p>
 
 ```bash
 # 1. record the failure; every later eval, package and challenge includes it
@@ -280,31 +222,11 @@ skills/
 
 ## How it is built
 
-```mermaid
-flowchart TB
-    cli[cli.py<br/>the skillz command: argparse, one handler per subcommand]
-    cli --> pipeline[pipeline.py<br/>skillz run: chains the stages, stops at the gate]
-    cli --> stages
-    cli --> ship
-    cli --> loop
-    subgraph stages["stage modules (one subcommand each)"]
-        direction LR
-        capture[capture.py<br/>paragraph / YAML / JSON to SkillSpec] --> generate[generate.py<br/>SkillSpec to SKILL.md] --> validate[validate.py<br/>14 static rules] --> render[render.py<br/>Claude + Codex variants] --> evaluate[evaluate.py<br/>cases, offline grades, proposals] --> release[release.py<br/>package, approve, regression]
-    end
-    pipeline --> stages
-    subgraph ship["install and registry"]
-        install[install.py<br/>install, rollback, list, registry.json]
-    end
-    subgraph loop["challenger loop"]
-        direction LR
-        captured[captured.py<br/>capture-failure] --> improve[improve.py] --> challenge[challenge.py] --> promote[promote.py]
-    end
-    evaluate --> evalcases[evalcases.py<br/>case generation, lexical matcher, proposals]
-    evaluate --> runner[runner.py<br/>opt-in claude / codex baseline]
-    capture --> yamlish[yamlish.py<br/>YAML subset reader and writer]
-    loop -.-> evalcases
-    loop -.-> release
-```
+The diagrams in this README are generated by `docs/assets/diagrams.py` (standard library only); run it to regenerate them.
+
+<p align="center">
+  <img src="docs/assets/architecture.svg" alt="Module map: cli.py, pipeline.py, the stage modules, install.py, the challenger loop modules, evalcases.py, runner.py, yamlish.py" width="100%">
+</p>
 
 - One canonical skill source in `skills/<name>/`; the Claude and Codex variants are thin renderings of it and are never edited by hand.
 - Offline and deterministic by default. Model runners are opt-in and never needed to finish. The test suite patches `subprocess` so the real `claude` or `codex` can never be spawned by a test.

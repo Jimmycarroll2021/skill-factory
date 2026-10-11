@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1240" height="500" viewBox="0 0 1240 500" role="img" aria-labelledby="t d" font-family="'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif">
+  <title id="t">How skill-factory is built</title>
+  <desc id="d">cli.py dispatches to one module per subcommand; pipeline.py chains the stage modules; evaluate uses evalcases and the opt-in runner; the challenger loop reuses evalcases, validate and release.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#6f93a6"/></marker>
+    <marker id="arrow-dim" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#a9bfcb"/></marker>
+  </defs>
+  <rect width="1240" height="500" rx="18" fill="#ffffff"/>
+  <rect x="420.0" y="24.0" width="400.0" height="60.0" rx="10" fill="#f3f7fa" stroke="#3e6577" stroke-width="1.6"/>
+  <text x="620.0" y="42.5" font-size="15" fill="#101820" font-weight="600" text-anchor="middle">cli.py</text>
+  <text x="620.0" y="59.5" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">the skillz command: argparse, one handler per subcommand</text>
+  <text x="620.0" y="74.5" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">dispatches to every module below</text>
+  <rect x="470.0" y="116.0" width="300.0" height="56.0" rx="10" fill="#f3f7fa" stroke="#3e6577" stroke-width="1.6"/>
+  <text x="620.0" y="140.0" font-size="15" fill="#101820" font-weight="600" text-anchor="middle">pipeline.py</text>
+  <text x="620.0" y="157.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">skillz run: chains the stages, stops at the gate</text>
+  <line x1="620.0" y1="84.0" x2="620.0" y2="116.0" stroke="#6f93a6" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="30.0" y="204.0" width="820.0" height="120.0" rx="14" fill="#fbfcfd" stroke="#c8d6de" stroke-width="1.4" stroke-dasharray="4,4"/>
+  <text x="44.0" y="226.0" font-size="13" fill="#46606e" font-weight="600" text-anchor="start">stage modules, one subcommand each</text>
+  <rect x="50.0" y="236.0" width="122.0" height="72.0" rx="10" fill="#f3f7fa" stroke="#3e6577" stroke-width="1.6"/>
+  <text x="111.0" y="260.0" font-size="14" fill="#101820" font-weight="600" text-anchor="middle">capture.py</text>
+  <text x="111.0" y="277.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">paragraph, YAML,</text>
+  <text x="111.0" y="292.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">JSON to SkillSpec</text>
+  <rect x="182.0" y="236.0" width="122.0" height="72.0" rx="10" fill="#f3f7fa" stroke="#3e6577" stroke-width="1.6"/>
+  <text x="243.0" y="260.0" font-size="14" fill="#101820" font-weight="600" text-anchor="middle">generate.py</text>
+  <text x="243.0" y="277.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">SkillSpec to</text>
+  <text x="243.0" y="292.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">SKILL.md</text>
+  <rect x="314.0" y="236.0" width="122.0" height="72.0" rx="10" fill="#f3f7fa" stroke="#3e6577" stroke-width="1.6"/>
+  <text x="375.0" y="267.5" font-size="14" fill="#101820" font-weight="600" text-anchor="middle">validate.py</text>
+  <text x="375.0" y="284.5" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">14 static rules</text>
+  <rect x="446.0" y="236.0" width="122.0" height="72.0" rx="10" fill="#f3f7fa" stroke="#3e6577" stroke-width="1.6"/>
+  <text x="507.0" y="260.0" font-size="14" fill="#101820" font-weight="600" text-anchor="middle">render.py</text>
+  <text x="507.0" y="277.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">Claude + Codex</text>
+  <text x="507.0" y="292.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">variants</text>
+  <rect x="578.0" y="236.0" width="122.0" height="72.0" rx="10" fill="#f3f7fa" stroke="#3e6577" stroke-width="1.6"/>
+  <text x="639.0" y="260.0" font-size="14" fill="#101820" font-weight="600" text-anchor="middle">evaluate.py</text>
+  <text x="639.0" y="277.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">cases, grades,</text>
+  <text x="639.0" y="292.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">proposals</text>
+  <rect x="710.0" y="236.0" width="122.0" height="72.0" rx="10" fill="#f3f7fa" stroke="#3e6577" stroke-width="1.6"/>
+  <text x="771.0" y="260.0" font-size="14" fill="#101820" font-weight="600" text-anchor="middle">release.py</text>
+  <text x="771.0" y="277.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">package, approve,</text>
+  <text x="771.0" y="292.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">regression</text>
+  <line x1="620.0" y1="172.0" x2="620.0" y2="204.0" stroke="#6f93a6" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="880.0" y="214.0" width="330.0" height="100.0" rx="10" fill="#f3f7fa" stroke="#3e6577" stroke-width="1.6"/>
+  <text x="1045.0" y="245.0" font-size="15" fill="#101820" font-weight="600" text-anchor="middle">install.py</text>
+  <text x="1045.0" y="262.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">install, rollback, list</text>
+  <text x="1045.0" y="277.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">skills/registry.json</text>
+  <text x="1045.0" y="292.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">exact platform directories only</text>
+  <rect x="30.0" y="350.0" width="820.0" height="100.0" rx="14" fill="#fbfcfd" stroke="#c8d6de" stroke-width="1.4" stroke-dasharray="4,4"/>
+  <text x="44.0" y="372.0" font-size="13" fill="#46606e" font-weight="600" text-anchor="start">the challenger loop</text>
+  <rect x="50.0" y="380.0" width="180.0" height="54.0" rx="10" fill="#f3f7fa" stroke="#3e6577" stroke-width="1.6"/>
+  <text x="140.0" y="402.5" font-size="14" fill="#101820" font-weight="600" text-anchor="middle">captured.py</text>
+  <text x="140.0" y="419.5" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">capture-failure</text>
+  <rect x="250.0" y="380.0" width="180.0" height="54.0" rx="10" fill="#f3f7fa" stroke="#3e6577" stroke-width="1.6"/>
+  <text x="340.0" y="402.5" font-size="14" fill="#101820" font-weight="600" text-anchor="middle">improve.py</text>
+  <text x="340.0" y="419.5" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">builds a candidate</text>
+  <rect x="450.0" y="380.0" width="180.0" height="54.0" rx="10" fill="#f3f7fa" stroke="#3e6577" stroke-width="1.6"/>
+  <text x="540.0" y="402.5" font-size="14" fill="#101820" font-weight="600" text-anchor="middle">challenge.py</text>
+  <text x="540.0" y="419.5" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">grades both sides</text>
+  <rect x="650.0" y="380.0" width="180.0" height="54.0" rx="10" fill="#f3f7fa" stroke="#3e6577" stroke-width="1.6"/>
+  <text x="740.0" y="402.5" font-size="14" fill="#101820" font-weight="600" text-anchor="middle">promote.py</text>
+  <text x="740.0" y="419.5" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">human command</text>
+  <rect x="880.0" y="350.0" width="150.0" height="54.0" rx="10" fill="#f3f7fa" stroke="#3e6577" stroke-width="1.6"/>
+  <text x="955.0" y="372.5" font-size="14" fill="#101820" font-weight="600" text-anchor="middle">evalcases.py</text>
+  <text x="955.0" y="389.5" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">cases, lexical matcher</text>
+  <rect x="1050.0" y="350.0" width="160.0" height="54.0" rx="10" fill="#f3f7fa" stroke="#3e6577" stroke-width="1.6"/>
+  <text x="1130.0" y="372.5" font-size="14" fill="#101820" font-weight="600" text-anchor="middle">runner.py</text>
+  <text x="1130.0" y="389.5" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">opt-in claude / codex</text>
+  <rect x="880.0" y="416.0" width="330.0" height="46.0" rx="10" fill="#f3f7fa" stroke="#3e6577" stroke-width="1.6"/>
+  <text x="1045.0" y="434.5" font-size="14" fill="#101820" font-weight="600" text-anchor="middle">yamlish.py</text>
+  <text x="1045.0" y="451.5" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">YAML subset reader and writer, used by capture</text>
+  <path d="M639.0,308 v14 H955 V350" fill="none" stroke="#a9bfcb" stroke-width="2" marker-end="url(#arrow-dim)"/>
+  <text x="800.0" y="318.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">evaluate</text>
+  <path d="M1030,377 H1050" fill="none" stroke="#a9bfcb" stroke-width="2" marker-end="url(#arrow-dim)"/>
+  <path d="M850,400 H880 V404" fill="none" stroke="#a9bfcb" stroke-width="2" marker-end="url(#arrow-dim)"/>
+  <text x="620.0" y="484.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle" font-style="italic">The loop reuses evalcases, validate and release. Standard library only at runtime; no module runs a skill's scripts, calls git push or spawns a model CLI without --runner.</text>
+</svg>

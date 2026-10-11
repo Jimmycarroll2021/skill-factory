@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1240" height="470" viewBox="0 0 1240 470" role="img" aria-labelledby="t d" font-family="'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif">
+  <title id="t">The challenger loop</title>
+  <desc id="d">capture-failure records a real failure; improve builds a candidate; challenge grades stable and candidate on the same cases and returns a verdict; promote is a human command that replaces the stable skill and packages a new version.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#6f93a6"/></marker>
+    <marker id="arrow-dim" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#a9bfcb"/></marker>
+  </defs>
+  <rect width="1240" height="470" rx="18" fill="#ffffff"/>
+  <rect x="24.0" y="60.0" width="150.0" height="70.0" rx="10" fill="#fff8d6" stroke="#e6cf6a" stroke-width="1.6"/>
+  <text x="99.0" y="83.5" font-size="15" fill="#101820" font-weight="600" text-anchor="middle">a real failure</text>
+  <text x="99.0" y="100.5" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">a prompt the skill</text>
+  <text x="99.0" y="115.5" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">got wrong</text>
+  <line x1="174.0" y1="95.0" x2="272.0" y2="95.0" stroke="#6f93a6" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="223.0" y="85.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">capture-failure</text>
+  <path d="M272.0,64.0 a105.0,9 0 0 1 210.0,0 v62.0 a105.0,9 0 0 1 -210.0,0 z" fill="#e8f1f6" stroke="#3e6577" stroke-width="1.6"/>
+  <ellipse cx="377.0" cy="64.0" rx="105.0" ry="9" fill="#e8f1f6" stroke="#3e6577" stroke-width="1.6"/>
+  <text x="377.0" y="88.0" font-size="15" fill="#101820" font-weight="600" text-anchor="middle">captured.json</text>
+  <text x="377.0" y="105.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">persistent case, included by</text>
+  <text x="377.0" y="120.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">every later eval and challenge</text>
+  <line x1="482.0" y1="95.0" x2="570.0" y2="95.0" stroke="#6f93a6" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="526.0" y="85.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">improve</text>
+  <rect x="570.0" y="50.0" width="240.0" height="90.0" rx="10" fill="#f3f7fa" stroke="#3e6577" stroke-width="1.6"/>
+  <text x="690.0" y="76.0" font-size="15" fill="#101820" font-weight="600" text-anchor="middle">candidate</text>
+  <text x="690.0" y="93.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">.factory/candidates/&lt;id&gt;/</text>
+  <text x="690.0" y="108.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">description + triggers extended</text>
+  <text x="690.0" y="123.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">stable files untouched</text>
+  <line x1="810.0" y1="95.0" x2="892.0" y2="95.0" stroke="#6f93a6" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="851.0" y="85.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">challenge</text>
+  <rect x="892.0" y="40.0" width="324.0" height="110.0" rx="10" fill="#f3f7fa" stroke="#3e6577" stroke-width="1.6"/>
+  <text x="1054.0" y="76.0" font-size="15" fill="#101820" font-weight="600" text-anchor="middle">challenge</text>
+  <text x="1054.0" y="93.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">validate stable and candidate</text>
+  <text x="1054.0" y="108.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">grade the union of cases on both sides</text>
+  <text x="1054.0" y="123.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">challenge.json + challenge.md</text>
+  <path d="M1054,150 v40" stroke="#6f93a6" stroke-width="2"/>
+  <polygon points="1054,190 1124,230 1054,270 984,230" fill="#f3f7fa" stroke="#3e6577" stroke-width="1.6"/>
+  <text x="1054.0" y="235.0" font-size="14" fill="#101820" font-weight="600" text-anchor="middle">verdict</text>
+  <rect x="1066.0" y="300.0" width="160.0" height="48.0" rx="10" fill="#fdecea" stroke="#c0392b" stroke-width="1.6"/>
+  <text x="1146.0" y="320.0" font-size="15" fill="#c0392b" font-weight="600" text-anchor="middle">candidate-unsafe</text>
+  <text x="1146.0" y="337.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">validation error</text>
+  <rect x="886.0" y="300.0" width="160.0" height="48.0" rx="10" fill="#fdecea" stroke="#c0392b" stroke-width="1.6"/>
+  <text x="966.0" y="320.0" font-size="15" fill="#c0392b" font-weight="600" text-anchor="middle">candidate-worse</text>
+  <text x="966.0" y="337.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">a case regressed</text>
+  <rect x="540.0" y="300.0" width="300.0" height="48.0" rx="10" fill="#e9f7f0" stroke="#2e8b57" stroke-width="1.6"/>
+  <text x="690.0" y="320.0" font-size="15" fill="#1f5f3f" font-weight="600" text-anchor="middle">candidate-better  or  no-difference</text>
+  <text x="690.0" y="337.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">nothing regressed</text>
+  <path d="M1084,260 L1140,300" fill="none" stroke="#6f93a6" stroke-width="2" marker-end="url(#arrow)"/>
+  <path d="M1024,260 L970,300" fill="none" stroke="#6f93a6" stroke-width="2" marker-end="url(#arrow)"/>
+  <path d="M984,230 H690 V300" fill="none" stroke="#6f93a6" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="1146.0" y="380.0" font-size="13" fill="#c0392b" font-weight="600" text-anchor="middle">refused</text>
+  <text x="966.0" y="380.0" font-size="13" fill="#c0392b" font-weight="600" text-anchor="middle">refused</text>
+  <polygon points="322.0,292.0 478.0,292.0 510.0,324.0 478.0,356.0 322.0,356.0 290.0,324.0" fill="#2b5a4a" stroke="#5fd3a8" stroke-width="2"/>
+  <text x="400.0" y="320.0" font-size="15" fill="#eef4f2" font-weight="600" text-anchor="middle">skillz promote</text>
+  <text x="400.0" y="337.0" font-size="12" fill="#cfe0e6" font-weight="normal" text-anchor="middle">explicit human command</text>
+  <line x1="540.0" y1="324.0" x2="510.0" y2="324.0" stroke="#6f93a6" stroke-width="2" marker-end="url(#arrow)"/>
+  <path d="M290,324 H224" fill="none" stroke="#6f93a6" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="54.0" y="290.0" width="170.0" height="70.0" rx="10" fill="#f3f7fa" stroke="#3e6577" stroke-width="1.6"/>
+  <text x="139.0" y="313.5" font-size="15" fill="#101820" font-weight="600" text-anchor="middle">new version</text>
+  <text x="139.0" y="330.5" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">awaiting approval,</text>
+  <text x="139.0" y="345.5" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">previous versions intact</text>
+  <polygon points="82.0,172.0 196.0,172.0 224.0,200.0 196.0,228.0 82.0,228.0 54.0,200.0" fill="#2b5a4a" stroke="#5fd3a8" stroke-width="2"/>
+  <text x="139.0" y="196.0" font-size="15" fill="#eef4f2" font-weight="600" text-anchor="middle">skillz approve</text>
+  <text x="139.0" y="213.0" font-size="12" fill="#cfe0e6" font-weight="normal" text-anchor="middle">then install, as always</text>
+  <path d="M139,290 v-62" fill="none" stroke="#6f93a6" stroke-width="2" stroke-dasharray="6,5" marker-end="url(#arrow)"/>
+  <text x="620.0" y="454.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle" font-style="italic">Grading is the same lexical-overlap heuristic as skillz eval: a better verdict is a signal about the description, not proof a model behaves better.</text>
+</svg>

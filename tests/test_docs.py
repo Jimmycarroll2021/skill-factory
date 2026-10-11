@@ -59,11 +59,23 @@ def test_readme_documents_run_and_every_subcommand():
 def test_readme_has_ordered_pipeline_with_approval_gate_before_install():
     readme = _read("README.md")
     assert "approve" in readme
-    mermaid = re.search(r"```mermaid\n(.*?)```", readme, re.DOTALL)
-    assert mermaid, "README needs a Mermaid pipeline diagram"
-    _in_order(mermaid.group(1), STAGES)
+    diagram = re.search(r'<img src="(docs/assets/pipeline\.svg)"', readme)
+    assert diagram, "README needs the pipeline diagram"
+    _in_order(_read(diagram.group(1)), STAGES)
     listing = readme.split("The same stages as a plain list:", 1)[1]
     _in_order(listing, STAGES[:-1])
+
+
+def test_readme_diagrams_exist_and_parse():
+    import xml.dom.minidom
+
+    readme = _read("README.md")
+    sources = re.findall(r'<img src="(docs/assets/[a-z]+\.svg)"', readme)
+    assert len(sources) >= 6, sources
+    for src in sources:
+        path = REPO / src
+        assert path.is_file(), src
+        xml.dom.minidom.parse(str(path))
 
 
 def test_readme_says_offline_grading_is_heuristic():

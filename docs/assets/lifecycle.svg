@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1240" height="330" viewBox="0 0 1240 330" role="img" aria-labelledby="t d" font-family="'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif">
+  <title id="t">Version lifecycle</title>
+  <desc id="d">packaged, awaiting approval, approved, installed, rolled back; every version is immutable and checksummed.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#6f93a6"/></marker>
+    <marker id="arrow-dim" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#a9bfcb"/></marker>
+  </defs>
+  <rect width="1240" height="330" rx="18" fill="#ffffff"/>
+  <circle cx="60" cy="150" r="9" fill="#101820"/>
+  <rect x="110.0" y="110.0" width="230.0" height="80.0" rx="10" fill="#f3f7fa" stroke="#3e6577" stroke-width="1.6"/>
+  <text x="225.0" y="138.5" font-size="15" fill="#101820" font-weight="600" text-anchor="middle">awaiting-approval</text>
+  <text x="225.0" y="155.5" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">skillz package / skillz run</text>
+  <text x="225.0" y="170.5" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">manifest.json with sha256</text>
+  <polygon points="426.0,119.0 514.0,119.0 545.0,150.0 514.0,181.0 426.0,181.0 395.0,150.0" fill="#2b5a4a" stroke="#5fd3a8" stroke-width="2"/>
+  <text x="470.0" y="146.0" font-size="15" fill="#eef4f2" font-weight="600" text-anchor="middle">skillz approve</text>
+  <text x="470.0" y="163.0" font-size="12" fill="#cfe0e6" font-weight="normal" text-anchor="middle">a human</text>
+  <rect x="600.0" y="110.0" width="230.0" height="80.0" rx="10" fill="#f3f7fa" stroke="#3e6577" stroke-width="1.6"/>
+  <text x="715.0" y="138.5" font-size="15" fill="#101820" font-weight="600" text-anchor="middle">approved</text>
+  <text x="715.0" y="155.5" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">approval.json: who, when</text>
+  <text x="715.0" y="170.5" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">the only installable state</text>
+  <rect x="910.0" y="110.0" width="270.0" height="80.0" rx="10" fill="#f3f7fa" stroke="#3e6577" stroke-width="1.6"/>
+  <text x="1045.0" y="138.5" font-size="15" fill="#101820" font-weight="600" text-anchor="middle">installed</text>
+  <text x="1045.0" y="155.5" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">.claude/skills or .agents/skills</text>
+  <text x="1045.0" y="170.5" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">recorded in registry.json</text>
+  <line x1="69.0" y1="150.0" x2="110.0" y2="150.0" stroke="#6f93a6" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="340.0" y1="150.0" x2="395.0" y2="150.0" stroke="#6f93a6" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="545.0" y1="150.0" x2="600.0" y2="150.0" stroke="#6f93a6" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="830.0" y1="150.0" x2="910.0" y2="150.0" stroke="#6f93a6" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="870.0" y="142.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">skillz install</text>
+  <path d="M1100,190 v40 H960 v-40" fill="none" stroke="#6f93a6" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="1030.0" y="252.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">skillz rollback: the previous approved version</text>
+  <path d="M180,110 v-40 H270 v40" fill="none" stroke="#6f93a6" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="225.0" y="56.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">package again: a new version, the old one untouched</text>
+  <rect x="110" y="270" width="1070" height="40" rx="8" fill="#e9f7f0" stroke="#2e8b57"/>
+  <text x="645.0" y="295.0" font-size="13" fill="#1f5f3f" font-weight="600" text-anchor="middle">approve, install, rollback and promote all re-verify the SHA-256 manifest first: a tampered version cannot move forward</text>
+</svg>
