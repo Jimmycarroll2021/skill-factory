@@ -10,8 +10,8 @@
         "src/skill_factory/evaluate.py",
         "tests/test_capture_failure.py"
       ],
-      "status": "pending",
-      "branch": "",
+      "status": "dispatched",
+      "branch": "mission/06-self-improve--loop-foundation",
       "commit": ""
     },
     {
