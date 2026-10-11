@@ -8,6 +8,16 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- The model-backed quality tier (mission 07): behaviour cases now carry a task prompt, a rubric
+  and expected markers, one per spec behaviour and per trigger. `skillz judge` runs each case
+  with and without the skill through a runner, has a judge model score both transcripts 0 to 5
+  on instruction following and task quality, and writes `.factory/judge.json` and `judge.md`;
+  the judge is a different model from the runner by default when both CLIs are on PATH. The
+  judge's JSON reply is parsed strictly and a malformed reply is recorded as a per-case error.
+  With `--runner` (and optionally `--judge`), `skillz challenge`, `skillz package` and
+  `skillz run` fold the scores into verdicts, version reports and regressions. The lexical tier
+  stays the default: nothing calls a model without `--runner`. README documents the six-tier
+  ladder.
 - The challenger loop (mission 06): `skillz capture-failure` records a failed prompt as a
   persistent eval case that every later eval, package, regression check and challenge includes;
   `skillz improve` builds a candidate under `.factory/candidates/<id>/` without touching stable

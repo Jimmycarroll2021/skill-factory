@@ -1,0 +1,37 @@
+{
+  "results": [
+    {
+      "kind": "test",
+      "status": "pass",
+      "detail": "exit 0"
+    },
+    {
+      "kind": "test",
+      "status": "pass",
+      "detail": "exit 0"
+    },
+    {
+      "kind": "test",
+      "status": "pass",
+      "detail": "exit 0"
+    },
+    {
+      "kind": "test",
+      "status": "pass",
+      "detail": "exit 0"
+    },
+    {
+      "kind": "file",
+      "status": "pass",
+      "detail": "exists: README.md"
+    },
+    {
+      "kind": "judge",
+      "status": "pass",
+      "detail": "PASS by reviewer; evidence: reviewer: \"133 passed in 2.15s\"; test_one_case_per_behaviour_and_per_trigger, test_generation_and_cases_json_are_byte_identical; test_cli_without_runner_is_skipped_and_exits_zero; test_cli_with_fakes_writes_scores_for_both_sides; test_parse_verdict_names_the_bad_field (\"a.task_quality must be an integer 0-5, got 7\"), test_cli_malformed_judge_reply_is_per_case_error_with_exit_zero; test_choose_judge_is_cross_model_when_both_executables_exist / same_model_when_one; test_a_lower_candidate_score_is_a_regression_and_candidate_worse, test_a_higher_candidate_score_is_an_improvement_and_candidate_better; test_package_with_a_runner_stores_the_judge_report_in_the_version, test_a_lower_score_than_the_approved_version_is_a_behaviour_regression ((before, after, score) == (10, 4, 4), exit 1); test_judge_source_never_mentions_subprocess; docs/evidence/judge-claude.json \"runner\": \"claude\", \"status\": \"completed\", summary {\"cases\": 5, \"skill_better\": 5, \"skill_worse\": 0, \"tie\": 0, \"errors\": 0}"
+    }
+  ],
+  "passed": 6,
+  "failed": 0,
+  "deferred": 0
+}

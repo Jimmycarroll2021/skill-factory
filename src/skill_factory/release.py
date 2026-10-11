@@ -3,7 +3,8 @@
 A version lives in ``<skill>/.factory/versions/<semver>/`` and is never modified once renamed into
 place, except that ``approve`` adds ``approval.json``. ``manifest.json`` lists a SHA-256 for every
 other file and is itself immutable, so the effective status of a version is read from
-``approval.json`` and never from the manifest. Nothing here spawns a process.
+``approval.json`` and never from the manifest. Nothing here spawns a process; a model is only
+consulted when ``package_skill`` is given a runner name (or a judge report made by one).
 """
 
 from __future__ import annotations
@@ -17,12 +18,14 @@ import re
 import secrets
 import shutil
 import sys
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 
-from skill_factory import evalcases, evaluate, render, validate
+from skill_factory import evalcases, evaluate, judge, render, validate
 from skill_factory.capture import NAME_RE, SpecError
+from skill_factory.runner import EXECUTABLES, Runner
 
 FACTORY_DIR = ".factory"
 VERSIONS_DIR = "versions"
@@ -41,6 +44,7 @@ _REPORT_FILES = (
     "eval.md",
     "cases.json",
 )
+_JUDGE_FILES = ("judge.json", "judge.md")
 
 
 class ReleaseError(ValueError):
@@ -253,6 +257,9 @@ def _regression_markdown(report: dict) -> str:
             f"- `{case['id']}` ({case['kind']}, score {case['score']}): "
             + " ".join(case["prompt"].split())
         )
+    behaviour = report.get("behaviour")
+    if behaviour:
+        lines += ["", f"Behaviour: {behaviour['status']} ({behaviour['checked']} cases compared)"]
     return "\n".join(lines) + "\n"
 
 
@@ -279,8 +286,79 @@ def _baseline_cases(baseline: Version) -> tuple[list[evalcases.Case], set[str]]:
     return cases, passed
 
 
-def regression_check(skill_dir: Path, candidate: str) -> dict:
-    """Re-grade the previous approved version's stored cases against the current SKILL.md."""
+def _judge_total(case: object) -> int | None:
+    """The with-skill total of a judge.json case, None for an error case; else IntegrityError."""
+    if not isinstance(case, dict) or not isinstance(case.get("id"), str):
+        raise TypeError("a case is not an object with an id")
+    if case.get("verdict") == "error":
+        return None
+    total = case["with_skill"]["total"]
+    if isinstance(total, bool) or not isinstance(total, int):
+        raise TypeError(f"case {case['id']} total is not an integer")
+    return total
+
+
+def _baseline_judge(baseline: Version) -> tuple[dict, dict[str, int | None]] | None:
+    """The baseline's stored judge report and its per-case totals, None when it has no judge.json.
+
+    A judge.json that cannot be read or does not have the judge schema is an IntegrityError.
+    """
+    path = baseline.path / "reports" / "judge.json"
+    if not path.exists():
+        return None
+    data = _read_json(path)
+    if data is None or not isinstance(data.get("status"), str):
+        raise IntegrityError(f"version {baseline.version} has a malformed reports/judge.json")
+    if data["status"] != "completed":
+        return data, {}
+    try:
+        totals = {case["id"]: _judge_total(case) for case in data["cases"]}
+    except (KeyError, TypeError) as exc:
+        raise IntegrityError(
+            f"version {baseline.version} has a malformed reports/judge.json: {exc}"
+        ) from exc
+    return data, totals
+
+
+def _behaviour_check(
+    baseline: Version | None, judge_report: dict | None
+) -> tuple[dict, list[dict]]:
+    """Compare judged with-skill totals with the baseline's; return (sub-report, newly failing)."""
+    result: dict = {"status": judge.SKIPPED_NO_RUNNER, "checked": 0, "baseline_judge": None}
+    if judge_report is None or judge_report.get("status") != "completed":
+        return result, []
+    stored = _baseline_judge(baseline) if baseline is not None else None
+    if stored is None or stored[0]["status"] != "completed":
+        result["status"] = "skipped: no baseline judge"
+        return result, []
+    data, totals = stored
+    result.update(status="compared", baseline_judge=data.get("judge"))
+    failing = []
+    for case in judge_report.get("cases", []):
+        before, after = totals.get(case["id"]), _judge_total(case)
+        if before is None or after is None:
+            continue
+        result["checked"] += 1
+        if after < before:
+            failing.append(
+                {
+                    "id": case["id"],
+                    "kind": "behaviour",
+                    "prompt": case["prompt"],
+                    "before": before,
+                    "after": after,
+                    "score": after,
+                }
+            )
+    return result, failing
+
+
+def regression_check(skill_dir: Path, candidate: str, judge_report: dict | None = None) -> dict:
+    """Re-grade the previous approved version's stored cases against the current SKILL.md.
+
+    A completed ``judge_report`` is also compared with the baseline's stored judge.json: a
+    behaviour case whose with-skill total dropped is added to ``newly_failing``.
+    """
     skill_dir = Path(skill_dir)
     limit = parse_semver(candidate)
     earlier = [v for v in approved_versions(skill_dir) if parse_semver(v.version) < limit]
@@ -292,6 +370,7 @@ def regression_check(skill_dir: Path, candidate: str) -> dict:
         "newly_failing": [],
     }
     if not earlier:
+        report["behaviour"], _ = _behaviour_check(None, judge_report)
         return report
     try:
         meta = render._frontmatter(skill_dir / "SKILL.md")
@@ -317,12 +396,25 @@ def regression_check(skill_dir: Path, candidate: str) -> dict:
                     "score": grade.score,
                 }
             )
+    report["behaviour"], behavioural = _behaviour_check(earlier[-1], judge_report)
+    report["newly_failing"] += behavioural
     report["status"] = "regressed" if report["newly_failing"] else "pass"
     return report
 
 
-def _snapshot(skill_dir: Path, tmp: Path, regression: dict, name: str, version: str) -> None:
-    """Fill tmp with skill/, dist/, reports/ and regression files, then write the manifest last."""
+def _snapshot(
+    skill_dir: Path,
+    tmp: Path,
+    regression: dict,
+    name: str,
+    version: str,
+    judge_report: dict | None = None,
+) -> None:
+    """Fill tmp with skill/, dist/, reports/ and regression files, then write the manifest last.
+
+    The judge files are copied only when ``judge_report`` was made for this package call, so a
+    stale ``.factory/judge.json`` from an earlier run never enters a version.
+    """
     factory = skill_dir / FACTORY_DIR
     files, _ = render._canonical_files(skill_dir)
     for rel in files:
@@ -334,6 +426,12 @@ def _snapshot(skill_dir: Path, tmp: Path, regression: dict, name: str, version: 
     (tmp / "reports").mkdir()
     for filename in _REPORT_FILES:
         shutil.copy2(factory / filename, tmp / "reports" / filename)
+    if judge_report is not None:
+        for filename in _JUDGE_FILES:
+            if (factory / filename).is_file():
+                shutil.copy2(factory / filename, tmp / "reports" / filename)
+        if not (tmp / "reports" / "judge.json").is_file():
+            _write(tmp / "reports" / "judge.json", _dumps(judge_report))
     _write(tmp / "regression.json", _dumps(regression))
     _write(tmp / "regression.md", _regression_markdown(regression))
     entries = [
@@ -359,8 +457,17 @@ def package_skill(
     *,
     set_version: str | None = None,
     allow_regression: bool = False,
+    runner_name: str | None = None,
+    judge_name: str | None = None,
+    runner_factory: Callable[[str], Runner | None] | None = None,
+    judge_report: dict | None = None,
 ) -> Version:
-    """Validate, render and evaluate the skill, then snapshot it as a new immutable version."""
+    """Validate, render and evaluate the skill, then snapshot it as a new immutable version.
+
+    With ``runner_name`` (and no ``judge_report``) the model judge also runs and its report is
+    stored in the version and compared with the previous approved version's. A caller that has
+    already judged the skill passes ``judge_report`` so the model is not called twice.
+    """
     skill_dir = Path(skill_dir)
     if not (skill_dir / "SKILL.md").is_file():
         raise ReleaseError(f"{skill_dir / 'SKILL.md'} does not exist")
@@ -391,8 +498,13 @@ def package_skill(
         evaluate.evaluate_skill(skill_dir)
     except (render.RenderError, SpecError) as exc:
         raise ReleaseError(str(exc)) from exc
+    if judge_report is None and runner_name is not None:
+        try:
+            judge_report = judge.judge_skill(skill_dir, runner_name, judge_name, runner_factory)
+        except SpecError as exc:
+            raise ReleaseError(str(exc)) from exc
 
-    regression = regression_check(skill_dir, version)
+    regression = regression_check(skill_dir, version, judge_report)
     _write(factory / "regression.json", _dumps(regression))
     _write(factory / "regression.md", _regression_markdown(regression))
     if regression["status"] == "regressed" and not allow_regression:
@@ -408,7 +520,7 @@ def package_skill(
     tmp = root / f".tmp-{version}-{secrets.token_hex(4)}"
     tmp.mkdir()
     try:
-        _snapshot(skill_dir, tmp, regression, name, version)
+        _snapshot(skill_dir, tmp, regression, name, version, judge_report)
         final = root / version
         if final.exists() or final.is_symlink():
             raise VersionExists(f"version {version} already exists; versions are immutable")
@@ -491,6 +603,18 @@ def add_package_parser(sub: argparse._SubParsersAction) -> None:
         help="create the version even when previously passing cases now fail",
     )
     parser.add_argument(
+        "--runner",
+        choices=sorted(EXECUTABLES),
+        default=None,
+        help="also judge the behaviour cases with this CLI and compare with the last approved",
+    )
+    parser.add_argument(
+        "--judge",
+        choices=sorted(EXECUTABLES),
+        default=None,
+        help="CLI that judges (default: the other model if both are on PATH, else the runner)",
+    )
+    parser.add_argument(
         "--out", type=Path, default=None, help="root directory containing skills/ (default: cwd)"
     )
 
@@ -506,6 +630,8 @@ def run_package(args: argparse.Namespace) -> int:
             bump,
             set_version=args.set_version,
             allow_regression=args.allow_regression,
+            runner_name=getattr(args, "runner", None),
+            judge_name=getattr(args, "judge", None),
         )
     except (ValidationFailed, RegressionFailed, IntegrityError) as exc:
         return _fail(str(exc), 1)

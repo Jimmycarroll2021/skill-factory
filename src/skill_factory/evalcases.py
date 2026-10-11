@@ -67,15 +67,19 @@ class Case:
     prompt: str
     source: str
     expected: list[str] = field(default_factory=list)
+    rubric: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict:
-        return {
+        data = {
             "id": self.id,
             "kind": self.kind,
             "prompt": self.prompt,
             "source": self.source,
             "expected": list(self.expected),
         }
+        if self.rubric:
+            data["rubric"] = list(self.rubric)
+        return data
 
 
 @dataclass
@@ -122,8 +126,68 @@ def _markers(behaviour: str) -> list[str]:
     return words or [" ".join(behaviour.lower().split())]
 
 
+def _task_prompt(trigger: str, behaviours: list[str], name: str) -> str:
+    """A task request built from the trigger text; no behaviour sentence appears in it."""
+    text = " ".join(trigger.split()).rstrip(".!?:; ") or name
+    prompt = f"{text}. Please work through the request end to end and show me the result."
+    squashed = prompt.lower()
+    if any(" ".join(b.lower().split()) in squashed for b in behaviours):
+        prompt = f"Please help me with a task related to {name}."
+    return prompt
+
+
+def _mentions(markers: list[str]) -> str:
+    return f"mentions: {', '.join(markers)}"
+
+
+def _must_not(spec: SkillSpec) -> list[str]:
+    """At most one criterion, derived from the first non-trigger."""
+    if not spec.non_triggers:
+        return []
+    return [f'must not: act on out-of-scope requests such as "{spec.non_triggers[0]}"']
+
+
+def _behaviour_cases(spec: SkillSpec) -> list[Case]:
+    """One case per spec behaviour, then one per trigger, with prompts, rubrics and markers."""
+    fallback = _first_sentence(spec.description) or spec.name
+    tasks = spec.triggers or [fallback]
+    must_not = _must_not(spec)
+    cases: list[Case] = []
+    for i, behaviour in enumerate(spec.behaviours):
+        markers = _markers(behaviour)
+        cases.append(
+            Case(
+                f"beh-{i + 1:03d}",
+                "behaviour",
+                _task_prompt(tasks[i % len(tasks)], [behaviour], spec.name),
+                f"behaviour:{i}",
+                markers,
+                [behaviour, _mentions(markers), *must_not],
+            )
+        )
+    union: list[str] = []
+    for behaviour in spec.behaviours:
+        for marker in _markers(behaviour):
+            if marker not in union:
+                union.append(marker)
+    for i, trigger in enumerate(spec.triggers):
+        markers = union or content_words(trigger)[:_MAX_MARKERS] or _markers(trigger)
+        goals = list(spec.behaviours) or [f"Completes the request: {trigger}"]
+        cases.append(
+            Case(
+                f"beh-t{i + 1:03d}",
+                "behaviour",
+                _task_prompt(trigger, spec.behaviours, spec.name),
+                f"trigger:{i}",
+                markers,
+                [*goals, _mentions(markers), *must_not],
+            )
+        )
+    return cases
+
+
 def generate_cases(spec: SkillSpec) -> list[Case]:
-    """Positive, negative and behavioural cases, in that order, with stable positional ids."""
+    """Positive, negative, behaviour-derived, then trigger-derived cases with stable ids."""
     cases: list[Case] = []
     positives = [(trigger, f"trigger:{i}") for i, trigger in enumerate(spec.triggers)]
     positives.append((_first_sentence(spec.description), "description"))
@@ -133,11 +197,7 @@ def generate_cases(spec: SkillSpec) -> list[Case]:
     negatives += [(text, f"generic:{i}") for i, text in enumerate(GENERIC_NEGATIVES)]
     for n, (prompt, source) in enumerate(negatives, start=1):
         cases.append(Case(f"neg-{n:03d}", "negative", prompt, source))
-    task = spec.triggers[0] if spec.triggers else _first_sentence(spec.description)
-    for n, behaviour in enumerate(spec.behaviours, start=1):
-        cases.append(
-            Case(f"beh-{n:03d}", "behaviour", task, f"behaviour:{n - 1}", _markers(behaviour))
-        )
+    cases.extend(_behaviour_cases(spec))
     return cases
 
 

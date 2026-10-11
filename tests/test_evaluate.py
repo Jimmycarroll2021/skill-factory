@@ -69,7 +69,7 @@ def test_well_described_end_to_end(tmp_path):
     assert report["baseline"]["status"] == "skipped: no runner"
     assert report["summary"]["positive"]["failed"] == 0
     assert report["summary"]["negative"]["failed"] == 0
-    assert report["summary"]["behaviour"]["pending"] == 2
+    assert report["summary"]["behaviour"]["pending"] == 5
     assert report["weak_areas"] == []
     markdown = _read(skill_dir, "eval.md")
     assert "skipped: no runner" in markdown and "heuristic" in markdown
@@ -131,13 +131,13 @@ def test_fake_runner_produces_baseline(tmp_path, monkeypatch):
     assert requested == ["claude"]
     baseline = report["baseline"]
     assert baseline["status"] == "completed" and baseline["runner"] == "fake"
-    assert [c["id"] for c in baseline["cases"]] == ["beh-001", "beh-002"]
+    assert [c["id"] for c in baseline["cases"]] == ["beh-001", "beh-002", "beh-t001", "beh-t002", "beh-t003"]
     assert all(c["verdict"] == "skill-helps" for c in baseline["cases"])
-    assert baseline["summary"]["skill_helps"] == 2
+    assert baseline["summary"]["skill_helps"] == 5
     skill_text = (skill_dir / "SKILL.md").read_text(encoding="utf-8").strip()
     assert any(skill_text in p for p in fake.prompts)
     assert any("<skill>" not in p for p in fake.prompts)
-    assert len(fake.prompts) == 4
+    assert len(fake.prompts) == 10
     markdown = _read(skill_dir, "eval.md")
     assert "completed" in markdown and "skill-helps" in markdown
     assert json.loads(_read(skill_dir, "eval.json"))["baseline"] == baseline
