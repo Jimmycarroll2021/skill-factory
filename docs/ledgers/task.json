@@ -10,8 +10,8 @@
         "tests/test_eval.py",
         "tests/test_evaluate.py"
       ],
-      "status": "pending",
-      "branch": "",
+      "status": "dispatched",
+      "branch": "mission/07-quality-tier--behaviour-cases",
       "commit": ""
     },
     {
@@ -22,8 +22,8 @@
         "CHANGELOG.md",
         "tests/test_docs.py"
       ],
-      "status": "pending",
-      "branch": "",
+      "status": "dispatched",
+      "branch": "mission/07-quality-tier--docs-quality-tier",
       "commit": ""
     },
     {
@@ -34,8 +34,8 @@
         "src/skill_factory/cli.py",
         "tests/test_judge.py"
       ],
-      "status": "pending",
-      "branch": "",
+      "status": "dispatched",
+      "branch": "mission/07-quality-tier--judge-core",
       "commit": ""
     },
     {
