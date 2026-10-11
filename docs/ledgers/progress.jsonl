@@ -5,3 +5,4 @@
 {"ts": "2026-10-11T02:14:51Z", "step": "s005", "slug": "behaviour-cases", "event": "merged", "detail": "gate rc=0", "state_hash": "2c0542b53a948257ddd89fa4f1f3cdd28d8945543cb97c284cb1af19040a4cdd", "tokens": 0, "cost_usd": 0.0}
 {"ts": "2026-10-11T02:15:57Z", "step": "s006", "slug": "judge-core", "event": "merged", "detail": "gate rc=0", "state_hash": "e5c50898a3a9a9b84a02ea5e1a486c75a02c92f3340f9cdba91f12492390b208", "tokens": 0, "cost_usd": 0.0}
 {"ts": "2026-10-11T02:15:58Z", "step": "s007", "slug": "quality-integration", "event": "dispatched", "detail": "worker dispatched step s007", "state_hash": "92e8ce44ac75f24c439e0eb94512ee6fcbe4b04b37531dcb88bd56b4a492dfbf", "tokens": 0, "cost_usd": 0.0}
+{"ts": "2026-10-11T02:20:37Z", "step": "s008", "slug": "runner-neutral-cwd", "event": "dispatched", "detail": "worker dispatched step s008", "state_hash": "7911121fbf3b922d33a627883ac2d73fa24d46429215a65feab97cd579aa0b81", "tokens": 0, "cost_usd": 0.0}

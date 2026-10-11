@@ -52,6 +52,17 @@
       "status": "dispatched",
       "branch": "mission/07-quality-tier--quality-integration",
       "commit": ""
+    },
+    {
+      "slug": "runner-neutral-cwd",
+      "goal": "Model runners execute claude/codex from a fresh neutral temp cwd with CLAUDECODE and CLAUDE_CODE_SESSION_ID unset so project instructions and hooks never shape a transcript",
+      "owns": [
+        "src/skill_factory/runner.py",
+        "tests/test_runner.py"
+      ],
+      "status": "dispatched",
+      "branch": "mission/07-quality-tier--runner-neutral-cwd",
+      "commit": ""
     }
   ],
   "facts": [],
