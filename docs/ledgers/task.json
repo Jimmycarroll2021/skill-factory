@@ -23,9 +23,9 @@
         "tests/test_improve.py",
         "tests/test_challenge.py"
       ],
-      "status": "dispatched",
+      "status": "merged",
       "branch": "mission/06-self-improve--improve-challenge",
-      "commit": ""
+      "commit": "1d4d66f"
     },
     {
       "slug": "promote-cmd",
@@ -51,8 +51,8 @@
         "docs/evidence/skill-factory-challenge.md",
         "docs/evidence/skill-factory-challenge.json"
       ],
-      "status": "pending",
-      "branch": "",
+      "status": "dispatched",
+      "branch": "mission/06-self-improve--loop-cli-docs",
       "commit": ""
     }
   ],
