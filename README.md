@@ -140,6 +140,45 @@ Promotion is an explicit human command. `skillz run` and the pipeline never prom
 
 **The factory improved itself this way.** The meta-skill in `skills/skill-factory/` missed the prompt "Help me write a SKILL.md file so my agent learns this workflow" (overlap score 0.14, below the 0.3 threshold). It was captured, a candidate was built, the challenge came back `candidate-better` with one improvement and no regressions, and the candidate was promoted. The committed report is [docs/evidence/skill-factory-challenge.md](docs/evidence/skill-factory-challenge.md).
 
+## Model-backed quality tier
+
+Quality is checked in six tiers, from cheap and certain to expensive and human. Each tier adds evidence; none replaces the one before it.
+
+1. static validation: structure, size and forbidden patterns (`skillz validate`); nothing is executed
+2. offline trigger heuristics: lexical-overlap grading of positive and negative prompts (`skillz eval`); deterministic, no model
+3. Claude/Codex behavioural execution: each behaviour case is run through the `claude` or `codex` CLI with and without the skill (`--runner`)
+4. independent model judge: a model scores the two transcripts against the case's rubric (`skillz judge`)
+5. cross-model evaluation: the judge is a different model from the one that ran the skill whenever both CLIs are on PATH
+6. human approval: `skillz approve` and `skillz promote` stay explicit human commands, whatever the scores say
+
+**The lexical tier is the default, and nothing calls a model without `--runner`.** `skillz run`, `eval`, `package` and `challenge` with no `--runner` behave exactly as before: offline, deterministic, and the model-backed stages record `skipped: no runner`. Tiers 3 to 5 cost model calls, so they are opt-in.
+
+```bash
+# score every behaviour case with and without the skill (about three model calls per case)
+uv run skillz judge <name> --runner claude
+
+# choose the judge yourself, for example Codex judging Claude's transcripts
+uv run skillz judge <name> --runner claude --judge codex
+```
+
+`skillz judge` does this for every behaviour case, including trigger-derived and captured ones:
+
+- It runs the case prompt through the runner twice, once with the skill text in the prompt and once without, and keeps both transcripts (each capped at 4000 characters in the report).
+- A separate judge call sees both transcripts under neutral labels, with the with-skill side placed on a deterministic, per-case label so position does not favour either side. It scores each transcript 0 to 5 on `instruction_following` and `task_quality` against the case's rubric and names a winner (with-skill, without-skill or tie) with a reason.
+- The judge defaults to the other model when both `claude` and `codex` are on PATH (cross-model), and to the runner's own model otherwise (same-model). `--judge` overrides this. The report says which one it was.
+- Without `--runner`, or when the runner or judge executable is not on PATH, it records `skipped: no runner` (or `skipped: no judge`), writes the report anyway and exits 0.
+- It writes `.factory/judge.json` and `.factory/judge.md` with per-case scores for both sides, the winner, the score delta and the reason.
+
+The judge's JSON reply is parsed strictly. Prose or a code fence around the object is tolerated, but the scores must be integers from 0 to 5 for both dimensions on both sides, the winner must be `a`, `b` or `tie`, and the reason must be non-empty. A malformed reply is never guessed at: the case is recorded as an error with a message naming the bad field, it counts as neither better nor worse, and the command still finishes.
+
+With `--runner`, the judge scores feed the existing decisions instead of sitting beside them:
+
+- `skillz challenge <name> <id> --runner claude` judges the stable skill and the candidate on the same behaviour cases with the same judge. A case the candidate scores lower on is a regression (verdict `candidate-worse`); a higher score is an improvement (`candidate-better`). The report gains a `## Behaviour` section.
+- `skillz package <name> --runner claude` stores `judge.json` and `judge.md` in the version's `reports/`. The next package compares its scores with the last approved version's; a case that scores lower now is a regression that stops the package unless you pass `--allow-regression`.
+- `skillz run <source> --runner claude` adds a judge stage between evaluate and regression and passes its report to the package stage, so the model is not called twice.
+
+A judge is a model, and it can be wrong or biased. Treat its scores as one more signal for the human at the approval gate, not as proof. The committed run of `skillz judge` against the real Claude CLI is in `docs/evidence/judge-claude.md` (with the raw `docs/evidence/judge-claude.json`).
+
 ## Quickstart
 
 Requirements: Python 3.12 and [uv](https://docs.astral.sh/uv/). No API key, no network and no model CLI are needed for anything in the pipeline.
@@ -174,19 +213,20 @@ Pass `--out <dir>` to any command to work on a different project root; the defau
 
 | Command | What it does | Exit codes |
 | --- | --- | --- |
-| `skillz run <source> [--name NAME] [--runner {claude,codex}] [--force]` | The pipeline: capture, generate, validate, render, evaluate, regression, package; stops at awaiting approval and writes `.factory/pipeline.json` and `pipeline.md`. | 0 awaiting approval, 1 stopped by a failed stage, 2 input error |
+| `skillz run <source> [--name NAME] [--runner {claude,codex}] [--judge {claude,codex}] [--force]` | The pipeline: capture, generate, validate, render, evaluate, (judge with `--runner`), regression, package; stops at awaiting approval and writes `.factory/pipeline.json` and `pipeline.md`. | 0 awaiting approval, 1 stopped by a failed stage, 2 input error |
 | `skillz new <source> [--name NAME] [--force]` | Capture a skill from a paragraph or a `.txt`/`.yaml`/`.yml`/`.json` spec and generate `skills/<name>/`. | 0, 2 |
 | `skillz validate <name>` | Check frontmatter, naming, paths, sizes, secrets, network calls and destructive shell. Writes `.factory/validate.json` and `validate.md`. | 0 clean, 1 errors, 2 missing |
 | `skillz render <name>` | Build the Claude and Codex variants under `.factory/dist/` without touching canonical files. | 0, 2 |
 | `skillz eval <name> [--runner {claude,codex}] [--strict]` | Generate cases, grade them offline, propose improvements; with `--runner` and that CLI on PATH, run each behaviour case with and without the skill. | 0 (advisory), 1 with `--strict` on a failing trigger case, 2 |
-| `skillz package <name> [--minor \| --major] [--set-version X.Y.Z] [--allow-regression]` | Validate, render and evaluate, compare with the last approved version, and write an immutable version under `.factory/versions/<semver>/`. | 0, 1 validation or regression, 2 clash or missing |
+| `skillz judge <name> [--runner {claude,codex}] [--judge {claude,codex}]` | Run each behaviour case with and without the skill, have a judge model score both transcripts 0 to 5 against the rubric, and write `.factory/judge.json` and `judge.md`. Cross-model by default when both CLIs are on PATH; `skipped: no runner` without `--runner`. | 0, 2 |
+| `skillz package <name> [--minor \| --major] [--set-version X.Y.Z] [--allow-regression] [--runner {claude,codex}] [--judge {claude,codex}]` | Validate, render and evaluate, compare with the last approved version (judge scores too, with `--runner`), and write an immutable version under `.factory/versions/<semver>/`. | 0, 1 validation or regression, 2 clash or missing |
 | `skillz approve <name> <version>` | Verify checksums and record approval (UTC time and local user). The only way a version becomes installable. | 0, 1 integrity, 2 missing |
 | `skillz install <name> --platform {claude,codex} --scope {project,user} [--version X.Y.Z]` | Install an approved version (default: highest approved) and record it in `skills/registry.json`. | 0, 1 not approved or integrity, 2 |
 | `skillz rollback <name> [--platform {claude,codex}] [--scope {project,user}]` | Reinstall the highest approved version below the installed one. Versions are never deleted. | 0, 1 nothing to roll back to, 2 |
 | `skillz list [--json]` | Show the registry and each skill's versions with their status. | 0 |
 | `skillz capture-failure <name> --prompt TEXT (--should-trigger \| --should-not-trigger \| --expect MARKER ...) [--note TEXT]` | Record a real failure as a persistent eval case in `.factory/cases/captured.json`. | 0, 2 |
 | `skillz improve <name>` | Build a challenger candidate under `.factory/candidates/<id>/` from eval proposals and captured failures; stable files are untouched. | 0, 1 nothing to improve, 2 |
-| `skillz challenge <name> <candidate-id>` | Validate stable and candidate, grade the union of cases on both sides, write `challenge.json` and `challenge.md`. | 0 for every verdict, 2 |
+| `skillz challenge <name> <candidate-id> [--runner {claude,codex}] [--judge {claude,codex}]` | Validate stable and candidate, grade the union of cases on both sides (with `--runner`, also judge behaviour cases on both), write `challenge.json` and `challenge.md`. | 0 for every verdict, 2 |
 | `skillz promote <name> <candidate-id>` | Explicit human command: replace the canonical files with a challenged candidate and package a new version that waits for approval. | 0, 1 refused or rolled back, 2 |
 
 ## What lands on disk
