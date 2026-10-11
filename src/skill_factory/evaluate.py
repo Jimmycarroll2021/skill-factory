@@ -13,7 +13,7 @@ import sys
 from collections.abc import Callable
 from pathlib import Path
 
-from skill_factory import evalcases, render, runner
+from skill_factory import captured, evalcases, render, runner
 from skill_factory.capture import NAME_RE, SkillSpec, SpecError
 from skill_factory.runner import EXECUTABLES, Runner
 
@@ -145,7 +145,7 @@ def evaluate_skill(
     if factory.is_symlink():
         raise SpecError(f"{factory} is a symlink; refusing to write through it")
 
-    cases = evalcases.generate_cases(spec)
+    cases = evalcases.generate_cases(spec) + captured.load_captured(skill_dir)
     grades = evalcases.grade_offline(cases, spec.name, spec.description)
     weak_areas = evalcases.propose_improvements(spec, cases, grades)
 
