@@ -37,3 +37,6 @@ Requirements advanced: REQ-009.
 ## Gaps
 - No controller verification or per-mission PR (see mission 01 report). Security review follows on the final commit.
 - Improvements are deterministic vocabulary and trigger edits; a model-assisted rewrite stays out of scope.
+
+## Security
+PASS on commit 2935efd. Low notes: captured prompts stored verbatim in spec triggers (only vocabulary reaches the frontmatter today; a length cap would be sensible); challenge.md cells escape only pipes; small TOCTOU in promote; no size cap on captured.json records.
