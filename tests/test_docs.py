@@ -139,6 +139,38 @@ def test_readme_documents_the_challenger_loop():
     assert "never promote" in readme
 
 
+def test_readme_documents_the_model_backed_quality_tier():
+    readme = _read("README.md")
+    heading = "## Model-backed quality tier"
+    assert heading in readme
+    section = readme.split(heading, 1)[1].split("\n## ", 1)[0]
+    _in_order(
+        section,
+        [
+            "static validation",
+            "offline trigger heuristics",
+            "Claude/Codex behavioural execution",
+            "independent model judge",
+            "cross-model evaluation",
+            "human approval",
+        ],
+    )
+    assert "skillz judge" in section
+    assert "strict" in section
+    assert "lexical tier is the default" in section
+    assert "nothing calls a model without `--runner`" in section
+    assert "docs/evidence/judge-claude.md" in section
+
+
+def test_readme_command_table_lists_judge_and_runner_flags():
+    rows = [line for line in _read("README.md").splitlines() if line.startswith("| `skillz ")]
+    by_name = {row.split("`")[1].split()[1]: row for row in rows}
+    assert "[--judge {claude,codex}]" in by_name["judge"]
+    for name in ("run", "package", "challenge"):
+        assert "[--runner {claude,codex}]" in by_name[name], name
+        assert "[--judge {claude,codex}]" in by_name[name], name
+
+
 def test_meta_skill_documents_the_loop_and_keeps_promote_human_only():
     body = (SKILL_DIR / "SKILL.md").read_text(encoding="utf-8")
     for command in ("capture-failure", "improve", "challenge"):
