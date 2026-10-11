@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1240" height="640" viewBox="0 0 1240 640" role="img" aria-labelledby="t d" font-family="'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif">
+  <title id="t">A release, step by step</title>
+  <desc id="d">You run skillz run, read the reports, approve, install, and roll back; skillz writes reports and versions under .factory and copies the variant into the platform directory.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#6f93a6"/></marker>
+    <marker id="arrow-dim" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#a9bfcb"/></marker>
+  </defs>
+  <rect width="1240" height="640" rx="18" fill="#ffffff"/>
+  <circle cx="110.0" cy="28.0" r="10" fill="#f3f7fa" stroke="#3e6577" stroke-width="1.6"/>
+  <path d="M110.0,38.0 v22 M96.0,46.0 h28 M110.0,60.0 l-12,18 M110.0,60.0 l12,18" stroke="#3e6577" stroke-width="2" fill="none"/>
+  <text x="110.0" y="96.0" font-size="14" fill="#101820" font-weight="600" text-anchor="middle">You</text>
+  <line x1="110" y1="100" x2="110" y2="580" stroke="#c8d6de" stroke-width="1.6" stroke-dasharray="5,5"/>
+  <rect x="300.0" y="24.0" width="240.0" height="44.0" rx="10" fill="#f3f7fa" stroke="#3e6577" stroke-width="1.6"/>
+  <text x="420.0" y="49.5" font-size="15" fill="#101820" font-weight="600" text-anchor="middle">skillz</text>
+  <line x1="420" y1="100" x2="420" y2="580" stroke="#c8d6de" stroke-width="1.6" stroke-dasharray="5,5"/>
+  <rect x="640.0" y="24.0" width="240.0" height="44.0" rx="10" fill="#f3f7fa" stroke="#3e6577" stroke-width="1.6"/>
+  <text x="760.0" y="49.5" font-size="15" fill="#101820" font-weight="600" text-anchor="middle">skills/&lt;name&gt;/.factory/</text>
+  <line x1="760" y1="100" x2="760" y2="580" stroke="#c8d6de" stroke-width="1.6" stroke-dasharray="5,5"/>
+  <rect x="970.0" y="24.0" width="240.0" height="44.0" rx="10" fill="#f3f7fa" stroke="#3e6577" stroke-width="1.6"/>
+  <text x="1090.0" y="49.5" font-size="15" fill="#101820" font-weight="600" text-anchor="middle">.claude/skills or .agents/skills</text>
+  <line x1="1090" y1="100" x2="1090" y2="580" stroke="#c8d6de" stroke-width="1.6" stroke-dasharray="5,5"/>
+  <circle cx="110" cy="128" r="11" fill="#101820"/>
+  <text x="110.0" y="132.0" font-size="11" fill="#ffffff" font-weight="600" text-anchor="middle">1</text>
+  <line x1="122.0" y1="128.0" x2="408.0" y2="128.0" stroke="#6f93a6" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="134.0" y="120.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="start">skillz run "paragraph"</text>
+  <circle cx="420" cy="160" r="11" fill="#101820"/>
+  <text x="420.0" y="164.0" font-size="11" fill="#ffffff" font-weight="600" text-anchor="middle">2</text>
+  <line x1="432.0" y1="160.0" x2="748.0" y2="160.0" stroke="#6f93a6" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="444.0" y="152.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="start">spec, validate, render, eval, regression reports</text>
+  <circle cx="420" cy="192" r="11" fill="#101820"/>
+  <text x="420.0" y="196.0" font-size="11" fill="#ffffff" font-weight="600" text-anchor="middle">3</text>
+  <line x1="432.0" y1="192.0" x2="748.0" y2="192.0" stroke="#6f93a6" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="444.0" y="184.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="start">versions/0.1.0/  manifest.json with sha256 of every file</text>
+  <circle cx="420" cy="224" r="11" fill="#101820"/>
+  <text x="420.0" y="228.0" font-size="11" fill="#ffffff" font-weight="600" text-anchor="middle">4</text>
+  <line x1="408.0" y1="224.0" x2="122.0" y2="224.0" stroke="#6f93a6" stroke-width="2" stroke-dasharray="6,5" marker-end="url(#arrow)"/>
+  <text x="396.0" y="216.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="end">pipeline.md: awaiting approval</text>
+  <circle cx="110" cy="256" r="11" fill="#101820"/>
+  <text x="110.0" y="260.0" font-size="11" fill="#ffffff" font-weight="600" text-anchor="middle">5</text>
+  <path d="M121,256 h60 v24 h-50" fill="none" stroke="#6f93a6" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="190.0" y="272.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="start">read pipeline.md and eval.md</text>
+  <circle cx="110" cy="306" r="11" fill="#101820"/>
+  <text x="110.0" y="310.0" font-size="11" fill="#ffffff" font-weight="600" text-anchor="middle">6</text>
+  <line x1="122.0" y1="306.0" x2="408.0" y2="306.0" stroke="#6f93a6" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="134.0" y="298.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="start">skillz approve &lt;name&gt; 0.1.0</text>
+  <circle cx="420" cy="338" r="11" fill="#101820"/>
+  <text x="420.0" y="342.0" font-size="11" fill="#ffffff" font-weight="600" text-anchor="middle">7</text>
+  <line x1="432.0" y1="338.0" x2="748.0" y2="338.0" stroke="#6f93a6" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="444.0" y="330.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="start">versions/0.1.0/approval.json  (who, when)</text>
+  <circle cx="110" cy="370" r="11" fill="#101820"/>
+  <text x="110.0" y="374.0" font-size="11" fill="#ffffff" font-weight="600" text-anchor="middle">8</text>
+  <line x1="122.0" y1="370.0" x2="408.0" y2="370.0" stroke="#6f93a6" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="134.0" y="362.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="start">skillz install &lt;name&gt; --platform claude --scope project</text>
+  <circle cx="420" cy="402" r="11" fill="#101820"/>
+  <text x="420.0" y="406.0" font-size="11" fill="#ffffff" font-weight="600" text-anchor="middle">9</text>
+  <line x1="432.0" y1="402.0" x2="748.0" y2="402.0" stroke="#6f93a6" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="444.0" y="394.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="start">verify checksums against manifest.json</text>
+  <circle cx="420" cy="434" r="11" fill="#101820"/>
+  <text x="420.0" y="438.0" font-size="11" fill="#ffffff" font-weight="600" text-anchor="middle">10</text>
+  <line x1="432.0" y1="434.0" x2="1078.0" y2="434.0" stroke="#6f93a6" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="444.0" y="426.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="start">copy the rendered variant  (atomic swap)</text>
+  <circle cx="420" cy="466" r="11" fill="#101820"/>
+  <text x="420.0" y="470.0" font-size="11" fill="#ffffff" font-weight="600" text-anchor="middle">11</text>
+  <line x1="432.0" y1="466.0" x2="748.0" y2="466.0" stroke="#6f93a6" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="444.0" y="458.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="start">registry.json: name, version, platform, scope, approval</text>
+  <circle cx="110" cy="498" r="11" fill="#101820"/>
+  <text x="110.0" y="502.0" font-size="11" fill="#ffffff" font-weight="600" text-anchor="middle">12</text>
+  <line x1="122.0" y1="498.0" x2="408.0" y2="498.0" stroke="#6f93a6" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="134.0" y="490.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="start">skillz rollback &lt;name&gt;</text>
+  <circle cx="420" cy="530" r="11" fill="#101820"/>
+  <text x="420.0" y="534.0" font-size="11" fill="#ffffff" font-weight="600" text-anchor="middle">13</text>
+  <line x1="432.0" y1="530.0" x2="1078.0" y2="530.0" stroke="#6f93a6" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="444.0" y="522.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="start">reinstall the previous approved version</text>
+  <rect x="60" y="578" width="1120" height="36" rx="8" fill="#fff8d6" stroke="#e6cf6a"/>
+  <text x="620.0" y="601.0" font-size="13" fill="#101820" font-weight="600" text-anchor="middle">No version is ever deleted. Nothing is ever pushed. The tool never approves for you.</text>
+</svg>

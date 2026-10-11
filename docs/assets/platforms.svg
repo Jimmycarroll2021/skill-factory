@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1240" height="400" viewBox="0 0 1240 400" role="img" aria-labelledby="t d" font-family="'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif">
+  <title id="t">One canonical skill, two platform variants</title>
+  <desc id="d">skills/name/ is the only source; skillz render produces a Claude variant and a Codex variant; skillz install copies them into the platform directories.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#6f93a6"/></marker>
+    <marker id="arrow-dim" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#a9bfcb"/></marker>
+  </defs>
+  <rect width="1240" height="400" rx="18" fill="#ffffff"/>
+  <rect x="30.0" y="40.0" width="330.0" height="320.0" rx="14" fill="#fbfcfd" stroke="#c8d6de" stroke-width="1.4" stroke-dasharray="4,4"/>
+  <text x="44.0" y="62.0" font-size="13" fill="#46606e" font-weight="600" text-anchor="start">skills/&lt;name&gt;/  (canonical, the only thing you edit)</text>
+  <rect x="60.0" y="90.0" width="270.0" height="96.0" rx="10" fill="#f3f7fa" stroke="#3e6577" stroke-width="1.6"/>
+  <text x="195.0" y="119.0" font-size="15" fill="#101820" font-weight="600" text-anchor="middle">SKILL.md</text>
+  <text x="195.0" y="136.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">frontmatter: name, description,</text>
+  <text x="195.0" y="151.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">optional license, allowed-tools, metadata</text>
+  <text x="195.0" y="166.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">short body, progressive disclosure</text>
+  <rect x="60.0" y="210.0" width="270.0" height="70.0" rx="10" fill="#f3f7fa" stroke="#3e6577" stroke-width="1.6"/>
+  <text x="195.0" y="241.0" font-size="15" fill="#101820" font-weight="600" text-anchor="middle">scripts/  references/  assets/</text>
+  <text x="195.0" y="258.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">only when the spec asks</text>
+  <rect x="60.0" y="296.0" width="270.0" height="50.0" rx="10" fill="#fafafa" stroke="#b8c7d0" stroke-width="1.6"/>
+  <text x="195.0" y="317.0" font-size="15" fill="#46606e" font-weight="600" text-anchor="middle">.factory/</text>
+  <text x="195.0" y="334.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">reports, versions, candidates</text>
+  <path d="M360,150 H470" fill="none" stroke="#6f93a6" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="415.0" y="138.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">skillz render</text>
+  <path d="M360,250 H470" fill="none" stroke="#6f93a6" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="415.0" y="238.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">skillz render</text>
+  <rect x="470.0" y="100.0" width="300.0" height="100.0" rx="10" fill="#f3f7fa" stroke="#3e6577" stroke-width="1.6"/>
+  <text x="620.0" y="131.0" font-size="15" fill="#101820" font-weight="600" text-anchor="middle">Claude variant</text>
+  <text x="620.0" y="148.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">.factory/dist/claude/</text>
+  <text x="620.0" y="163.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">SKILL.md + supporting files</text>
+  <text x="620.0" y="178.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">nothing else needed</text>
+  <rect x="470.0" y="220.0" width="300.0" height="110.0" rx="10" fill="#f3f7fa" stroke="#3e6577" stroke-width="1.6"/>
+  <text x="620.0" y="256.0" font-size="15" fill="#101820" font-weight="600" text-anchor="middle">Codex variant</text>
+  <text x="620.0" y="273.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">.factory/dist/codex/</text>
+  <text x="620.0" y="288.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">same files</text>
+  <text x="620.0" y="303.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">+ agents/openai.yaml (name, description, interface)</text>
+  <path d="M770,150 H890" fill="none" stroke="#6f93a6" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="830.0" y="138.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">skillz install</text>
+  <path d="M770,275 H890" fill="none" stroke="#6f93a6" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="830.0" y="263.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">skillz install</text>
+  <path d="M890.0,109.0 a160.0,9 0 0 1 320.0,0 v82.0 a160.0,9 0 0 1 -320.0,0 z" fill="#e8f1f6" stroke="#3e6577" stroke-width="1.6"/>
+  <ellipse cx="1050.0" cy="109.0" rx="160.0" ry="9" fill="#e8f1f6" stroke="#3e6577" stroke-width="1.6"/>
+  <text x="1050.0" y="143.0" font-size="15" fill="#101820" font-weight="600" text-anchor="middle">Claude Code</text>
+  <text x="1050.0" y="160.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">project  .claude/skills/&lt;name&gt;/</text>
+  <text x="1050.0" y="175.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">user       ~/.claude/skills/&lt;name&gt;/</text>
+  <path d="M890.0,234.0 a160.0,9 0 0 1 320.0,0 v82.0 a160.0,9 0 0 1 -320.0,0 z" fill="#e8f1f6" stroke="#3e6577" stroke-width="1.6"/>
+  <ellipse cx="1050.0" cy="234.0" rx="160.0" ry="9" fill="#e8f1f6" stroke="#3e6577" stroke-width="1.6"/>
+  <text x="1050.0" y="268.0" font-size="15" fill="#101820" font-weight="600" text-anchor="middle">Codex</text>
+  <text x="1050.0" y="285.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">project  .agents/skills/&lt;name&gt;/</text>
+  <text x="1050.0" y="300.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">user       ~/.agents/skills/&lt;name&gt;/</text>
+  <text x="620.0" y="384.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle" font-style="italic">Canonical files are byte-identical before and after rendering; install verifies every file against the version manifest first.</text>
+</svg>

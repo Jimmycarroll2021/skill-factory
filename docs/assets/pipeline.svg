@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1240" height="350" viewBox="0 0 1240 350" role="img" aria-labelledby="t d" font-family="'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif">
+  <title id="t">The skill-factory pipeline</title>
+  <desc id="d">describe, capture, generate, validate, render, evaluate, regression, package, human approval gate, install, registry and rollback.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#6f93a6"/></marker>
+    <marker id="arrow-dim" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#a9bfcb"/></marker>
+  </defs>
+  <rect width="1240" height="350" rx="18" fill="#ffffff"/>
+  <rect x="158.0" y="32.0" width="996.0" height="130.0" rx="14" fill="#fbfcfd" stroke="#c8d6de" stroke-width="1.4" stroke-dasharray="4,4"/>
+  <text x="172.0" y="54.0" font-size="13" fill="#46606e" font-weight="600" text-anchor="start">skillz run does all of this in one command, then stops</text>
+  <rect x="24.0" y="70.0" width="128.0" height="76.0" rx="10" fill="#f3f7fa" stroke="#3e6577" stroke-width="1.6"/>
+  <text x="88.0" y="96.5" font-size="15" fill="#101820" font-weight="600" text-anchor="middle">describe</text>
+  <text x="88.0" y="113.5" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">your paragraph</text>
+  <text x="88.0" y="128.5" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">or spec file</text>
+  <line x1="152.0" y1="108.0" x2="166.0" y2="108.0" stroke="#6f93a6" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="166.0" y="70.0" width="128.0" height="76.0" rx="10" fill="#f3f7fa" stroke="#3e6577" stroke-width="1.6"/>
+  <text x="230.0" y="104.0" font-size="15" fill="#101820" font-weight="600" text-anchor="middle">capture</text>
+  <text x="230.0" y="121.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">spec.json</text>
+  <line x1="294.0" y1="108.0" x2="308.0" y2="108.0" stroke="#6f93a6" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="308.0" y="70.0" width="128.0" height="76.0" rx="10" fill="#f3f7fa" stroke="#3e6577" stroke-width="1.6"/>
+  <text x="372.0" y="104.0" font-size="15" fill="#101820" font-weight="600" text-anchor="middle">generate</text>
+  <text x="372.0" y="121.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">SKILL.md</text>
+  <line x1="436.0" y1="108.0" x2="450.0" y2="108.0" stroke="#6f93a6" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="450.0" y="70.0" width="128.0" height="76.0" rx="10" fill="#f3f7fa" stroke="#3e6577" stroke-width="1.6"/>
+  <text x="514.0" y="96.5" font-size="15" fill="#101820" font-weight="600" text-anchor="middle">validate</text>
+  <text x="514.0" y="113.5" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">static checks</text>
+  <text x="514.0" y="128.5" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">nothing runs</text>
+  <line x1="578.0" y1="108.0" x2="592.0" y2="108.0" stroke="#6f93a6" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="592.0" y="70.0" width="128.0" height="76.0" rx="10" fill="#f3f7fa" stroke="#3e6577" stroke-width="1.6"/>
+  <text x="656.0" y="96.5" font-size="15" fill="#101820" font-weight="600" text-anchor="middle">render</text>
+  <text x="656.0" y="113.5" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">Claude + Codex</text>
+  <text x="656.0" y="128.5" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">variants</text>
+  <line x1="720.0" y1="108.0" x2="734.0" y2="108.0" stroke="#6f93a6" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="734.0" y="70.0" width="128.0" height="76.0" rx="10" fill="#f3f7fa" stroke="#3e6577" stroke-width="1.6"/>
+  <text x="798.0" y="96.5" font-size="15" fill="#101820" font-weight="600" text-anchor="middle">evaluate</text>
+  <text x="798.0" y="113.5" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">trigger + behaviour</text>
+  <text x="798.0" y="128.5" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">cases, graded</text>
+  <line x1="862.0" y1="108.0" x2="876.0" y2="108.0" stroke="#6f93a6" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="876.0" y="70.0" width="128.0" height="76.0" rx="10" fill="#f3f7fa" stroke="#3e6577" stroke-width="1.6"/>
+  <text x="940.0" y="96.5" font-size="15" fill="#101820" font-weight="600" text-anchor="middle">regression</text>
+  <text x="940.0" y="113.5" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">vs last approved</text>
+  <text x="940.0" y="128.5" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">version</text>
+  <line x1="1004.0" y1="108.0" x2="1018.0" y2="108.0" stroke="#6f93a6" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="1018.0" y="70.0" width="128.0" height="76.0" rx="10" fill="#f3f7fa" stroke="#3e6577" stroke-width="1.6"/>
+  <text x="1082.0" y="96.5" font-size="15" fill="#101820" font-weight="600" text-anchor="middle">package</text>
+  <text x="1082.0" y="113.5" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">immutable,</text>
+  <text x="1082.0" y="128.5" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">checksummed</text>
+  <polygon points="237.0,220.0 363.0,220.0 395.0,252.0 363.0,284.0 237.0,284.0 205.0,252.0" fill="#2b5a4a" stroke="#5fd3a8" stroke-width="2"/>
+  <text x="300.0" y="248.0" font-size="15" fill="#eef4f2" font-weight="600" text-anchor="middle">human approval gate</text>
+  <text x="300.0" y="265.0" font-size="12" fill="#cfe0e6" font-weight="normal" text-anchor="middle">skillz approve</text>
+  <rect x="470.0" y="220.0" width="170.0" height="64.0" rx="10" fill="#f3f7fa" stroke="#3e6577" stroke-width="1.6"/>
+  <text x="555.0" y="240.5" font-size="15" fill="#101820" font-weight="600" text-anchor="middle">install</text>
+  <text x="555.0" y="257.5" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">skillz install</text>
+  <text x="555.0" y="272.5" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">only approved versions</text>
+  <path d="M700.0,227.0 a95.0,9 0 0 1 190.0,0 v52.0 a95.0,9 0 0 1 -190.0,0 z" fill="#e8f1f6" stroke="#3e6577" stroke-width="1.6"/>
+  <ellipse cx="795.0" cy="227.0" rx="95.0" ry="9" fill="#e8f1f6" stroke="#3e6577" stroke-width="1.6"/>
+  <text x="795.0" y="246.0" font-size="15" fill="#101820" font-weight="600" text-anchor="middle">registry</text>
+  <text x="795.0" y="263.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">skills/registry.json</text>
+  <text x="795.0" y="278.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">who, what, where, when</text>
+  <rect x="960.0" y="220.0" width="200.0" height="64.0" rx="10" fill="#f3f7fa" stroke="#3e6577" stroke-width="1.6"/>
+  <text x="1060.0" y="240.5" font-size="15" fill="#101820" font-weight="600" text-anchor="middle">rollback</text>
+  <text x="1060.0" y="257.5" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">skillz rollback</text>
+  <text x="1060.0" y="272.5" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">previous approved version</text>
+  <path d="M1082.0,146.0 v34 H405 v40.0" fill="none" stroke="#6f93a6" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="1002.0" y="170.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">awaiting approval</text>
+  <line x1="395.0" y1="252.0" x2="470.0" y2="252.0" stroke="#6f93a6" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="640.0" y1="252.0" x2="700.0" y2="252.0" stroke="#6f93a6" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="670.0" y="244.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">record</text>
+  <line x1="890.0" y1="252.0" x2="960.0" y2="252.0" stroke="#6f93a6" stroke-width="2" marker-end="url(#arrow)"/>
+  <path d="M1060,284 v26 H555 v-26" fill="none" stroke="#6f93a6" stroke-width="2" stroke-dasharray="6,5" marker-end="url(#arrow)"/>
+  <text x="800.0" y="302.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">reinstall from the registry</text>
+  <text x="610.0" y="208.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">into .claude/skills/&lt;name&gt;/ or .agents/skills/&lt;name&gt;/</text>
+</svg>

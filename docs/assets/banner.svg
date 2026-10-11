@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="360" viewBox="0 0 1280 360" role="img" aria-labelledby="t d">
+  <title id="t">skill-factory</title>
+  <desc id="d">A paragraph in, a tested and versioned Agent Skill out, a human at the gate. Describe, generate, validate, evaluate, package, approve, install, improve.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#101820"/>
+      <stop offset="1" stop-color="#1f3a4a"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#5fd3a8"/>
+      <stop offset="1" stop-color="#2ea7d9"/>
+    </linearGradient>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#7fa3b5"/>
+    </marker>
+  </defs>
+  <rect width="1280" height="360" rx="24" fill="url(#bg)"/>
+  <g font-family="'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif">
+    <text x="80" y="124" font-size="74" font-weight="700" fill="#eef4f2" letter-spacing="-1">skill<tspan fill="url(#accent)">-factory</tspan></text>
+    <text x="82" y="172" font-size="27" fill="#cfe0e6">A paragraph in. A tested, versioned Agent Skill out. A human at the gate.</text>
+    <text x="82" y="206" font-size="18" fill="#7fa3b5">One canonical SKILL.md for Claude Code and Codex, evaluated offline, packaged immutably, improved by challengers.</text>
+  </g>
+  <g font-family="'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="17" font-weight="600" fill="#eef4f2" text-anchor="middle">
+    <g>
+      <rect x="80" y="262" width="150" height="54" rx="12" fill="#243f50" stroke="#3e6577"/>
+      <text x="155" y="295">describe</text>
+    </g>
+    <line x1="232" y1="289" x2="268" y2="289" stroke="#7fa3b5" stroke-width="2.5" marker-end="url(#arrow)"/>
+    <g>
+      <rect x="270" y="262" width="150" height="54" rx="12" fill="#243f50" stroke="#3e6577"/>
+      <text x="345" y="295">generate</text>
+    </g>
+    <line x1="422" y1="289" x2="458" y2="289" stroke="#7fa3b5" stroke-width="2.5" marker-end="url(#arrow)"/>
+    <g>
+      <rect x="460" y="262" width="150" height="54" rx="12" fill="#243f50" stroke="#3e6577"/>
+      <text x="535" y="295">validate</text>
+    </g>
+    <line x1="612" y1="289" x2="648" y2="289" stroke="#7fa3b5" stroke-width="2.5" marker-end="url(#arrow)"/>
+    <g>
+      <rect x="650" y="262" width="150" height="54" rx="12" fill="#243f50" stroke="#3e6577"/>
+      <text x="725" y="295">evaluate</text>
+    </g>
+    <line x1="802" y1="289" x2="838" y2="289" stroke="#7fa3b5" stroke-width="2.5" marker-end="url(#arrow)"/>
+    <g>
+      <rect x="840" y="262" width="150" height="54" rx="12" fill="#243f50" stroke="#3e6577"/>
+      <text x="915" y="295">package</text>
+    </g>
+    <line x1="992" y1="289" x2="1028" y2="289" stroke="#7fa3b5" stroke-width="2.5" marker-end="url(#arrow)"/>
+    <g>
+      <polygon points="1030,289 1105,262 1180,289 1105,316" fill="#2b5a4a" stroke="#5fd3a8" stroke-width="2"/>
+      <text x="1105" y="294" font-size="15">approve</text>
+    </g>
+  </g>
+  <g font-family="'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="14" fill="#7fa3b5">
+    <text x="1200" y="150" text-anchor="end">Python 3.12 · stdlib only</text>
+    <text x="1200" y="174" text-anchor="end">offline · deterministic</text>
+    <text x="1200" y="198" text-anchor="end">never pushes · never executes skills</text>
+  </g>
+</svg>
