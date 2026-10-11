@@ -40,3 +40,6 @@ Requirements advanced: REQ-010.
 ## Gaps
 - No controller verification or per-mission PR (see mission 01 report). Security review follows on the final commit.
 - Cross-model judging has not been run for real (no Codex here).
+
+## Security
+PASS on commit 86ee343. Low notes: transcripts embedded in the judge prompt can sway scores (prompt-injection surface; strict parse bounds the effect to scores and a reason string); deeply nested JSON in a judge reply could raise RecursionError (local crash only); the model CLI still inherits the rest of the environment; pre-existing symlinked judge.json would be followed; _snapshot trusts a caller-supplied judge_report.

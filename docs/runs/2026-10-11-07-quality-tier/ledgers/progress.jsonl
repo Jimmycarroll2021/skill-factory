@@ -8,3 +8,4 @@
 {"ts": "2026-10-11T02:20:37Z", "step": "s008", "slug": "runner-neutral-cwd", "event": "dispatched", "detail": "worker dispatched step s008", "state_hash": "7911121fbf3b922d33a627883ac2d73fa24d46429215a65feab97cd579aa0b81", "tokens": 0, "cost_usd": 0.0}
 {"ts": "2026-10-11T02:22:02Z", "step": "s009", "slug": "quality-integration", "event": "merged", "detail": "gate rc=0", "state_hash": "2d1a1a2f3776c270fc89b04b3c1de622a01ee1fd0fe46380fa292e7c74e966f7", "tokens": 0, "cost_usd": 0.0}
 {"ts": "2026-10-11T02:22:03Z", "step": "s010", "slug": "runner-neutral-cwd", "event": "merged", "detail": "gate rc=0", "state_hash": "2d1a1a2f3776c270fc89b04b3c1de622a01ee1fd0fe46380fa292e7c74e966f7", "tokens": 0, "cost_usd": 0.0}
+{"ts": "2026-10-11T02:28:10Z", "step": "s011", "slug": "security", "event": "merged", "detail": "security PASS on 86ee343, 5 low notes", "state_hash": "2d1a1a2f3776c270fc89b04b3c1de622a01ee1fd0fe46380fa292e7c74e966f7", "tokens": 0, "cost_usd": 0.0}
