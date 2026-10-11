@@ -1,0 +1,10 @@
+{
+  "goal": "A developer can run skillz judge to have a model score with-skill and without-skill transcripts of every behaviour case against an explicit rubric, cross-model by default when both claude and codex are available, and when a runner is given skillz challenge and skillz package fold those behavioural scores into their verdicts and regressions, so the factory proves skill quality rather than only trigger wording, while every test still runs offline with fake runners",
+  "plan": [],
+  "facts": [],
+  "assumptions": [],
+  "blocked": [],
+  "replan_count": 0,
+  "stall_count": 0,
+  "is_complete": false
+}
