@@ -3,7 +3,9 @@
 Both sides are validated and graded against the same union of cases (captured failures, the
 stable skill's cases and the candidate's cases). The result is written to ``challenge.json`` and
 ``challenge.md`` inside the candidate directory only; the stable skill is never written. Grading is
-the offline lexical-overlap heuristic, so no model is consulted and no process is spawned.
+the offline lexical-overlap heuristic. With a runner (``--runner``) the behaviour cases are also
+scored by the model judge on both sides and folded into the verdict; without one no model is
+consulted and no process is spawned.
 """
 
 from __future__ import annotations
@@ -12,12 +14,22 @@ import argparse
 import dataclasses
 import json
 import sys
+from collections.abc import Callable
 from datetime import UTC, datetime
 from pathlib import Path
 
-from skill_factory import candidates, captured, evalcases, evaluate, render, validate
+from skill_factory import (
+    candidates,
+    captured,
+    evalcases,
+    evaluate,
+    judge,
+    render,
+    validate,
+)
 from skill_factory.candidates import CandidateError
 from skill_factory.capture import NAME_RE, SkillSpec, SpecError
+from skill_factory.runner import EXECUTABLES, Runner
 
 SCHEMA = 1
 
@@ -92,6 +104,115 @@ def _areas(
     )
 
 
+def _total(entry: dict) -> int | None:
+    """The with-skill total of one judged case, or None when that case errored."""
+    if entry.get("verdict") == "error":
+        return None
+    return entry["with_skill"]["total"]
+
+
+def _behaviour_change(before: int | None, after: int | None) -> str:
+    if before is None or after is None:
+        return "error"
+    if after < before:
+        return "regression"
+    if after > before:
+        return "improvement"
+    return "unchanged"
+
+
+def _behaviour(
+    cases: list[evalcases.Case],
+    stable_md: Path,
+    candidate_md: Path,
+    runner_name: str | None,
+    judge_name: str | None,
+    runner_factory: Callable[[str], Runner | None] | None,
+) -> dict:
+    """Judge the union behaviour cases with both skill texts and the same judge."""
+    found, judge_runner, skip = judge.resolve_runners(runner_name, judge_name, runner_factory)
+    if skip is not None:
+        return {
+            "status": skip,
+            "requested": {"runner": runner_name, "judge": judge_name},
+        }
+    try:
+        stable_text = evaluate._read_text(stable_md, "SKILL.md")
+        candidate_text = evaluate._read_text(candidate_md, "SKILL.md")
+    except SpecError as exc:
+        raise CandidateError(str(exc)) from exc
+    behaviours = [c.to_dict() for c in cases if c.kind == "behaviour"]
+    stable = judge.judge_cases(found, judge_runner, behaviours, stable_text)
+    candidate = judge.judge_cases(found, judge_runner, behaviours, candidate_text)
+    rows, regressions, improvements = [], [], []
+    counts = {"regression": 0, "improvement": 0, "unchanged": 0, "error": 0}
+    for before, after in zip(stable["cases"], candidate["cases"], strict=True):
+        change = _behaviour_change(_total(before), _total(after))
+        counts[change] += 1
+        if change == "regression":
+            regressions.append(before["id"])
+        elif change == "improvement":
+            improvements.append(before["id"])
+        rows.append(
+            {
+                "id": before["id"],
+                "prompt": before["prompt"],
+                "stable_total": _total(before),
+                "candidate_total": _total(after),
+                "change": change,
+            }
+        )
+    return {
+        "status": "completed",
+        "requested": {"runner": runner_name, "judge": judge_name},
+        "runner": found.name,
+        "judge": judge_runner.name,
+        "cross_model": found.name != judge_runner.name,
+        "cases": rows,
+        "summary": {
+            "cases": len(rows),
+            "regressions": counts["regression"],
+            "improvements": counts["improvement"],
+            "unchanged": counts["unchanged"],
+            "errors": counts["error"],
+        },
+        "regressions": regressions,
+        "improvements": improvements,
+    }
+
+
+def _behaviour_markdown(behaviour: dict) -> list[str]:
+    lines = ["", "## Behaviour", ""]
+    if behaviour["status"] != "completed":
+        note = (
+            f"Not judged: {behaviour['status']}. Pass `--runner claude|codex` to score the "
+            "behaviour cases with a judge model."
+        )
+        return [*lines, note]
+    counts = behaviour["summary"]
+    mode = "cross-model" if behaviour["cross_model"] else "same-model"
+    summary = (
+        f"Runner {behaviour['runner']}, judge {behaviour['judge']} ({mode}). "
+        f"{counts['cases']} cases: {counts['regressions']} regressions, "
+        f"{counts['improvements']} improvements, {counts['unchanged']} unchanged, "
+        f"{counts['errors']} errors."
+    )
+    lines += [
+        summary,
+        "",
+        "| id | prompt | stable | candidate | change |",
+        "| --- | --- | --- | --- | --- |",
+    ]
+    for case in behaviour["cases"]:
+        stable = "error" if case["stable_total"] is None else case["stable_total"]
+        candidate = "error" if case["candidate_total"] is None else case["candidate_total"]
+        lines.append(
+            f"| `{case['id']}` | {_cell(case['prompt'])} | {stable} | {candidate} "
+            f"| {case['change']} |"
+        )
+    return lines
+
+
 def _load_report(directory: Path) -> validate.Report:
     try:
         return validate.validate_skill(directory)
@@ -150,17 +271,26 @@ def _markdown(report: dict) -> str:
             f"| `{case['id']}` | {case['kind']} | {_cell(case['prompt'])} | {case['stable']} "
             f"| {case['candidate']} | {case['change']} |"
         )
+    lines += _behaviour_markdown(report["behaviour"])
     weak = report["weak_areas"]
     lines += ["", "## Weak areas", ""]
     for label in ("stable", "candidate", "resolved", "introduced"):
         lines.append(f"- {label}: {', '.join(weak[label]) if weak[label] else 'none'}")
+    behaviour = report["behaviour"]
+    if behaviour["status"] == "completed":
+        consulted = (
+            f"behaviour cases were scored by the {behaviour['judge']} judge on the "
+            f"{behaviour['runner']} runner."
+        )
+    else:
+        consulted = "no model was consulted."
     lines += [
         "",
         "## Notes",
         "",
         (
-            f"Grading is the offline lexical-overlap heuristic (threshold {report['threshold']}); "
-            "no model was consulted."
+            f"Trigger grading is the offline lexical-overlap heuristic "
+            f"(threshold {report['threshold']}); {consulted}"
         ),
         (
             "Promotion is a separate human command: "
@@ -171,9 +301,16 @@ def _markdown(report: dict) -> str:
     return "\n".join(lines)
 
 
-def challenge_candidate(skill_dir: Path, cid: str) -> dict:
+def challenge_candidate(
+    skill_dir: Path,
+    cid: str,
+    runner_name: str | None = None,
+    judge_name: str | None = None,
+    runner_factory: Callable[[str], Runner | None] | None = None,
+) -> dict:
     """Challenge candidate ``cid``, write its reports and return the challenge.json dict.
 
+    With ``runner_name`` the behaviour cases are also judged on both sides by a model.
     Raises CandidateError for a bad id or a missing or unreadable input.
     """
     skill_dir = Path(skill_dir)
@@ -258,11 +395,22 @@ def challenge_candidate(skill_dir: Path, cid: str) -> dict:
             }
         )
 
+    behaviour = _behaviour(
+        cases,
+        skill_dir / "SKILL.md",
+        cskill / "SKILL.md",
+        runner_name,
+        judge_name,
+        runner_factory,
+    )
+    behaviour_regressions = behaviour.get("regressions", [])
+    behaviour_improvements = behaviour.get("improvements", [])
+
     if not candidate_report.ok:
         verdict = "candidate-unsafe"
-    elif regressions:
+    elif regressions or behaviour_regressions:
         verdict = "candidate-worse"
-    elif improvements:
+    elif improvements or behaviour_improvements:
         verdict = "candidate-better"
     else:
         verdict = "no-difference"
@@ -291,6 +439,7 @@ def challenge_candidate(skill_dir: Path, cid: str) -> dict:
         },
         "regressions": regressions,
         "improvements": improvements,
+        "behaviour": behaviour,
         "weak_areas": {
             "stable": stable_areas,
             "candidate": candidate_areas,
@@ -329,6 +478,18 @@ def add_parser(sub: argparse._SubParsersAction) -> None:
         default=None,
         help="root directory containing skills/ (default: cwd)",
     )
+    parser.add_argument(
+        "--runner",
+        choices=sorted(EXECUTABLES),
+        default=None,
+        help="also score the behaviour cases on both sides with this CLI, if it is on PATH",
+    )
+    parser.add_argument(
+        "--judge",
+        choices=sorted(EXECUTABLES),
+        default=None,
+        help="CLI that judges (default: the other model if both are on PATH, else the runner)",
+    )
 
 
 def _fail(message: str) -> int:
@@ -344,10 +505,21 @@ def run(args: argparse.Namespace) -> int:
     if not skill_dir.is_dir():
         return _fail(f"skill directory not found: {skill_dir}")
     try:
-        report = challenge_candidate(skill_dir, args.candidate)
+        report = challenge_candidate(
+            skill_dir, args.candidate, getattr(args, "runner", None), getattr(args, "judge", None)
+        )
     except (CandidateError, SpecError) as exc:
         return _fail(str(exc))
     print(f"challenge {args.name} {args.candidate}: {report['verdict']}")
+    if getattr(args, "runner", None) is not None:
+        behaviour = report["behaviour"]
+        counts = behaviour.get("summary")
+        detail = (
+            f" ({counts['regressions']} regressions, {counts['improvements']} improvements)"
+            if counts
+            else ""
+        )
+        print(f"behaviour: {behaviour['status']}{detail}")
     cdir = candidates.candidate_dir(skill_dir, args.candidate)
     print(cdir / candidates.CHALLENGE_JSON)
     print(cdir / candidates.CHALLENGE_MD)
