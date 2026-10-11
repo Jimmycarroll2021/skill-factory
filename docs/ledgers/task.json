@@ -49,9 +49,9 @@
         "tests/test_challenge.py",
         "tests/test_pipeline.py"
       ],
-      "status": "dispatched",
+      "status": "merged",
       "branch": "mission/07-quality-tier--quality-integration",
-      "commit": ""
+      "commit": "96832fc"
     },
     {
       "slug": "runner-neutral-cwd",
@@ -60,9 +60,9 @@
         "src/skill_factory/runner.py",
         "tests/test_runner.py"
       ],
-      "status": "dispatched",
+      "status": "merged",
       "branch": "mission/07-quality-tier--runner-neutral-cwd",
-      "commit": ""
+      "commit": "fd0c596"
     }
   ],
   "facts": [],
