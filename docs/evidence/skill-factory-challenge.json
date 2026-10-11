@@ -1,0 +1,165 @@
+{
+  "candidate": "c001",
+  "cases": [
+    {
+      "candidate": "pass",
+      "candidate_score": 1.0,
+      "change": "improvement",
+      "expected": [],
+      "id": "cap-001",
+      "kind": "positive",
+      "origins": [
+        "captured",
+        "candidate"
+      ],
+      "prompt": "Help me write a SKILL.md file so my agent learns this workflow",
+      "stable": "fail",
+      "stable_score": 0.1429
+    },
+    {
+      "candidate": "pass",
+      "candidate_score": 1.0,
+      "change": "unchanged",
+      "expected": [],
+      "id": "stable/pos-001",
+      "kind": "positive",
+      "origins": [
+        "stable",
+        "candidate"
+      ],
+      "prompt": "Turns a plain-language description into a validated, tested and versioned agent skill for Claude Code or Codex, using the skillz CLI.",
+      "stable": "pass",
+      "stable_score": 1.0
+    },
+    {
+      "candidate": "pass",
+      "candidate_score": 0.0,
+      "change": "unchanged",
+      "expected": [],
+      "id": "stable/neg-001",
+      "kind": "negative",
+      "origins": [
+        "stable",
+        "candidate"
+      ],
+      "prompt": "What is the weather forecast for tomorrow in Paris?",
+      "stable": "pass",
+      "stable_score": 0.0
+    },
+    {
+      "candidate": "pass",
+      "candidate_score": 0.25,
+      "change": "unchanged",
+      "expected": [],
+      "id": "stable/neg-002",
+      "kind": "negative",
+      "origins": [
+        "stable",
+        "candidate"
+      ],
+      "prompt": "Write a haiku about autumn leaves.",
+      "stable": "pass",
+      "stable_score": 0.0
+    },
+    {
+      "candidate": "pass",
+      "candidate_score": 0.0,
+      "change": "unchanged",
+      "expected": [],
+      "id": "stable/neg-003",
+      "kind": "negative",
+      "origins": [
+        "stable",
+        "candidate"
+      ],
+      "prompt": "Translate the sentence 'good morning, my friend' into Spanish.",
+      "stable": "pass",
+      "stable_score": 0.0
+    },
+    {
+      "candidate": "pass",
+      "candidate_score": 0.0,
+      "change": "unchanged",
+      "expected": [],
+      "id": "stable/neg-004",
+      "kind": "negative",
+      "origins": [
+        "stable",
+        "candidate"
+      ],
+      "prompt": "Explain how photosynthesis works in plants.",
+      "stable": "pass",
+      "stable_score": 0.0
+    },
+    {
+      "candidate": "pass",
+      "candidate_score": 0.0,
+      "change": "unchanged",
+      "expected": [],
+      "id": "stable/neg-005",
+      "kind": "negative",
+      "origins": [
+        "stable",
+        "candidate"
+      ],
+      "prompt": "Suggest a recipe for a vegetarian lasagne.",
+      "stable": "pass",
+      "stable_score": 0.0
+    }
+  ],
+  "created_at": "2026-10-11T00:14:45Z",
+  "improvements": [
+    "cap-001"
+  ],
+  "method": "heuristic lexical overlap: a prompt matches when the share of its content words found in the skill name and description reaches the threshold; no model is consulted",
+  "regressions": [],
+  "schema": 1,
+  "sha256": {
+    "candidate": {
+      "SKILL.md": "cb2584c65d68878e214fbee743c46aec37abe8cee7842f3abe01b33b10003b05",
+      "spec.json": "2bdd5cb045d9ad3de58226112058f23d7f92cba2f41b826e93b297c7a01dcfd8"
+    },
+    "stable": {
+      "SKILL.md": "2c9849205aa0ce00d1cc6b1fd5f30e5571a6b54f94dd0cd59249473427836111"
+    }
+  },
+  "skill": "skill-factory",
+  "summary": {
+    "cases": 7,
+    "improvements": 1,
+    "regressions": 0,
+    "unchanged": 6
+  },
+  "threshold": 0.3,
+  "validation": {
+    "candidate": {
+      "errors": 0,
+      "findings": [],
+      "ok": true,
+      "skill": "skill-factory",
+      "warnings": 0
+    },
+    "new_errors": [],
+    "stable": {
+      "errors": 0,
+      "findings": [],
+      "ok": true,
+      "skill": "skill-factory",
+      "warnings": 0
+    }
+  },
+  "verdict": "candidate-better",
+  "weak_areas": {
+    "candidate": [
+      "no-behaviours"
+    ],
+    "introduced": [],
+    "resolved": [
+      "trigger-vocabulary"
+    ],
+    "stable": [
+      "trigger-vocabulary",
+      "no-behaviours"
+    ]
+  }
+}

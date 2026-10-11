@@ -1,0 +1,47 @@
+{
+  "results": [
+    {
+      "kind": "test",
+      "status": "pass",
+      "detail": "exit 0"
+    },
+    {
+      "kind": "test",
+      "status": "pass",
+      "detail": "exit 0"
+    },
+    {
+      "kind": "test",
+      "status": "pass",
+      "detail": "exit 0"
+    },
+    {
+      "kind": "test",
+      "status": "pass",
+      "detail": "exit 0"
+    },
+    {
+      "kind": "test",
+      "status": "pass",
+      "detail": "exit 0"
+    },
+    {
+      "kind": "file",
+      "status": "pass",
+      "detail": "exists: LICENSE"
+    },
+    {
+      "kind": "grep",
+      "status": "pass",
+      "detail": "matched: windows-latest"
+    },
+    {
+      "kind": "judge",
+      "status": "pass",
+      "detail": "PASS by reviewer; evidence: reviewer: tests/test_generate.py asserts front[\"name\"] == skill_dir.name == expected_name, NAME_RE.match, len(name) <= 64, 0 < len(description.strip()) <= 1024, (skill_dir / resource).is_dir() is (resource in resources); pytest \"collected 49 items ... 49 passed\"; pyproject dependencies = [], dev = [\"pytest\", \"ruff\"], skillz = \"skill_factory.cli:main\"; ci.yml os: [ubuntu-latest, windows-latest] with uv run ruff check src tests and uv run pytest -q"
+    }
+  ],
+  "passed": 8,
+  "failed": 0,
+  "deferred": 0
+}

@@ -1,0 +1,65 @@
+{
+  "goal": "A developer can run skillz improve to build a challenger candidate of a skill from its evaluation proposals and captured failures, skillz capture-failure to record a real failure as a persistent evaluation case, skillz challenge to compare candidate and stable on the same evaluations with a regression and security comparison, and skillz promote to make the candidate the new stable version only by explicit command when the challenge did not get worse, with the factory's own meta-skill improved the same way",
+  "plan": [
+    {
+      "slug": "loop-foundation",
+      "goal": "Persist captured failures as eval cases (captured.py: load_captured/append_captured + capture-failure subcommand module), merge them into every eval via evaluate.evaluate_skill, and add shared candidate layout helpers in candidates.py",
+      "owns": [
+        "src/skill_factory/captured.py",
+        "src/skill_factory/candidates.py",
+        "src/skill_factory/evaluate.py",
+        "tests/test_capture_failure.py"
+      ],
+      "status": "merged",
+      "branch": "mission/06-self-improve--loop-foundation",
+      "commit": "a39fe95"
+    },
+    {
+      "slug": "improve-challenge",
+      "goal": "Add improve.py (candidate under .factory/candidates/<id>/ from proposals and captured failures, stable files untouched) and challenge.py (validation plus union of cases graded on both sides, challenge.json/challenge.md with contracted verdict); depends on loop-foundation",
+      "owns": [
+        "src/skill_factory/improve.py",
+        "src/skill_factory/challenge.py",
+        "tests/test_improve.py",
+        "tests/test_challenge.py"
+      ],
+      "status": "merged",
+      "branch": "mission/06-self-improve--improve-challenge",
+      "commit": "1d4d66f"
+    },
+    {
+      "slug": "promote-cmd",
+      "goal": "Add promote.py: promote a challenged candidate only for an acceptable non-stale verdict, atomically replace stable canonical files and spec.json, package a new awaiting-approval version, record promoted.json, roll back on package failure; never called by pipeline/run; depends on loop-foundation",
+      "owns": [
+        "src/skill_factory/promote.py",
+        "tests/test_promote.py"
+      ],
+      "status": "merged",
+      "branch": "mission/06-self-improve--promote-cmd",
+      "commit": "87df50c"
+    },
+    {
+      "slug": "loop-cli-docs",
+      "goal": "Wire capture-failure/improve/challenge/promote into skillz, prove the loop end to end via cli.main, document it in README/CHANGELOG/meta-skill, and dogfood it on skills/skill-factory with the challenge report committed under docs/evidence; depends on improve-challenge and promote-cmd",
+      "owns": [
+        "src/skill_factory/cli.py",
+        "tests/test_loop.py",
+        "tests/test_docs.py",
+        "README.md",
+        "CHANGELOG.md",
+        "skills/skill-factory/SKILL.md",
+        "docs/evidence/skill-factory-challenge.md",
+        "docs/evidence/skill-factory-challenge.json"
+      ],
+      "status": "merged",
+      "branch": "mission/06-self-improve--loop-cli-docs",
+      "commit": "3f0bee3"
+    }
+  ],
+  "facts": [],
+  "assumptions": [],
+  "blocked": [],
+  "replan_count": 0,
+  "stall_count": 0,
+  "is_complete": false
+}

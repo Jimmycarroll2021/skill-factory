@@ -1,0 +1,41 @@
+mission:
+  goal: "A developer can run skillz improve to build a challenger candidate of a skill from its evaluation proposals and captured failures, skillz capture-failure to record a real failure as a persistent evaluation case, skillz challenge to compare candidate and stable on the same evaluations with a regression and security comparison, and skillz promote to make the candidate the new stable version only by explicit command when the challenge did not get worse, with the factory's own meta-skill improved the same way"
+  base: "mission/05-pipeline-docs"
+  requirements:
+    - REQ-009
+  deliverables:
+    - src/skill_factory/
+    - tests/test_improve.py
+    - tests/test_challenge.py
+    - README.md
+    - CHANGELOG.md
+success_criteria:
+  - {kind: test, cmd: "uv run pytest -q", expect: 0}
+  - {kind: test, cmd: "uv run pytest -q tests/test_improve.py tests/test_challenge.py", expect: 0}
+  - {kind: test, cmd: "uv run skillz improve --help", expect: 0}
+  - {kind: test, cmd: "uv run skillz capture-failure --help", expect: 0}
+  - {kind: test, cmd: "uv run skillz challenge --help", expect: 0}
+  - {kind: test, cmd: "uv run skillz promote --help", expect: 0}
+  - {kind: test, cmd: "uv run skillz validate skill-factory", expect: 0}
+  - {kind: file, path: README.md, must_contain: "skillz challenge"}
+  - {kind: judge, rubric: "Tests in temporary directories prove that improve writes a candidate under .factory/candidates/ and leaves every stable canonical file byte-identical; that capture-failure appends a persistent case which a later eval and challenge both include; that challenge runs validation and the union of stable and candidate cases against both sides, writes challenge.json and challenge.md, and returns candidate-worse when a trigger case that passed on stable fails on the candidate and candidate-unsafe when the candidate has a validation error; that promote refuses a candidate-worse or candidate-unsafe verdict with a non-zero exit and changes nothing, and on an acceptable verdict replaces the stable skill, packages a new awaiting-approval version and keeps the previous version directory intact; that nothing in the pipeline or run command calls promote; and that skills/skill-factory/SKILL.md was improved through the loop with its challenge report committed as evidence and still passes skillz validate"}
+budgets:
+  tokens: 6000000
+  cost_usd: 60
+  wall_clock_min: 100
+  steps: 320
+  stall_limit: 3
+  replan_limit: 3
+  critic_rounds: 2
+permissions:
+  irreversible:
+    default: skip-and-record
+    allow:
+      - "git push origin mission/*"
+      - "gh pr create*"
+ambiguity_policy: choose-default-and-record
+quality:
+  profile: code
+  lint: "uv run ruff check src tests"
+  test: "uv run pytest -q"
+  build: "uv build"

@@ -1,0 +1,52 @@
+{
+  "results": [
+    {
+      "kind": "test",
+      "status": "pass",
+      "detail": "exit 0"
+    },
+    {
+      "kind": "test",
+      "status": "pass",
+      "detail": "exit 0"
+    },
+    {
+      "kind": "test",
+      "status": "pass",
+      "detail": "exit 0"
+    },
+    {
+      "kind": "test",
+      "status": "pass",
+      "detail": "exit 0"
+    },
+    {
+      "kind": "test",
+      "status": "pass",
+      "detail": "exit 0"
+    },
+    {
+      "kind": "test",
+      "status": "pass",
+      "detail": "exit 0"
+    },
+    {
+      "kind": "test",
+      "status": "pass",
+      "detail": "exit 0"
+    },
+    {
+      "kind": "file",
+      "status": "pass",
+      "detail": "exists: README.md"
+    },
+    {
+      "kind": "judge",
+      "status": "pass",
+      "detail": "PASS by reviewer; evidence: reviewer: \"88 passed in 2.47s\"; test_vague_skill_gets_vocabulary_and_stable_files_stay_identical; test_evaluate_includes_captured_cases; test_a_failure_captured_after_improve_is_graded_on_both_sides; test_a_gutted_candidate_is_worse_and_names_the_regressed_case; test_a_destructive_script_makes_the_candidate_unsafe_even_with_regressions; test_unacceptable_verdict_is_refused_and_changes_nothing; test_acceptable_verdict_promotes_and_packages_a_new_version (0.1.1 awaiting, 0.1.0 byte-identical); test_pipeline_and_run_never_mention_promote; docs/evidence/skill-factory-challenge.md \"Verdict: **candidate-better**\", cap-001 fail -> pass; validate skill-factory \"ok (0 errors, 0 warnings)\"; real loop: promote \"promoted csv-data-cleaner c001 as 0.1.0 (awaiting-approval)\""
+    }
+  ],
+  "passed": 9,
+  "failed": 0,
+  "deferred": 0
+}

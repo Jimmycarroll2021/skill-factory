@@ -1,0 +1,14 @@
+{
+  "name": "general-helper",
+  "description": "Helps with things.",
+  "triggers": [
+    "Remove duplicate rows from a spreadsheet",
+    "Summarise the quarterly invoices"
+  ],
+  "non_triggers": [
+    "Write a SQL query to join two database tables"
+  ],
+  "behaviours": [
+    "Always confirm before changing any files"
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "name": "csv-data-cleaner",
+  "description": "Clean messy CSV files by fixing encodings, trimming whitespace and removing duplicate rows.",
+  "license": "MIT",
+  "allowed_tools": ["Read", "Bash"],
+  "metadata": {"author": "skill-factory", "version": "1.0"},
+  "resources": ["scripts", "assets"],
+  "triggers": ["clean this CSV file", "remove duplicate rows from a spreadsheet export"],
+  "non_triggers": ["train a machine learning model on the data"],
+  "behaviours": ["write the cleaned file next to the original", "report how many rows changed"]
+}

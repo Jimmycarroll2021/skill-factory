@@ -1,0 +1,49 @@
+{
+  "goal": "A developer can run skillz validate to get a static structure and security verdict for a skill, and skillz render to get Claude and Codex install variants from the one canonical source, each with a JSON report and Markdown summary under skills/<name>/.factory/",
+  "plan": [
+    {
+      "slug": "validate-skill",
+      "goal": "Static never-executing validate_skill with all REQ-002 rules, validate.json/validate.md reports and add_parser/run handlers, proven by bad-skill fixtures firing each rule with exit 1 while a clean fixture exits 0; plus capture NAME_RE fullmatch",
+      "owns": [
+        "src/skill_factory/validate.py",
+        "tests/test_validate.py",
+        "tests/fixtures/skills/",
+        "src/skill_factory/capture.py",
+        "tests/test_capture.py"
+      ],
+      "status": "merged",
+      "branch": "mission/02-validate-render--validate-skill",
+      "commit": "c675aaf"
+    },
+    {
+      "slug": "render-variants",
+      "goal": "render_skill producing Claude and Codex (agents/openai.yaml) variants under .factory/dist with render.json/render.md and add_parser/run handlers, proven to leave canonical files byte-identical; plus ci.yml read-only permissions",
+      "owns": [
+        "src/skill_factory/render.py",
+        "tests/test_render.py",
+        ".github/workflows/ci.yml"
+      ],
+      "status": "merged",
+      "branch": "mission/02-validate-render--render-variants",
+      "commit": "7e68e22"
+    },
+    {
+      "slug": "cli-validate-render",
+      "goal": "Wire validate and render into the skillz CLI via SUBCOMMANDS/HANDLERS with end-to-end main() tests and passing --help for both (depends on validate-skill and render-variants)",
+      "owns": [
+        "src/skill_factory/cli.py",
+        "tests/test_cli.py",
+        "README.md"
+      ],
+      "status": "merged",
+      "branch": "mission/02-validate-render--cli-validate-render",
+      "commit": "a26011d"
+    }
+  ],
+  "facts": [],
+  "assumptions": [],
+  "blocked": [],
+  "replan_count": 0,
+  "stall_count": 0,
+  "is_complete": false
+}
