@@ -317,6 +317,12 @@ class GateTest(unittest.TestCase):
         code, out = self.gate("--only", "nonsense")
         self.assertEqual(code, 2, out)
 
+    def test_unreadable_skill_md_is_exit_2_not_fail(self):
+        (self.root / "skills" / "broken" / "SKILL.md").mkdir(parents=True)  # read_bytes raises
+        code, out = self.gate()
+        self.assertEqual(code, 2, out)
+        self.assertIn("could not run", out)
+
 
 if __name__ == "__main__":
     unittest.main()

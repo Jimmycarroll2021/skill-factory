@@ -582,7 +582,11 @@ def main(argv=None):
 
     skills_dir = root / "skills"
     folders = sorted(p.parent for p in skills_dir.glob("*/SKILL.md")) if skills_dir.is_dir() else []
-    skills = [Skill(root, p) for p in folders]
+    try:
+        skills = [Skill(root, p) for p in folders]
+    except OSError as e:
+        print(f"check: could not run: {e}", file=sys.stderr)
+        return 2
 
     raw, crashed = Findings(), []
     for name in ["found", *[c for c in selected if c != "found"]]:
