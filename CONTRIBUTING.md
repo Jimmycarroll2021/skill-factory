@@ -18,10 +18,10 @@ uv sync --group dev
 ```bash
 uv run pytest -q              # tests
 uv run ruff check src tests   # lint
-bash scripts/gate.sh          # lint, tests and build together, as the harness runs them
+uv build                      # package
 ```
 
-Run all three before opening a pull request. `uv build` must also succeed.
+Run all three before opening a pull request.
 
 ## Definition of done
 
@@ -33,7 +33,8 @@ Run all three before opening a pull request. `uv build` must also succeed.
   to a temporary directory and use a fake runner.
 - Paths use `pathlib`, files are read and written as UTF-8 with LF line endings, and nothing
   relies on symlinks, so the suite passes on Linux and Windows.
-- The tool never runs a generated skill's scripts and never pushes or publishes anything.
+- The tool never runs a generated skill's scripts and never pushes or publishes anything;
+  `skillz approve` and `skillz promote` are the human's commands.
 - User-visible changes are noted in [CHANGELOG.md](CHANGELOG.md).
 
 ## Pull requests
@@ -42,8 +43,6 @@ Run all three before opening a pull request. `uv build` must also succeed.
   files at most; unrelated cleanup belongs in another pull request.
 - CI must be green on Linux and Windows (ruff and pytest, see `.github/workflows/ci.yml`).
 - Describe what changed, why, and how you checked it.
-- Do not edit the quickship harness files (`scripts/`, `tests/*.sh`, `CLAUDE.md`, `BRIEF*.yaml`,
-  `docs/runs/`) unless the pull request is about the harness.
 
 ## Reporting problems
 

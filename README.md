@@ -294,14 +294,10 @@ uv run skillz install skill-factory --platform claude --scope project
 uv sync --group dev
 uv run pytest -q
 uv run ruff check src tests
-bash scripts/gate.sh
+uv build
 ```
 
 CI runs ruff and pytest on Ubuntu and Windows. See [CONTRIBUTING.md](CONTRIBUTING.md) and [CHANGELOG.md](CHANGELOG.md).
-
-## How this repository was built
-
-This repository was built unattended with [quickship](https://github.com/Jimmycarroll2021/quickship), an agent harness, in six reviewed missions: a strategist turned a one-paragraph idea into a PRD and mission briefs, and each mission ran through a planner, parallel workers in git worktrees, a read-only reviewer that graded the acceptance rubric on its own evidence, and a security reviewer. The harness and its evidence are committed: `scripts/`, `tests/*.sh`, `CLAUDE.md`, `BRIEF*.yaml`, `docs/missions/`, `docs/PRD.md`, `docs/PROGRAM.md` and the per-mission reports and ledgers under `docs/runs/`. They are not part of the `skillz` package and you can ignore them when using the tool. The package itself is `src/skill_factory/`.
 
 ## Licence
 

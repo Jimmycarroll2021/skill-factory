@@ -65,11 +65,11 @@ No design language section: the product is a CLI with no UI.
 
 | Mission | Requirements | Reviewable outcome |
 | --- | --- | --- |
-| `docs/missions/01-skeleton-capture.yaml` | REQ-001, REQ-008 | uv package, `skillz` CLI, `skillz new` from paragraph or YAML/JSON spec generating a compliant skill; LICENSE, .gitignore and the Linux/Windows CI workflow |
-| `docs/missions/02-validate-render.yaml` | REQ-002, REQ-003 | static validator with JSON/Markdown reports, and Claude/Codex variant rendering from the canonical source |
-| `docs/missions/03-evaluation.yaml` | REQ-004 | trigger and behavioural case generation, offline grading, improvement proposals, opt-in baseline runner with "skipped: no runner" |
-| `docs/missions/04-release-install.yaml` | REQ-005, REQ-006 | versioned packages with regression, approval gate, install, registry, rollback and list |
-| `docs/missions/05-pipeline-docs.yaml` | REQ-007, REQ-008 | `skillz run` end-to-end pipeline stopping at approval, README with quickstart and diagram, CONTRIBUTING, CHANGELOG |
+| 01 skeleton-capture | REQ-001, REQ-008 | uv package, `skillz` CLI, `skillz new` from paragraph or YAML/JSON spec generating a compliant skill; LICENSE, .gitignore and the Linux/Windows CI workflow |
+| 02 validate-render | REQ-002, REQ-003 | static validator with JSON/Markdown reports, and Claude/Codex variant rendering from the canonical source |
+| 03 evaluation | REQ-004 | trigger and behavioural case generation, offline grading, improvement proposals, opt-in baseline runner with "skipped: no runner" |
+| 04 release-install | REQ-005, REQ-006 | versioned packages with regression, approval gate, install, registry, rollback and list |
+| 05 pipeline-docs | REQ-007, REQ-008 | `skillz run` end-to-end pipeline stopping at approval, README with quickstart and diagram, CONTRIBUTING, CHANGELOG |
 
 ## Delivery slicing
 
@@ -99,7 +99,7 @@ No design language section: the product is a CLI with no UI.
 
 | Mission | Requirements | Reviewable outcome |
 | --- | --- | --- |
-| `docs/missions/06-self-improve.yaml` | REQ-009 | improve, capture-failure, challenge and promote subcommands with reports; meta-skill run through the loop; README and CHANGELOG updated |
+| 06 self-improve | REQ-009 | improve, capture-failure, challenge and promote subcommands with reports; meta-skill run through the loop; README and CHANGELOG updated |
 
 ## Post-MVP: model-backed quality tier (added 2026-10-11)
 
@@ -107,4 +107,4 @@ No design language section: the product is a CLI with no UI.
 
 | Mission | Requirements | Reviewable outcome |
 | --- | --- | --- |
-| `docs/missions/07-quality-tier.yaml` | REQ-010 | richer behaviour cases with rubrics, the judge stage with cross-model default, runner-backed challenge and regression, run integration, committed evidence from a real Claude run |
+| 07 quality-tier | REQ-010 | richer behaviour cases with rubrics, the judge stage with cross-model default, runner-backed challenge and regression, run integration, committed evidence from a real Claude run |

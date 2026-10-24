@@ -28,9 +28,3 @@ packages = ["src/skill_factory"]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 
-[tool.ruff]
-extend-exclude = [
-    "tests/controller.py",
-    "tests/hardening.py",
-    "tests/readiness.py",
-]

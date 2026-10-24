@@ -6,6 +6,28 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
+### Removed
+
+- The quickship v0.3 agent harness that built the project: the controller and hook scripts
+  under `scripts/`, its bash self-tests under `tests/`, `.quickship/`, `BRIEF*.yaml`,
+  `IDEA*.md`, the `*.cmd` launchers, its subagent definitions, its `CLAUDE.md` contract and
+  hook settings, its PR template, and the build records in `docs/missions/`, `docs/runs/`,
+  `docs/PROGRAM.md`, `docs/PRD_TEMPLATE.md` and `docs/design/contracts.md`. They stay in git
+  history. `CLAUDE.md` and the PR template are replaced with plain project versions; the
+  `skillz` package is unchanged.
+
+### Changed
+
+- `.claude/settings.json` keeps every guardrail the harness had, without the harness: the
+  sandbox stays on with unsandboxed commands off, and its network allowlist drops only the npm
+  and Playwright hosts this Python project never used. The deny list still blocks force pushes,
+  pushes to `main`, history rewrites, `git branch -D`, `git checkout --`, merges, `rm -rf`,
+  `pip install`, `PowerShell` and `.env` files. Its six harness hook scripts (guard, idempotency,
+  budget, anchor, stop gate, subagent check) are replaced by one stdlib hook, `.claude/hooks/guard.py`, which
+  catches what a prefix rule cannot: `push -uf`, `HEAD:main`, `rm -r -f`, `cat .env`, `cd`
+  before `git`, and the same commands inside `bash -c` or `eval`. `defaultMode: acceptEdits` and
+  the broad allow rules (`npm`, `python`, `cat`, `cd`) are gone, so more calls ask first.
+
 ### Added
 
 - The model-backed quality tier (mission 07): behaviour cases now carry a task prompt, a rubric

@@ -1,6 +1,4 @@
-.claude/worktrees/
-.claude/state/
-work/_untrusted/
+.claude/settings.local.json
 __pycache__/
 .venv/
 dist/
