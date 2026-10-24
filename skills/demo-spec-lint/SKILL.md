@@ -9,6 +9,7 @@ description: >
   (use the project's own gate), and NOT for judging whether the idea is worth building.
 argument-hint: "[path to DEMO_SPEC.md]"
 allowed-tools: Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/spec_lint.py *)
+license: MIT
 metadata:
   version: 1.0.0
   distinct_from: "the project's smoke gate (runs the demo; this only reads the spec)"

@@ -30,3 +30,7 @@ python3 -m unittest discover -s tests -v     # the gate's own self-tests
 ## Contribute
 
 Read [CONTRIBUTING.md](CONTRIBUTING.md) and [docs/SKILL-STANDARD.md](docs/SKILL-STANDARD.md).
+
+## Licence
+
+[MIT](LICENSE). Copy, change and share the skills; keep the copyright notice.

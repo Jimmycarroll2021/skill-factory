@@ -30,3 +30,5 @@ Add a line to `scripts/allowlist.txt`: `<check> <path> <text from the finding's 
 - Run `/code-review medium` and answer every finding before asking for review.
 - A human merges; agents never do.
 - Never paste secrets, `.env` contents or private transcripts.
+
+Contributions are released under the MIT licence.

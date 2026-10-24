@@ -12,3 +12,4 @@ All notable changes are recorded here. The format follows [Keep a Changelog](htt
 - `tests/test_check.py`: self-tests in which every check fails on a known-bad fixture.
 - `skills/demo-spec-lint`: the reference skill. It blocks a demo spec whose golden-path steps name no observable result.
 - CI running the gate and its self-tests on Linux and Windows.
+- MIT licence; skills carry `license: MIT` in their frontmatter.
