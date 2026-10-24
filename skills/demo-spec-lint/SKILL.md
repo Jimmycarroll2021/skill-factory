@@ -1,12 +1,6 @@
 ---
 name: demo-spec-lint
-description: >
-  Use when writing, reviewing or gating a demo spec, a golden path or a list of
-  acceptance steps (for example a DEMO_SPEC.md), or when someone asks
-  "is this spec testable?" or "can we start building?". Lints the spec and blocks
-  it when a golden-path step names no observable result, the health path is not a
-  path, or a required line is missing. NOT for running the demo or its smoke tests
-  (use the project's own gate), and NOT for judging whether the idea is worth building.
+description: "Use when writing, reviewing or gating a demo spec, a golden path or a list of acceptance steps (for example a DEMO_SPEC.md), or when someone asks \"is this spec testable?\" or \"can we start building?\". Lints the spec and blocks it when a golden-path step names no observable result, the health path is not a path, or a required line is missing. NOT for running the demo or its smoke tests (use the project's own gate), and NOT for judging whether the idea is worth building."
 argument-hint: "[path to DEMO_SPEC.md]"
 allowed-tools: Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/spec_lint.py *)
 license: MIT

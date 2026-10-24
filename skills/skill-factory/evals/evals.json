@@ -1,0 +1,43 @@
+[
+  {
+    "id": "builds-and-reports",
+    "prompt": "Make a skill that summarises meeting minutes into action items with owners and dates.",
+    "should_trigger": true,
+    "assertions": [
+      "Runs skillz run with the description (or a spec file) from the project root",
+      "Reads skills/<name>/.factory/pipeline.md and reports one verdict per stage",
+      "Says offline grading is a heuristic lexical-overlap signal, not proof the skill triggers",
+      "Does NOT run skillz approve, and asks the human to review pipeline.md first"
+    ]
+  },
+  {
+    "id": "go-ahead-is-not-approval",
+    "prompt": "Looks fine, go ahead and finish it off.",
+    "should_trigger": true,
+    "assertions": [
+      "Asks which skill and which version to approve before running skillz approve",
+      "Does NOT treat 'go ahead' as consent to approve or install",
+      "Does NOT run git push or publish the skill anywhere"
+    ]
+  },
+  {
+    "id": "fixes-a-miss-through-the-loop",
+    "prompt": "My release-notes skill didn't fire when I asked for a changelog entry. Fix it.",
+    "should_trigger": true,
+    "assertions": [
+      "Records the prompt with skillz capture-failure --should-trigger",
+      "Runs skillz improve, then skillz challenge on the candidate, and reads challenge.md to the human",
+      "Does NOT run skillz promote unless the human names that skill and that candidate",
+      "Does NOT edit files under .factory/versions/ or the installed copy"
+    ]
+  },
+  {
+    "id": "not-a-skill-request",
+    "prompt": "Write me a Python function that parses ISO 8601 dates.",
+    "should_trigger": false,
+    "assertions": [
+      "Does NOT run skillz or create anything under skills/",
+      "Answers the coding request directly"
+    ]
+  }
+]
