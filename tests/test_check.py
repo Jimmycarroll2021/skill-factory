@@ -278,6 +278,14 @@ class GateTest(unittest.TestCase):
         p.write_bytes(b"\xef\xbb\xbf" + p.read_bytes())
         self.assertFails("frontmatter", "BOM")
 
+    def test_crlf_line_endings_pass(self):
+        # Windows editors (and Python's text mode on Windows) write CRLF; the gate
+        # must read the skill, not reject it as having no frontmatter.
+        p = self.skill / "SKILL.md"
+        p.write_bytes(p.read_bytes().replace(b"\r\n", b"\n").replace(b"\n", b"\r\n"))
+        code, out = self.gate()
+        self.assertEqual(code, 0, out)
+
     def test_cases_json_not_a_list_is_a_finding(self):
         (self.skill / "evals" / "cases.json").write_text("5", encoding="utf-8")
         self.assertFails("cases", "list")

@@ -247,6 +247,7 @@ class Skill:
         except UnicodeDecodeError as e:
             self.text = raw.decode("utf-8", "replace")
             self.fm_error = f"SKILL.md is not valid UTF-8 ({e.reason} at byte {e.start})"
+        self.text = self.text.replace("\r\n", "\n")  # Windows line endings are not a defect
         if self.text.startswith("\ufeff"):
             self.text = self.text[1:]
             self.fm_error = self.fm_error or "SKILL.md starts with a UTF-8 BOM; save it as UTF-8 without a BOM"
