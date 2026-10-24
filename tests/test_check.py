@@ -244,6 +244,17 @@ class GateTest(unittest.TestCase):
                   "Checks a file that is not yet checked.")
         self.assertFails("boundary")
 
+    def test_sentence_initial_never_is_a_boundary(self):
+        self.edit("SKILL.md", "Exits 4 on a bad input file.\n  NOT for anything real (use a real skill).",
+                  "Checks a file says ok. Never approves a file it has not read.")
+        code, out = self.gate("--only", "boundary")
+        self.assertEqual(code, 0, out)
+
+    def test_incidental_lowercase_never_is_not_a_boundary(self):
+        self.edit("SKILL.md", "Exits 4 on a bad input file.\n  NOT for anything real (use a real skill).",
+                  "Checks files that never change.")
+        self.assertFails("boundary")
+
     def test_bare_script_path_in_command_fails(self):
         self.edit("SKILL.md", "python3 ${CLAUDE_SKILL_DIR}/scripts/tiny.py", "python3 scripts/tiny.py")
         self.assertFails("contract", "CLAUDE_SKILL_DIR")

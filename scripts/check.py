@@ -53,9 +53,10 @@ RESERVED = {
     "vim",
 }
 NAME_RE = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
-# Capital NOT is case-sensitive so an incidental lowercase "not" does not count.
+# Capital NOT and a sentence-initial "Never" are case-sensitive, so an incidental
+# lowercase "not" or "never" does not count.
 BOUNDARY_RE = re.compile(
-    r"\bNOT\b|(?i:\bnot for\b|\bdo not use\b|\bdon't use\b|\brefuses?\b|\bdistinct from\b"
+    r"\bNOT\b|(?:^|[.!?]\s+)Never\b|(?i:\bnot for\b|\bdo not use\b|\bdon't use\b|\brefuses?\b|\bdistinct from\b"
     r"|\b(?:use|see) [a-z0-9-]+ instead\b)"
 )
 BROCHURE_H2 = {"overview", "core capabilities", "best practices", "common pitfalls",
