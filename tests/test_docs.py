@@ -96,7 +96,7 @@ def test_every_committed_skill_validates_cleanly():
     assert len(skills) >= 2
     for skill in skills:
         report = validate.validate_skill(skill)
-        assert report.ok, (skill.name, report.findings)
+        assert report.findings == [], (skill.name, report.findings)
 
 
 def test_meta_skill_frontmatter_name_matches_directory():

@@ -5,8 +5,6 @@
       "Bash(uv run ruff*)",
       "Bash(uv run pytest*)",
       "Bash(uv run skillz*)",
-      "Bash(uv run python scripts/check.py*)",
-      "Bash(python3 scripts/check.py*)",
       "Bash(uv build*)",
       "Bash(git -C *)",
       "Bash(git status*)",

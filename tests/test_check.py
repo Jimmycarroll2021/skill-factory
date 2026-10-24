@@ -5,6 +5,7 @@ study found missing from the source repo's gates).
 Run: uv run pytest -q tests/test_check.py (or python3 -m unittest discover -s tests -p test_check.py)
 """
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -75,6 +76,13 @@ class GateTest(unittest.TestCase):
         self.addCleanup(shutil.rmtree, self.root, ignore_errors=True)
         self.skill = self.make_skill("tiny-gate")
 
+    def env(self):
+        """The real environment with HOME and USERPROFILE moved into the temp root, so no script
+        (the gate, or a skill script it runs) sees the developer's home."""
+        home = self.root / "home"
+        home.mkdir(exist_ok=True)
+        return {**os.environ, "HOME": str(home), "USERPROFILE": str(home)}
+
     def make_skill(self, name, md=SKILL_MD):
         d = self.root / "skills" / name
         for sub in ("scripts", "assets", "references", "evals"):
@@ -96,7 +104,7 @@ class GateTest(unittest.TestCase):
 
     def gate(self, *extra):
         r = subprocess.run([sys.executable, str(CHECK), "--root", str(self.root), *extra],
-                           capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=120, check=False)
+                           capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=120, check=False, env=self.env())
         return r.returncode, r.stdout + r.stderr
 
     def assertFails(self, check, needle=""):
@@ -116,7 +124,7 @@ class GateTest(unittest.TestCase):
 
     def test_this_repo_passes(self):
         r = subprocess.run([sys.executable, str(CHECK)], capture_output=True, text=True,
-                           encoding="utf-8", errors="replace", timeout=300, check=False)
+                           encoding="utf-8", errors="replace", timeout=300, check=False, env=self.env())
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
 
     # -- refuse on empty ---------------------------------------------------------
@@ -303,13 +311,13 @@ class GateTest(unittest.TestCase):
 
     def test_script_typo_flag_is_bad_input_in_exemplar(self):
         r = subprocess.run([sys.executable, str(ROOT / "skills/demo-spec-lint/scripts/spec_lint.py"), "--inptu", "x"],
-                           capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=60, check=False)
+                           capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=60, check=False, env=self.env())
         self.assertEqual(r.returncode, 3, r.stderr)
 
     def test_sample_and_input_together_refuse_in_exemplar(self):
         r = subprocess.run([sys.executable, str(ROOT / "skills/demo-spec-lint/scripts/spec_lint.py"),
                             "--input", "/nonexistent.md", "--sample"],
-                           capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=60, check=False)
+                           capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=60, check=False, env=self.env())
         self.assertEqual(r.returncode, 3, r.stdout + r.stderr)
 
     # -- harness errors ------------------------------------------------------------
