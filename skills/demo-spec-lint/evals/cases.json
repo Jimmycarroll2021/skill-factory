@@ -1,0 +1,16 @@
+[
+  {"script": "scripts/spec_lint.py", "args": ["--input", "assets/good-spec.md"], "expect_exit": 0,
+   "why": "a spec where every step names a visible result passes"},
+  {"script": "scripts/spec_lint.py", "args": ["--input", "assets/warn-spec.md", "--output", "json"], "expect_exit": 2,
+   "why": "thin seed data, empty out-of-scope and a vague result warn but do not block"},
+  {"script": "scripts/spec_lint.py", "args": ["--input", "assets/bad-spec.md"], "expect_exit": 4,
+   "why": "a step with no result and a health value that is not a path must block"},
+  {"script": "scripts/spec_lint.py", "args": ["--input", "assets/missing.md"], "expect_exit": 3,
+   "why": "an unreadable file is bad input, not a pass"},
+  {"script": "scripts/spec_lint.py", "args": [], "expect_exit": 3,
+   "why": "no input must refuse, never fall back to the sample"},
+  {"script": "scripts/spec_lint.py", "args": ["--inptu", "assets/good-spec.md"], "expect_exit": 3,
+   "why": "a mistyped flag is bad input; argparse's default exit 2 would read as WARN"},
+  {"script": "scripts/spec_lint.py", "args": ["--input", "assets/bad-spec.md", "--sample"], "expect_exit": 3,
+   "why": "--sample must not silently replace a real file"}
+]

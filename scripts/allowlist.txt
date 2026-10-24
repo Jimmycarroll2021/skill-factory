@@ -1,0 +1,4 @@
+# Reasoned exceptions to scripts/check.py findings.
+# Format: <check> <path> <text in the finding's message>  # reason
+# The gate fails on an entry without a reason, with an unknown check name,
+# or that no longer suppresses anything. Keep this file short.
