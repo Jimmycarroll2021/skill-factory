@@ -24,7 +24,8 @@ MAX_SKILL_BYTES = 5 * 1_048_576  # the whole skill (excluding .factory/) over th
 MAX_BODY_LINES = 500  # a SKILL.md body longer than this is a warning
 
 FACTORY_DIR = ".factory"
-ALLOWED_TOP_LEVEL = frozenset({"SKILL.md", FACTORY_DIR, *RESOURCE_DIRS})
+EVALS_DIR = "evals"  # committed eval prompts for scripts/check.py; render never ships it
+ALLOWED_TOP_LEVEL = frozenset({"SKILL.md", FACTORY_DIR, EVALS_DIR, *RESOURCE_DIRS})
 _MAX_FINDINGS_PER_FILE = 20
 _BINARY_SNIFF = 8192
 
@@ -297,7 +298,8 @@ def _walk(skill_dir: Path, findings: list[Finding]) -> None:
                         "path-not-allowed",
                         "error",
                         rel,
-                        f"top-level entry {rel!r} is not SKILL.md, scripts/, references/ or assets/",
+                        f"top-level entry {rel!r} is not SKILL.md, scripts/, references/, "
+                        "assets/ or evals/",
                     )
                 )
             if path.is_symlink():

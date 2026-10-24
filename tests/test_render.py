@@ -113,6 +113,16 @@ def test_dist_never_contains_factory_dir(tmp_path):
         assert not (skill_dir / ".factory" / "dist" / platform / ".factory").exists()
 
 
+def test_dist_never_contains_evals_dir(tmp_path):
+    skill_dir = _canonical_skill(tmp_path)
+    (skill_dir / "evals").mkdir()
+    (skill_dir / "evals" / "evals.json").write_text("[]\n", encoding="utf-8", newline="\n")
+    render.render_skill(skill_dir)
+    for platform in ("claude", "codex"):
+        assert (skill_dir / ".factory" / "dist" / platform / "SKILL.md").is_file()
+        assert not (skill_dir / ".factory" / "dist" / platform / "evals").exists()
+
+
 def test_name_mismatch_raises_and_run_returns_2(tmp_path, capsys):
     skill_dir = _canonical_skill(tmp_path)
     renamed = skill_dir.with_name("other-name")
