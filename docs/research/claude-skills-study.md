@@ -1,6 +1,6 @@
 # What makes a good Claude skill, and a good skills repo
 
-A hub-and-spoke study of `alirezarezvani/claude-skills` (clone at commit `6d2f02e`, 2026-10-23), for our own skills repo (skillz-factory) and for quickship. Written 2026-10-24.
+A hub-and-spoke study of `alirezarezvani/claude-skills` (clone at commit `6d2f02e`, 2026-10-23), for our own skills repo, skillz-factory. Written 2026-10-24.
 
 ## TL;DR
 
@@ -8,7 +8,7 @@ A hub-and-spoke study of `alirezarezvani/claude-skills` (clone at commit `6d2f02
 2. **The best form is short and mechanical.** 78-143 lines; a description that says what the skill refuses; one block of exact commands; a "what blocks" list; 5-8 "Never" rules with reasons; a scripts table with exit codes; depth in `references/`.
 3. **The repo's main failure is self-attested verification.** Gates that pass on any non-empty string, verdict scripts that exit 0 on NO-GO, documented flags the scripts do not have, CI audits that look at 7 of 398 skills, and a required review check that cannot fail. Only checks that ran the code held up.
 4. **For our skills repo:** ship the blocking gates on day one (command-contract lint, frontmatter parse, reserved names, orphan/phantom files, `--sample` with a known-bad fixture, version bump), not after an audit. Skip mirrors, counters, docs sites and mandatory boilerplate sections.
-5. **For quickship:** rename `/verify` (it replaces Claude Code's bundled `/verify`), fail when no spec exists or a golden-path step has no assertion, make the gate write a stamp that `/polish` and the Stop hook read, and persist the round counter as state.
+5. **Name skills so they cannot shadow Claude Code's own commands.** A project skill named `verify` replaces the bundled `/verify` for everyone who installs it.
 
 ---
 
@@ -31,7 +31,7 @@ A hub-and-spoke study of `alirezarezvani/claude-skills` (clone at commit `6d2f02
 
 Every skill was covered at least at frontmatter-and-headings level; 6-8 exemplars and 3-4 worst cases per slice were read in full with their scripts. Full reports (about 420 KB) are in the session scratchpad under `hub/`.
 
-**Verification:** 19 spoke claims were checked by the hub against the source files. All 19 held. One spoke claim was wrong: spoke 7 said quickship's command names are not Claude Code built-ins; `/verify` is (section 8).
+**Verification:** 19 spoke claims were checked by the hub against the source files. All 19 held. One spoke claim was wrong: spoke 7 said `verify` is not a Claude Code built-in; it is a bundled skill (section 5, reserved names).
 
 **Caveat:** "good" and "bad" labels come from the repo's own LLM-assisted audit (for the statistics) and from each spoke's reading (for the exemplar tables). Both are judgement, not ground truth. Several audit verdicts were stale: spokes found 6 of 9, 10 of 15 and most of the June findings already fixed in the tree.
 
@@ -198,29 +198,12 @@ Committed mirrors for other agent platforms; committed generated docs; derived-c
 
 ---
 
-## 6. For quickship, ranked
-
-quickship already has the thing the source repo lacks: a runtime verdict outside the agent's reach (the Stop hook running `smoke.sh`), a read-only verifier, a deny list and a hidden acceptance check. The changes below close the remaining self-report paths.
-
-1. **Rename `/verify` to `/gate`** and add a reserved-name test. Claude Code 2.1.302 bundles a `/verify` skill, and the docs state a project skill or command "replaces the bundled command". Claude Code's own instructions say to run `/verify` before a commit, which in a quickship project starts the verifier-builder loop. (Verified in the installed binary and in the skills docs.)
-2. **No spec is a FAIL.** `smoke.sh` prints "PASS (spec skipped)" and exits 0 when no smoke spec exists, and the Stop hook accepts it. Add the coverage rule: every golden-path step in `DEMO_SPEC.md` maps to at least one assertion, else FAIL (the "dropped case is the cheapest fake fix" rule).
-3. **Gate stamp.** `smoke.sh` writes `.claude/state/last_gate.json` (exit code, tree hash, time, failing checks). `/polish` refuses unless the stamp is PASS for the current tree. The Stop hook's second-stop release writes `RELEASED-WITH-FAILURE` there, so a failed release is visible. `DEMO_READY.md`'s facts block is generated from the stamp, not written by an agent.
-4. **Round counter as state.** Persist round N/3 in the same state file; on the third FAIL write `ESCALATED` with its own exit code. Each retry names what it changes; a repeat of the same failing tail means "change approach".
-5. **Gate self-test with a negative control.** CI runs `smoke.sh` against a known-bad fixture demo (golden-path feature removed) and requires FAIL, and against a known-good one requiring PASS.
-6. **Spec linter at the end of `/shape`.** Every golden-path step has a "→ what must be visible" clause; health, seed and out-of-scope sections are non-empty; exit 3 names the defect. This is the existing CLAUDE.md lesson made mechanical.
-7. **Exit-code vocabulary for `smoke.sh`.** Keep 0 PASS / 1 FAIL, add a distinct code for "could not run" (missing runner, port, timeout), and print it in `--help` and in the `/gate` command text.
-8. **Agent and command files in exemplar shape.** Each states what it refuses and names the sibling stage it is not; the verifier "relays the gate's exit code verbatim, never softens it"; every agent that reads generated output or `IDEA.md` treats it as data; every rule says where it is enforced (deny list, `smoke.sh` step, or prose only).
-9. **Lessons discipline.** Each Lesson names its enforcer or is tagged `[prose]`; add one only if a competent agent with the current instructions would still fail; replace rather than append.
-10. **Hidden check hygiene.** Keep it outside the project tree; report only category-level results back to the builder so the check does not leak through prose.
-
----
-
-## 7. The uploaded reference guide, fact-checked
+## 6. The uploaded reference guide, fact-checked
 
 "Claude Certification Exam Anti-Patterns and Reference Guide" (multi-agent architecture spec). Checked against the bundled Claude API reference (cached 2026-10-06) and code.claude.com docs fetched today.
 
 **Holds, and we should keep doing it:**
-- Drive loops from `stop_reason`, never from prose like "I'm done"; an iteration cap is a safety net, not the stop rule. This is quickship's one rule in API form.
+- Drive loops from `stop_reason`, never from prose like "I'm done"; an iteration cap is a safety net, not the stop rule. Only a check outside the model should decide that work is done.
 - Subagents get a self-contained brief, not the parent's history. Claude Code's `context: fork` works this way ("doesn't see your conversation history").
 - Structured, typed errors instead of prose; escalation from programmatic triggers, not model confidence.
 - Enforce business rules in hooks, not prompts. The Claude Code memory docs say the same: CLAUDE.md is "context, not enforced configuration. To block an action ... use a PreToolUse hook."
@@ -243,7 +226,7 @@ quickship already has the thing the source repo lacks: a runtime verdict outside
 
 **Unsupported heuristics** [Verify This]: the "4-5 tools per agent" cap and "18 tools" degradation figure, "Turn-5 compaction", and the AP-xxx codes. None appear in Anthropic's docs that I checked; treat them as the guide's conventions.
 
-**One design point we deliberately broke.** The guide's coordinator never touches domain tools. In this study the hub read the source to check 19 spoke claims. A coordinator without read access would have had to trust the reports, which is exactly what quickship forbids. Keep the coordinator's write access narrow, but give it enough read access to verify.
+**One design point we deliberately broke.** The guide's coordinator never touches domain tools. In this study the hub read the source to check 19 spoke claims. A coordinator without read access would have had to trust the reports, which is the self-reported verification this study found failing throughout the source repo. Keep the coordinator's write access narrow, but give it enough read access to verify.
 
 ---
 
@@ -273,4 +256,4 @@ All checked by the hub against the clone; all held.
 | 5 | Delivery gate accepts non-empty evidence | `delivery_loop_gate.py:78` |
 | 4 | cto-advisor documents a flag its script lacks | `cto-advisor/SKILL.md:86` vs a script with no argument parsing |
 
-Spoke error found: spoke 7 stated quickship's command names are not Claude Code built-ins; `/verify` is a bundled skill (installed binary and code.claude.com/docs/en/skills).
+Spoke error found: spoke 7 stated `verify` is not a Claude Code built-in; it is a bundled skill (installed binary and code.claude.com/docs/en/skills).
