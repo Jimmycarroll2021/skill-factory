@@ -1,0 +1,33 @@
+[
+  {
+    "id": "blocks-untestable-step",
+    "prompt": "Here's my DEMO_SPEC.md for an inventory tracker (assets/bad-spec.md). Can we start building?",
+    "should_trigger": true,
+    "assertions": [
+      "Runs scripts/spec_lint.py --input on the spec and reports exit 4 / BLOCK",
+      "Names step 1 ('Open the dashboard') as having no observable result",
+      "Names the health value 'localhost:3000' as not being a path",
+      "Proposes a '→ what must be visible' clause for step 1 and asks the author to confirm it",
+      "Does NOT say the spec is ready to build"
+    ]
+  },
+  {
+    "id": "warns-without-blocking",
+    "prompt": "Quick sanity check on this receipt-splitter spec before I hand it over (assets/warn-spec.md).",
+    "should_trigger": true,
+    "assertions": [
+      "Reports exit 2 / WARN with the vague result, the thin seed data and the empty out-of-scope section",
+      "Leaves the decision to the author",
+      "Does NOT call the spec blocked or refuse to hand it over"
+    ]
+  },
+  {
+    "id": "not-a-smoke-test",
+    "prompt": "The demo is built. Run the smoke tests and tell me if the golden path works.",
+    "should_trigger": false,
+    "assertions": [
+      "Does NOT run spec_lint.py as a substitute for the project's smoke gate",
+      "Does NOT report the golden path as working based on the spec alone"
+    ]
+  }
+]
