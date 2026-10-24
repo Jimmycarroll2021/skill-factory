@@ -255,7 +255,7 @@ skills/
 
 ## What the factory checks
 
-- **Validation rules** (static, nothing is executed): frontmatter and kebab-case name matching the directory, description length, allowed paths (`SKILL.md`, `scripts/`, `references/`, `assets/`, `.factory/`), file and total size limits, and patterns for secrets, network calls and destructive shell in scripts. A green report is not a security guarantee: pattern matching has false negatives.
+- **Validation rules** (static, nothing is executed): frontmatter and kebab-case name matching the directory, description length, allowed paths (`SKILL.md`, `scripts/`, `references/`, `assets/`, `evals/`, `.factory/`; render never ships `evals/` or `.factory/`), file and total size limits, and patterns for secrets, network calls and destructive shell in scripts. A green report is not a security guarantee: pattern matching has false negatives.
 - **Trigger tests**: positive and negative prompts are generated from the spec and graded offline by a lexical-overlap scorer against the skill's name and description. This is a heuristic signal, not evidence that a model will trigger the skill.
 - **Behaviour cases**: generated from the spec. With the opt-in `--runner claude|codex` and that executable on PATH, each case runs with and without the skill and the difference is graded. Otherwise the report records `skipped: no runner` and the pipeline still completes.
 - **Regression**: the previous approved version's trigger cases are re-run against the candidate. A newly failing case stops the pipeline unless you package with `--allow-regression`.
@@ -288,16 +288,30 @@ uv run skillz approve skill-factory 0.1.0
 uv run skillz install skill-factory --platform claude --scope project
 ```
 
+## The skill standard
+
+The skills committed under `skills/` also follow [docs/SKILL-STANDARD.md](docs/SKILL-STANDARD.md), drawn from a study of a large public skills collection ([docs/research/claude-skills-study.md](docs/research/claude-skills-study.md)). What predicted a good skill was wiring and honesty: scripts whose documented flags exist, exit codes that follow the verdict, and a description that says what the skill refuses. The most common failure was self-reported verification. `scripts/check.py` (standard library only) enforces the standard and runs in CI next to `skillz validate`:
+
+```bash
+uv run python scripts/check.py   # last line is PASS or FAIL; exit 0 PASS, 1 FAIL, 2 could not run
+```
+
+| Skill | What it does |
+|---|---|
+| [skill-factory](skills/skill-factory/SKILL.md) | Drives `skillz` to build, check, package and install a skill. |
+| [demo-spec-lint](skills/demo-spec-lint/SKILL.md) | The standard's reference example: blocks a demo spec whose golden-path steps name no observable result. |
+
 ## Development
 
 ```bash
 uv sync --group dev
 uv run pytest -q
 uv run ruff check src tests
+uv run python scripts/check.py
 uv build
 ```
 
-CI runs ruff and pytest on Ubuntu and Windows. See [CONTRIBUTING.md](CONTRIBUTING.md) and [CHANGELOG.md](CHANGELOG.md).
+CI runs ruff, pytest and `scripts/check.py` on Ubuntu and Windows. See [CONTRIBUTING.md](CONTRIBUTING.md) and [CHANGELOG.md](CHANGELOG.md).
 
 ## Licence
 

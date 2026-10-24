@@ -18,10 +18,11 @@ uv sync --group dev
 ```bash
 uv run pytest -q              # tests
 uv run ruff check src tests   # lint
+uv run python scripts/check.py  # the skill-standard gate over skills/
 uv build                      # package
 ```
 
-Run all three before opening a pull request.
+Run all four before opening a pull request.
 
 ## Definition of done
 
@@ -35,13 +36,18 @@ Run all three before opening a pull request.
   relies on symlinks, so the suite passes on Linux and Windows.
 - The tool never runs a generated skill's scripts and never pushes or publishes anything;
   `skillz approve` and `skillz promote` are the human's commands.
+- A skill under `skills/` follows [docs/SKILL-STANDARD.md](docs/SKILL-STANDARD.md): copy the shape of
+  `skills/demo-spec-lint/`, write its cases first (one that passes, one that must fail, one bad
+  input), and pass both `scripts/check.py` and `skillz validate`. A wrong check is changed in its
+  own commit with a self-test in `tests/test_check.py`; an exception goes in
+  `scripts/allowlist.txt` with a reason.
 - User-visible changes are noted in [CHANGELOG.md](CHANGELOG.md).
 
 ## Pull requests
 
 - Keep a pull request small and about one outcome. Aim for roughly 500 changed lines and 10
   files at most; unrelated cleanup belongs in another pull request.
-- CI must be green on Linux and Windows (ruff and pytest, see `.github/workflows/ci.yml`).
+- CI must be green on Linux and Windows (ruff, pytest and `scripts/check.py`, see `.github/workflows/ci.yml`).
 - Describe what changed, why, and how you checked it.
 
 ## Reporting problems

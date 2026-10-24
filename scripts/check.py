@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""check.py - the only thing in skillz-factory that says PASS.
+"""check.py - the skill-standard gate for skill-factory's committed skills.
 
 Runs every repo gate over skills/<name>/ and prints one line per finding, then
 PASS or FAIL as the last line. Stdlib only. Each check's docstring names the
@@ -557,7 +557,7 @@ def apply_allowlist(findings, entries, f_out):
 # ---------------------------------------------------------------- main
 
 def main(argv=None):
-    ap = argparse.ArgumentParser(description="Run the skillz-factory gates. Exit 0 PASS, 1 FAIL, 2 could not run.")
+    ap = argparse.ArgumentParser(description="Run the skill-standard gates. Exit 0 PASS, 1 FAIL, 2 could not run.")
     ap.add_argument("--root", default=str(Path(__file__).resolve().parent.parent), help="repo root (default: this repo)")
     ap.add_argument("--only", default="", help="comma-separated subset of: " + ", ".join(ALL_CHECKS))
     ap.add_argument("--json", action="store_true", help="print findings as JSON")

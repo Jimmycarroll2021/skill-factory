@@ -17,7 +17,7 @@ skills/<name>/
 
 ## SKILL.md
 
-1. Frontmatter parses as a strict YAML subset and uses only keys Claude Code reads. `[CI: frontmatter]`
+1. Frontmatter parses as a strict YAML subset and uses only keys Claude Code reads. `[CI: frontmatter]` The skill also passes `skillz validate`, whose parser has no block scalars, so write `description` on one line. `[CI: tests/test_docs.py]`
 2. `name` is kebab-case and equals the folder name. `[CI: frontmatter]`
 3. `name` is not a bundled Claude Code command or skill (`verify`, `review`, `simplify`, ...). A project skill replaces the bundled one. `[CI: reserved-name]`
 4. `description` = when to use it (concrete situations or phrases) + what it does, including what it refuses + a NOT-for clause naming the alternative. `[CI: boundary]` checks a refusal or NOT clause exists; `[prose]` for the rest.

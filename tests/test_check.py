@@ -2,7 +2,7 @@
 class the gate exists for fails on its own check (the negative control the
 study found missing from the source repo's gates).
 
-Run: python3 -m unittest discover -s tests -v
+Run: uv run pytest -q tests/test_check.py (or python3 -m unittest discover -s tests -p test_check.py)
 """
 import json
 import shutil
@@ -96,7 +96,7 @@ class GateTest(unittest.TestCase):
 
     def gate(self, *extra):
         r = subprocess.run([sys.executable, str(CHECK), "--root", str(self.root), *extra],
-                           capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=120)
+                           capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=120, check=False)
         return r.returncode, r.stdout + r.stderr
 
     def assertFails(self, check, needle=""):
@@ -116,7 +116,7 @@ class GateTest(unittest.TestCase):
 
     def test_this_repo_passes(self):
         r = subprocess.run([sys.executable, str(CHECK)], capture_output=True, text=True,
-                           encoding="utf-8", errors="replace", timeout=300)
+                           encoding="utf-8", errors="replace", timeout=300, check=False)
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
 
     # -- refuse on empty ---------------------------------------------------------
@@ -261,7 +261,7 @@ class GateTest(unittest.TestCase):
 
     def test_other_skill_paths_are_not_resolved_here(self):
         self.edit("SKILL.md", "--input assets/ok.txt\n```", "--input assets/ok.txt\n```\n\n```bash\npython3 ../other/scripts/tiny.py --whatever\n```")
-        code, out = self.gate("--only", "contract")
+        _code, out = self.gate("--only", "contract")
         self.assertNotIn("--whatever", out)
 
     def test_tilde_and_indented_fences_are_checked(self):
@@ -303,13 +303,13 @@ class GateTest(unittest.TestCase):
 
     def test_script_typo_flag_is_bad_input_in_exemplar(self):
         r = subprocess.run([sys.executable, str(ROOT / "skills/demo-spec-lint/scripts/spec_lint.py"), "--inptu", "x"],
-                           capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=60)
+                           capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=60, check=False)
         self.assertEqual(r.returncode, 3, r.stderr)
 
     def test_sample_and_input_together_refuse_in_exemplar(self):
         r = subprocess.run([sys.executable, str(ROOT / "skills/demo-spec-lint/scripts/spec_lint.py"),
                             "--input", "/nonexistent.md", "--sample"],
-                           capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=60)
+                           capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=60, check=False)
         self.assertEqual(r.returncode, 3, r.stdout + r.stderr)
 
     # -- harness errors ------------------------------------------------------------

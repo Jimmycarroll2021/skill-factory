@@ -1,6 +1,6 @@
 # What makes a good Claude skill, and a good skills repo
 
-A hub-and-spoke study of `alirezarezvani/claude-skills` (clone at commit `6d2f02e`, 2026-10-23), for our own skills repo, skillz-factory. Written 2026-10-24.
+A hub-and-spoke study of `alirezarezvani/claude-skills` (clone at commit `6d2f02e`, 2026-10-23), for our own skills repo, skillz-factory. Written 2026-10-24. skillz-factory has since moved into skill-factory; paths below are as they were.
 
 ## TL;DR
 
