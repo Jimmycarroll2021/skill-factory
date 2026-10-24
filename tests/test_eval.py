@@ -178,3 +178,34 @@ def test_content_words_are_ordered_unique_and_without_stop_words():
 def test_method_says_heuristic():
     assert "heuristic" in ev.METHOD
     assert "lexical overlap" in ev.METHOD
+
+
+def test_boundary_sentences_in_the_description_are_not_trigger_words():
+    # "Do not use it for X" tells the model to stay away from X; its words must not make
+    # a request about X look like a match.
+    description = (
+        "Draft release notes from merged pull requests. Use it when the user asks for a "
+        "changelog entry. Do not use it for internal design documents."
+    )
+    off_topic = "Write internal design documents for the team"
+    on_topic = "Write a changelog entry from the merged pull requests"
+    assert ev.match_score(off_topic, "release-notes", description) < ev.MATCH_THRESHOLD
+    assert ev.match_score(on_topic, "release-notes", description) >= ev.MATCH_THRESHOLD
+
+
+def test_a_negation_in_the_main_sentence_keeps_its_trigger_words():
+    description = "Fixes CSV files that do not parse. Use when asked."
+    assert ev.match_score("fix csv files", "tool", description) >= ev.MATCH_THRESHOLD
+
+
+def test_vague_proposal_suggests_whole_requests_not_a_keyword_list():
+    spec = SkillSpec(
+        name="general-helper",
+        description="Helps.",
+        triggers=["Remove duplicate rows from a spreadsheet"],
+    )
+    cases = ev.generate_cases(spec)
+    proposals = {p.area: p for p in ev.propose_improvements(spec, cases, ev.grade_offline(cases, spec))}
+    text = proposals["vague-description"].proposal
+    assert "trigger words such as" not in text
+    assert '"Remove duplicate rows from a spreadsheet"' in text
