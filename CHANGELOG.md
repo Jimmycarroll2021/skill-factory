@@ -90,6 +90,9 @@ All notable changes to this project are documented here. The format follows
 - Version verification never opens a FIFO or device file; a special file in a version directory
   is reported as not matching the manifest, and a `receipt.json` that is not a regular file is
   refused without being read.
+- Cases are de-duplicated across sources by what they check (kind, prompt, assertions and
+  expected markers), not by prompt alone, so two `evals.json` entries with one prompt and
+  different assertions are both judged, in `eval`, `package` and `challenge`.
 - An `evals/evals.json` entry without an `id` is named after a digest of its prompt
   (`evl-<10 hex>`) instead of its position, so reordering or inserting entries cannot hand one
   prompt's history to another in the receipt's comparison.

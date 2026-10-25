@@ -240,3 +240,26 @@ def test_an_id_less_eval_keeps_its_identity_when_the_file_is_reordered(root):
     # the digest ignores whitespace differences, so a reflowed prompt is still the same case
     _write_evals(skill, [{"prompt": "Summarise this changelog", "assertions": ["Keeps every heading"]}])
     assert evalcases.load_evals(skill)[0].id == before["Summarise  this\nchangelog"]
+
+
+def test_two_entries_with_one_prompt_and_different_assertions_are_both_judged(root):
+    """De-duplication is by what a case checks, not by its prompt alone: a second rubric for the
+    same prompt is a second behaviour case, in evaluation and in the challenge union."""
+    from skill_factory import challenge, evaluate
+
+    skill = _bare(root)
+    prompt = "Draft release notes from this changelog"
+    _write_evals(
+        skill,
+        [
+            {"id": "format", "prompt": prompt, "assertions": ["Uses Markdown headings"]},
+            {"id": "secrets", "prompt": prompt, "assertions": ["Must NOT expose credentials"]},
+        ],
+    )
+    cases = {c.id: c for c in evalcases.all_cases(skill, evaluate.load_spec(skill))}
+    assert cases["evl-format-beh"].rubric == ["Uses Markdown headings"]
+    assert cases["evl-secrets-beh"].rubric == ["Must NOT expose credentials"]
+    # the same prompt with the same rubric is still one case
+    assert [c.id for c in cases.values() if c.kind == "positive"] == ["evl-format"]
+    union = challenge._union(evalcases.load_evals(skill), [], [], [])
+    assert {c.id for c, _ in union} >= {"evl-format-beh", "evl-secrets-beh"}

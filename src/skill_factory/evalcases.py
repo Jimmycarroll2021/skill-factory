@@ -307,22 +307,36 @@ def load_evals(skill_dir: Path) -> list[Case]:
     return cases
 
 
-def _prompt_key(case: Case) -> tuple[str, str]:
-    return (case.kind, " ".join(case.prompt.lower().split()))
+def _norm(text: str) -> str:
+    return " ".join(text.lower().split())
+
+
+def case_key(case: Case) -> tuple:
+    """What a case checks: its kind, prompt and criteria (rubric and expected markers).
+
+    Two cases with one prompt but different assertions are two checks, so both are kept; the
+    same prompt with the same criteria from two sources is one check, and the first source wins.
+    """
+    return (
+        case.kind,
+        _norm(case.prompt),
+        tuple(sorted(_norm(item) for item in case.rubric)),
+        tuple(sorted(_norm(item) for item in case.expected)),
+    )
 
 
 def _merge(generated: list[Case], *extra: list[Case]) -> list[Case]:
-    """The generated cases unchanged, then each extra case whose (kind, prompt) is new.
+    """The generated cases unchanged, then each extra case whose ``case_key`` is new.
 
     Generated ids are pinned by the spec and may legitimately repeat a prompt (a trigger-derived
     behaviour case beside a behaviour-derived one), so only the extra sources are de-duplicated,
     first occurrence winning: an evals entry beats a captured failure with the same prompt.
     """
     merged = list(generated)
-    seen = {_prompt_key(case) for case in merged}
+    seen = {case_key(case) for case in merged}
     for cases in extra:
         for case in cases:
-            key = _prompt_key(case)
+            key = case_key(case)
             if key not in seen:
                 seen.add(key)
                 merged.append(case)
@@ -331,7 +345,7 @@ def _merge(generated: list[Case], *extra: list[Case]) -> list[Case]:
 
 def all_cases(skill_dir: Path, spec: SkillSpec) -> list[Case]:
     """Every case for a skill: generated from the spec, then evals.json, then captured failures,
-    the first occurrence of a (kind, prompt) winning across sources."""
+    the first occurrence of a ``case_key`` (kind, prompt, criteria) winning across sources."""
     # captured imports Case from this module, so it is resolved at call time, not at import.
     from skill_factory import captured
 

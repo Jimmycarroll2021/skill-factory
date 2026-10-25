@@ -68,7 +68,7 @@ def _identity(skill_md: Path, spec: SkillSpec) -> SkillSpec:
 
 
 def _key(case: evalcases.Case) -> tuple:
-    return (case.kind, " ".join(case.prompt.lower().split()), tuple(case.expected))
+    return evalcases.case_key(case)  # kind, prompt and criteria: a second rubric is a second case
 
 
 def _union(
