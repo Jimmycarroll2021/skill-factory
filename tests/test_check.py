@@ -334,6 +334,14 @@ class GateTest(unittest.TestCase):
         self.edit("scripts/nested/tiny.py", 'code = 0 if text == "ok" else 4', "code = 0")
         self.assertFails("cases", "expected 4")
 
+    def test_quoted_script_path_and_continuation_flags_are_checked(self):
+        cmd = "python3 ${CLAUDE_SKILL_DIR}/scripts/tiny.py --input assets/ok.txt"
+        self.edit("SKILL.md", cmd, 'python3 "${CLAUDE_SKILL_DIR}/scripts/tiny.py" --nonexistent')
+        self.assertFails("contract", "--nonexistent")
+        self.edit("SKILL.md", 'python3 "${CLAUDE_SKILL_DIR}/scripts/tiny.py" --nonexistent',
+                  "python3 ${CLAUDE_SKILL_DIR}/scripts/tiny.py \\\n  --also-missing")
+        self.assertFails("contract", "--also-missing")
+
     # -- harness errors ------------------------------------------------------------
     def test_unknown_check_name_is_exit_2(self):
         code, out = self.gate("--only", "nonsense")

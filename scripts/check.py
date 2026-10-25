@@ -25,6 +25,7 @@ import ast
 import hashlib
 import json
 import re
+import shlex
 import subprocess
 import sys
 from pathlib import Path
@@ -318,15 +319,34 @@ def check_boundary(root, skills, f):
             f.add("boundary", s.path(), "description has no refusal or NOT-for clause naming what the skill does not do")
 
 
+def command_args(rest):
+    """The arguments after a script path, read the way the shell reads them: a closing quote
+    around the path is dropped, quoting is kept, and reading stops at an operator or comment."""
+    if rest[:1] in ("\"", "'"):
+        rest = rest[1:]
+    lex = shlex.shlex(rest, posix=True, punctuation_chars=";&|<>")
+    lex.whitespace_split = True
+    args = []
+    try:
+        for token in lex:
+            if set(token) <= set(";&|<>"):
+                break
+            args.append(token)
+    except ValueError:  # unbalanced quote: fall back to plain words rather than check nothing
+        return rest.split()
+    return args
+
+
 def check_contract(root, skills, f):
     """Every command in a fenced block must name a real script and only flags
     that script declares. 11 of 36 engineering-team skills and 11 of 29
     compliance-os calls documented flags their scripts did not have."""
     for s in skills:
         for block in fenced_blocks(s.body):
-            for line in block.splitlines():
+            # A backslash-newline continues the command, as in the shell.
+            for line in re.sub(r"\\\n[ \t]*", " ", block).splitlines():
                 for m in SCRIPT_REF_RE.finditer(line):
-                    rel, args = m.group(1), m.group(2).split()
+                    rel, args = m.group(1), command_args(line[m.end(1):])
                     if not line[:m.start()].endswith(SKILL_DIR):
                         f.add("contract", s.path(), f"use {SKILL_DIR}{rel}: a bare {rel} only works from the skill folder, not once installed")
                     target = s.dir / rel
