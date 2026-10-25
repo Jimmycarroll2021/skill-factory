@@ -34,12 +34,15 @@ _NEGATIVE_RE = re.compile(r"\b(?:not|never|nor|cannot)\b|n't\b", re.IGNORECASE)
 # Any negative statement: what capture files as a non-trigger and what the validator accepts
 # as the description saying where the skill stops.
 NEGATIVE_RE = _NEGATIVE_RE
-# An explicit exclusion ("Do not use it for X", "NOT for X", "Never Y"). The grader drops these
+# An explicit exclusion ("Do not use it for X", "NOT for X", "Never Y", "It does not handle X"). The grader drops these
 # sentences from a description's trigger words; a plain negation such as "files that do not
 # parse" describes the job and stays.
 EXCLUSION_RE = re.compile(
     r"\bNOT\b|(?:^|[.!?]\s+)Never\b|(?i:\bnot for\b|\bdo not use\b|\bdon't use\b"
-    r"|\bnever use\b|\brefuses?\b|\bdistinct from\b|\b(?:use|see) [a-z0-9-]+ instead\b)"
+    r"|\bnever use\b|\brefuses?\b|\bdistinct from\b|\b(?:use|see) [a-z0-9-]+ instead\b"
+    # "It does not handle PDFs": what the skill will not take. "files that do not parse" stays.
+    r"|\b(?:(?:does|do|will|can) not|doesn't|don't|won't|can't|cannot)"
+    r" (?:handle|support|cover|accept|process|work (?:on|with)|apply to|deal with)\b)"
 )
 _TRIGGER_RE = re.compile(
     r"\bwhen(?:ever)?\b|\buse (?:it|this)\b|\bif the user\b|\btriggers? (?:on|when)\b",

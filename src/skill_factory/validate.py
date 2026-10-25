@@ -130,6 +130,13 @@ _FENCE_RE = re.compile(
 _SCRIPT_CALL_RE = re.compile(
     _REL_START + r"(scripts/[A-Za-z0-9_./-]+\.py)((?:\s+[^\s|;&>#]+)*)"
 )
+# What may precede a script path for the line to run it: a command start, an optional
+# `uv run` and Python interpreter, and the skill-dir prefix. A path in a string literal
+# (`Path("scripts/x.py")`) is only named, so it gets the path checks, not missing-script.
+_INVOCATION_PREFIX_RE = re.compile(
+    r"(?:.*(?:[;|]|&&)\s*)?(?:\$\s+)?(?:uv\s+run\s+)?(?:(?:python3?|py)(?:\s+-\S+)*\s*)?"
+    r"[\"']?(?:\$\{CLAUDE_SKILL_DIR\}/|\./)?\s*"
+)
 
 
 @dataclass
@@ -314,13 +321,19 @@ def _script_options(path: Path) -> set[str] | None:
             and node.func.attr == "add_argument"
         ):
             declared = True
-            for arg in node.args:
-                if (
-                    isinstance(arg, ast.Constant)
-                    and isinstance(arg.value, str)
-                    and arg.value.startswith("-")
-                ):
-                    options.add(arg.value)
+            flags = [
+                arg.value
+                for arg in node.args
+                if isinstance(arg, ast.Constant)
+                and isinstance(arg.value, str)
+                and arg.value.startswith("-")
+            ]
+            options.update(flags)
+            if any(
+                kw.arg == "action" and ast.unparse(kw.value).endswith("BooleanOptionalAction")
+                for kw in node.keywords
+            ):
+                options.update(f"--no-{f[2:]}" for f in flags if f.startswith("--"))
     # A script that parses its arguments another way (sys.argv, getopt, click) is not checked.
     return options if declared else None
 
@@ -381,7 +394,8 @@ def _check_quality(skill_dir: Path, name, description, body: str, add) -> None:
     for block in _FENCE_RE.finditer(body):
         for line in block.group(2).splitlines():
             for match in _SCRIPT_CALL_RE.finditer(line):
-                commands.append((match.group(1), match.group(2).split()))
+                if _INVOCATION_PREFIX_RE.fullmatch(line[: match.start(1)].strip()):
+                    commands.append((match.group(1), match.group(2).split()))
     run_scripts = {rel for rel, _ in commands}
     for rel in sorted(named - run_scripts):
         if not (skill_dir / rel).is_file():
@@ -423,7 +437,11 @@ def _check_quality(skill_dir: Path, name, description, body: str, add) -> None:
         for arg in args:
             if arg.startswith("--") or re.fullmatch(r"-[A-Za-z]", arg):
                 flag = arg.split("=", 1)[0]
-                if flag not in options:
+                # argparse accepts any unambiguous prefix of a long option by default.
+                abbreviates = flag.startswith("--") and any(
+                    o.startswith(flag) for o in options if o.startswith("--")
+                )
+                if flag not in options and not abbreviates:
                     add("script-flag-missing", f"{rel} declares no option {flag}, so "
                         "the documented command fails")
 

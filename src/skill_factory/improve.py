@@ -91,11 +91,21 @@ def _new_words(prompts: list[str], known: set[str]) -> list[str]:
     return found
 
 
-def _fit(description: str, tagged: list[tuple[str, str]]) -> list[tuple[str, str]]:
+def _task_word(word: str, avoid: set[str]) -> bool:
+    found = evalcases.content_words(word)
+    return bool(found) and found[0] not in avoid
+
+
+def _fit(
+    description: str, tagged: list[tuple[str, str]], avoid: set[str] = frozenset()
+) -> list[tuple[str, str]]:
     """Drop requests from the end until the extended description is at most MAX_DESCRIPTION.
 
-    If not even one whole request fits, shorten the first one word by word, down to
-    _MIN_SITUATION_WORDS, rather than add nothing.
+    If not even one whole request fits, shorten the first one rather than add nothing: keep
+    only its task words (content words not in ``avoid``, the description's own words and
+    those of prompts the skill must not take), then drop them from the end down to
+    _MIN_SITUATION_WORDS. A request with no task words left is skipped, so a generic
+    prefix such as "Please help me" is never added.
     """
 
     def fits(items: list[tuple[str, str]]) -> bool:
@@ -108,7 +118,9 @@ def _fit(description: str, tagged: list[tuple[str, str]]) -> list[tuple[str, str
         kept.pop()
     if not kept and tagged:
         phrase, area = tagged[0]
-        words = phrase.split()
+        words = [w for w in phrase.split() if _task_word(w, avoid)]
+        if not words:
+            return []
         while len(words) > _MIN_SITUATION_WORDS and not fits([(" ".join(words), area)]):
             words.pop()
         if fits([(" ".join(words), area)]):
@@ -185,7 +197,15 @@ def _plan(
                 {"area": proposal.area, "reason": "needs human judgement; not applied"}
             )
 
-    kept = _fit(spec.description, tagged)
+    # Words of prompts the skill must not take: a shortened request keeping only these would
+    # raise the negatives as much as the positives.
+    negative = {
+        w
+        for case in cases
+        if case.kind == "negative"
+        for w in evalcases.content_words(case.prompt)
+    }
+    kept = _fit(spec.description, tagged, known | negative)
     for area in ("trigger-vocabulary", "vague-description"):
         if area not in areas:
             continue
