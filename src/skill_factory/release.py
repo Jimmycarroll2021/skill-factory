@@ -2,8 +2,8 @@
 
 A version lives in ``<skill>/.factory/versions/<semver>/`` and is never modified once renamed into
 place, except that ``approve`` adds ``approval.json``. ``manifest.json`` lists a SHA-256 for every
-other file and is itself immutable, so the effective status of a version is read from
-``approval.json`` and never from the manifest. Nothing here spawns a process; a model is only
+other file (including the version's ``receipt.json``, see ``receipt.py``) and is itself immutable,
+so the effective status of a version is read from ``approval.json`` and never from the manifest. Nothing here spawns a process; a model is only
 consulted when ``package_skill`` is given a runner name (or a judge report made by one).
 """
 
@@ -23,7 +23,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 
-from skill_factory import evalcases, evaluate, judge, render, validate
+from skill_factory import evalcases, evaluate, judge, receipt, render, validate
 from skill_factory.capture import NAME_RE, SpecError
 from skill_factory.runner import EXECUTABLES, Runner
 
@@ -73,6 +73,10 @@ class RegressionFailed(ReleaseError):
     def __init__(self, message: str, report: dict) -> None:
         super().__init__(message)
         self.report = report
+
+
+class RegressionsNotAccepted(ReleaseError):
+    """The version's receipt lists regressions and no reason to accept them was given."""
 
 
 @dataclass
@@ -249,22 +253,42 @@ def _regression_markdown(report: dict) -> str:
         "",
     ]
     if report["status"] == "no-baseline":
-        lines.append("No previous approved version, so there is nothing to compare against.")
-    elif not report["newly_failing"]:
-        lines.append("No newly failing cases.")
-    for case in report["newly_failing"]:
-        lines.append(
-            f"- `{case['id']}` ({case['kind']}, score {case['score']}): "
-            + " ".join(case["prompt"].split())
-        )
+        lines += ["No previous approved version, so there is nothing to compare against.", ""]
+    for heading, key, empty in (
+        ("Regressions", "newly_failing", "No newly failing cases."),
+        ("Gains", "newly_passing", "No newly passing cases."),
+    ):
+        lines += [f"## {heading}", ""]
+        lines += [_case_line(case) for case in report.get(key, [])] or [empty]
+        lines.append("")
     behaviour = report.get("behaviour")
     if behaviour:
-        lines += ["", f"Behaviour: {behaviour['status']} ({behaviour['checked']} cases compared)"]
-    return "\n".join(lines) + "\n"
+        lines += [f"Behaviour: {behaviour['status']} ({behaviour['checked']} cases compared)", ""]
+    return "\n".join(lines)
 
 
-def _baseline_cases(baseline: Version) -> tuple[list[evalcases.Case], set[str]]:
-    """The baseline's stored cases and the ids of its trigger cases that passed."""
+def _case_line(case: dict) -> str:
+    return (
+        f"- `{case['id']}` ({case['kind']}, {case['before']} -> {case['after']}, "
+        f"score {case['score']}): " + " ".join(case["prompt"].split())
+    )
+
+
+def _entry(case: evalcases.Case | dict, before: object, after: object, score: object) -> dict:
+    """One newly_failing / newly_passing row; ``case`` is a Case or a judge.json case dict."""
+    data = case.to_dict() if isinstance(case, evalcases.Case) else case
+    return {
+        "id": data["id"],
+        "kind": data.get("kind", "behaviour"),
+        "prompt": data["prompt"],
+        "before": before,
+        "after": after,
+        "score": score,
+    }
+
+
+def _baseline_cases(baseline: Version) -> tuple[list[evalcases.Case], dict[str, str]]:
+    """The baseline's stored cases and the eval status (pass or fail) of each graded case."""
     cases_data = _read_json(baseline.path / "reports" / "cases.json")
     eval_data = _read_json(baseline.path / "reports" / "eval.json")
     if cases_data is None or eval_data is None:
@@ -280,10 +304,12 @@ def _baseline_cases(baseline: Version) -> tuple[list[evalcases.Case], set[str]]:
             )
             for item in cases_data["cases"]
         ]
-        passed = {r["id"] for r in eval_data["results"] if r.get("status") == "pass"}
+        graded = {
+            r["id"]: r["status"] for r in eval_data["results"] if r.get("status") in ("pass", "fail")
+        }
     except (KeyError, TypeError, AttributeError) as exc:
         raise IntegrityError(f"version {baseline.version} has malformed reports: {exc}") from exc
-    return cases, passed
+    return cases, graded
 
 
 def _judge_total(case: object) -> int | None:
@@ -322,42 +348,41 @@ def _baseline_judge(baseline: Version) -> tuple[dict, dict[str, int | None]] | N
 
 def _behaviour_check(
     baseline: Version | None, judge_report: dict | None
-) -> tuple[dict, list[dict]]:
-    """Compare judged with-skill totals with the baseline's; return (sub-report, newly failing)."""
+) -> tuple[dict, list[dict], list[dict]]:
+    """Compare judged with-skill totals with the baseline's.
+
+    Returns (sub-report, newly failing, newly passing): a case whose total dropped is a
+    regression, one whose total rose is a gain.
+    """
     result: dict = {"status": judge.SKIPPED_NO_RUNNER, "checked": 0, "baseline_judge": None}
     if judge_report is None or judge_report.get("status") != "completed":
-        return result, []
+        return result, [], []
     stored = _baseline_judge(baseline) if baseline is not None else None
     if stored is None or stored[0]["status"] != "completed":
         result["status"] = "skipped: no baseline judge"
-        return result, []
+        return result, [], []
     data, totals = stored
     result.update(status="compared", baseline_judge=data.get("judge"))
-    failing = []
+    failing, passing = [], []
     for case in judge_report.get("cases", []):
         before, after = totals.get(case["id"]), _judge_total(case)
         if before is None or after is None:
             continue
         result["checked"] += 1
         if after < before:
-            failing.append(
-                {
-                    "id": case["id"],
-                    "kind": "behaviour",
-                    "prompt": case["prompt"],
-                    "before": before,
-                    "after": after,
-                    "score": after,
-                }
-            )
-    return result, failing
+            failing.append(_entry(case, before, after, after))
+        elif after > before:
+            passing.append(_entry(case, before, after, after))
+    return result, failing, passing
 
 
 def regression_check(skill_dir: Path, candidate: str, judge_report: dict | None = None) -> dict:
     """Re-grade the previous approved version's stored cases against the current SKILL.md.
 
-    A completed ``judge_report`` is also compared with the baseline's stored judge.json: a
-    behaviour case whose with-skill total dropped is added to ``newly_failing``.
+    ``newly_failing`` holds the regressions: trigger cases that passed in the baseline and fail
+    now, and (when a completed ``judge_report`` is given and the baseline stored one too)
+    behaviour cases whose with-skill total dropped. ``newly_passing`` holds the gains, the same
+    comparisons the other way round. Both lists are sorted by id.
     """
     skill_dir = Path(skill_dir)
     limit = parse_semver(candidate)
@@ -368,36 +393,30 @@ def regression_check(skill_dir: Path, candidate: str, judge_report: dict | None 
         "status": "no-baseline",
         "checked": 0,
         "newly_failing": [],
+        "newly_passing": [],
     }
     if not earlier:
-        report["behaviour"], _ = _behaviour_check(None, judge_report)
+        report["behaviour"], _, _ = _behaviour_check(None, judge_report)
         return report
     try:
         meta = render._frontmatter(skill_dir / "SKILL.md")
     except render.RenderError as exc:
         raise ReleaseError(str(exc)) from exc
-    cases, passed_before = _baseline_cases(earlier[-1])
-    trigger = [c for c in cases if c.kind != "behaviour" and c.id in passed_before]
+    cases, graded = _baseline_cases(earlier[-1])
+    trigger = [c for c in cases if c.kind != "behaviour" and c.id in graded]
     grades = evalcases.grade_offline(
         trigger, str(meta.get("name", "")), str(meta.get("description", ""))
     )
     by_id = {c.id: c for c in trigger}
     report["checked"] = len(trigger)
     for grade in grades:
-        if grade.status == "fail":
-            case = by_id[grade.id]
-            report["newly_failing"].append(
-                {
-                    "id": case.id,
-                    "kind": case.kind,
-                    "prompt": case.prompt,
-                    "before": "pass",
-                    "after": "fail",
-                    "score": grade.score,
-                }
-            )
-    report["behaviour"], behavioural = _behaviour_check(earlier[-1], judge_report)
-    report["newly_failing"] += behavioural
+        before = graded[grade.id]
+        if before != grade.status and grade.status in ("pass", "fail"):
+            key = "newly_failing" if grade.status == "fail" else "newly_passing"
+            report[key].append(_entry(by_id[grade.id], before, grade.status, grade.score))
+    report["behaviour"], failing, passing = _behaviour_check(earlier[-1], judge_report)
+    report["newly_failing"] = sorted(report["newly_failing"] + failing, key=lambda c: c["id"])
+    report["newly_passing"] = sorted(report["newly_passing"] + passing, key=lambda c: c["id"])
     report["status"] = "regressed" if report["newly_failing"] else "pass"
     return report
 
@@ -410,7 +429,7 @@ def _snapshot(
     version: str,
     judge_report: dict | None = None,
 ) -> None:
-    """Fill tmp with skill/, dist/, reports/ and regression files, then write the manifest last.
+    """Fill tmp with skill/, dist/, reports/, regression files and the receipt; the manifest last.
 
     The judge files are copied only when ``judge_report`` was made for this package call, so a
     stale ``.factory/judge.json`` from an earlier run never enters a version.
@@ -434,6 +453,19 @@ def _snapshot(
             _write(tmp / "reports" / "judge.json", _dumps(judge_report))
     _write(tmp / "regression.json", _dumps(regression))
     _write(tmp / "regression.md", _regression_markdown(regression))
+    created_at = _now()
+    receipt.write_receipt(
+        tmp,
+        receipt.build_receipt(
+            name=name,
+            version=version,
+            created_at=created_at,
+            skill_sha256=_sha256(tmp / "skill" / "SKILL.md"),
+            eval_report=_read_json(factory / "eval.json"),
+            judge_report=judge_report,
+            regression=regression,
+        ),
+    )
     entries = [
         {"path": path.relative_to(tmp).as_posix(), "sha256": _sha256(path)}
         for path in tmp.rglob("*")
@@ -443,7 +475,7 @@ def _snapshot(
         "schema": 1,
         "name": name,
         "version": version,
-        "created_at": _now(),
+        "created_at": created_at,
         "status": AWAITING,
         "previous_approved": regression["baseline"],
         "files": sorted(entries, key=lambda item: item["path"]),
@@ -532,8 +564,55 @@ def package_skill(
     return next(v for v in load_versions(skill_dir) if v.version == version)
 
 
-def approve(skill_dir: Path, version: str, user: str | None = None) -> Version:
-    """Record approval of a version after verifying its checksums; idempotent."""
+def _approval_record(
+    name: str, version_dir: Path, user: str | None, accept_regressions: str | None
+) -> dict:
+    """The approval.json dict, or RegressionsNotAccepted when the receipt needs a reason.
+
+    ``receipt`` is the receipt's status, or ``missing`` for a version packaged before receipts.
+    """
+    if accept_regressions is not None and not accept_regressions.strip():
+        raise ReleaseError("--accept-regressions needs a reason")
+    if user is None:
+        try:
+            user = getpass.getuser()
+        except Exception:  # noqa: BLE001  any getuser failure means unknown
+            user = "unknown"
+    record = {
+        "name": name,
+        "version": version_dir.name,
+        "status": APPROVED,
+        "approved_at": _now(),
+        "approved_by": user or "unknown",
+        "receipt": "missing",
+    }
+    data = receipt.load_receipt(version_dir)
+    if data is None:
+        return record
+    record["receipt"] = data.get("status")
+    if data.get("status") == receipt.REGRESSED:
+        ids = sorted(str(row.get("id")) for row in data.get("regressions", []))
+        if accept_regressions is None:
+            raise RegressionsNotAccepted(
+                f"version {version_dir.name} regressed against {data.get('baseline')}: "
+                f"{', '.join(ids)}; pass --accept-regressions \"<reason>\" to approve it anyway"
+            )
+        record["accepted_regressions"] = {"reason": accept_regressions.strip(), "ids": ids}
+    return record
+
+
+def approve(
+    skill_dir: Path,
+    version: str,
+    user: str | None = None,
+    accept_regressions: str | None = None,
+) -> Version:
+    """Record approval of a version after verifying its checksums; idempotent.
+
+    A version whose receipt lists regressions is refused unless ``accept_regressions`` gives the
+    reason, which approval.json then records with the accepted ids. The receipt itself is never
+    modified.
+    """
     skill_dir = Path(skill_dir)
     parse_semver(version)
     version_dir = _versions_root(skill_dir) / version
@@ -545,18 +624,7 @@ def approve(skill_dir: Path, version: str, user: str | None = None) -> Version:
             f"version {version} does not match its manifest: " + ", ".join(mismatched)
         )
     if _approval(version_dir) is None:
-        if user is None:
-            try:
-                user = getpass.getuser()
-            except Exception:  # noqa: BLE001  any getuser failure means unknown
-                user = "unknown"
-        record = {
-            "name": skill_dir.name,
-            "version": version,
-            "status": APPROVED,
-            "approved_at": _now(),
-            "approved_by": user or "unknown",
-        }
+        record = _approval_record(skill_dir.name, version_dir, user, accept_regressions)
         temp = version_dir / f".approval-{secrets.token_hex(4)}.tmp"
         try:
             _write(temp, _dumps(record))
@@ -650,11 +718,18 @@ def add_approve_parser(sub: argparse._SubParsersAction) -> None:
         help="approve a packaged version so it can be installed",
         description=(
             "Verify the version's checksums and record approval (UTC time and local user) in "
-            "approval.json. Approving an approved version changes nothing."
+            "approval.json. A version whose receipt lists regressions is refused unless "
+            "--accept-regressions gives the reason. Approving an approved version changes nothing."
         ),
     )
     parser.add_argument("name", help="skill name (the directory under skills/)")
     parser.add_argument("version", help="version to approve, MAJOR.MINOR.PATCH")
+    parser.add_argument(
+        "--accept-regressions",
+        default=None,
+        metavar="REASON",
+        help="approve despite the regressions in the receipt; the reason goes in approval.json",
+    )
     parser.add_argument(
         "--out", type=Path, default=None, help="root directory containing skills/ (default: cwd)"
     )
@@ -665,8 +740,8 @@ def run_approve(args: argparse.Namespace) -> int:
     if isinstance(skill_dir, int):
         return skill_dir
     try:
-        result = approve(skill_dir, args.version)
-    except IntegrityError as exc:
+        result = approve(skill_dir, args.version, accept_regressions=args.accept_regressions)
+    except (IntegrityError, RegressionsNotAccepted) as exc:
         return _fail(str(exc), 1)
     except (ReleaseError, OSError) as exc:  # includes VersionNotFound and invalid versions
         return _fail(str(exc))

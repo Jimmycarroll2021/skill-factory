@@ -68,6 +68,8 @@ class InstallRecord:
     approved_at: str | None
     action: str = "install"
     from_version: str | None = None
+    evidence: str | None = None  # the version's receipt evidence level; None without a receipt
+    regressions: int | None = None  # how many regressions that receipt lists
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -121,6 +123,15 @@ def _approval(version_dir: Path) -> dict | None:
     return data if data is not None and data.get("status") == APPROVED else None
 
 
+def _evidence(version_dir: Path) -> tuple[str | None, int | None]:
+    """(evidence level, regression count) from the version's receipt.json; Nones without one."""
+    data = _read_json(version_dir / "receipt.json")
+    if data is None:
+        return None, None
+    regressions = data.get("regressions")
+    return data.get("evidence"), len(regressions) if isinstance(regressions, list) else None
+
+
 def version_status(root: Path, name: str) -> list[dict]:
     """Return the versions of ``name`` in ascending semver order, read from the version dirs."""
     _check_name(name)
@@ -145,6 +156,7 @@ def version_status(root: Path, name: str) -> list[dict]:
                 "created_at": manifest.get("created_at"),
                 "approved_at": approval.get("approved_at") if approval else None,
                 "approved_by": approval.get("approved_by") if approval else None,
+                "evidence": _evidence(entry)[0],
             }
         )
     return rows
@@ -274,6 +286,7 @@ def _plan(
     files = _verify_dist(version_dir, platform)
     target = target_dir(root, name, platform, scope, home)
     _check_no_symlinks(_base(root, scope, home), target)
+    evidence, regressions = _evidence(version_dir)
     record = InstallRecord(
         name=name,
         version=version,
@@ -283,6 +296,8 @@ def _plan(
         installed_at=_now(),
         approved_by=approval.get("approved_by"),
         approved_at=approval.get("approved_at"),
+        evidence=evidence,
+        regressions=regressions,
         **extra,
     )
     return _Plan(record, version_dir / "dist" / platform, files, target)
@@ -448,22 +463,23 @@ def format_list(data: dict) -> str:
             r["version"],
             r["platform"],
             r["scope"],
+            r.get("evidence"),  # registries written before receipts have no such key
             r["approved_by"],
             r["path"],
         )
         for r in data["installed"]
     ]
     versions = [
-        (name, row["version"], row["status"], row["created_at"])
+        (name, row["version"], row["status"], row["created_at"], row.get("evidence"))
         for name, rows in sorted(data["skills"].items())
         for row in rows
     ]
     lines = ["Installed", ""]
     lines += _table(
-        ("NAME", "VERSION", "PLATFORM", "SCOPE", "APPROVED_BY", "PATH"), installed
+        ("NAME", "VERSION", "PLATFORM", "SCOPE", "EVIDENCE", "APPROVED_BY", "PATH"), installed
     )
     lines += ["", "Versions", ""]
-    lines += _table(("NAME", "VERSION", "STATUS", "CREATED_AT"), versions)
+    lines += _table(("NAME", "VERSION", "STATUS", "CREATED_AT", "EVIDENCE"), versions)
     return "\n".join(lines) + "\n"
 
 

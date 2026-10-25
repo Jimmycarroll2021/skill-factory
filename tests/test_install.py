@@ -65,8 +65,10 @@ def _write(path: Path, text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
-def make_version(root: Path, name: str, version: str, approved: bool = True) -> Path:
-    """Write a contract-shaped version directory by hand."""
+def make_version(
+    root: Path, name: str, version: str, approved: bool = True, receipt: dict | None = None
+) -> Path:
+    """Write a contract-shaped version directory by hand; ``receipt`` adds a receipt.json."""
     _write(root / "skills" / name / "SKILL.md", f"---\nname: {name}\n---\n")
     vdir = root / "skills" / name / ".factory" / "versions" / version
     files = {
@@ -75,6 +77,8 @@ def make_version(root: Path, name: str, version: str, approved: bool = True) -> 
         "dist/codex/agents/openai.yaml": f"name: {name}\nversion: {version}\n",
         f"only-{version}.txt": "marker\n",
     }
+    if receipt is not None:
+        files["receipt.json"] = json.dumps(receipt, indent=2) + "\n"
     listing = [
         {"path": rel, "sha256": _write(vdir / rel, text)} for rel, text in files.items()
     ]
@@ -371,6 +375,78 @@ def test_list_empty_project_exits_0(root, capsys):
     assert not (root / "skills").exists()
     out = capsys.readouterr().out
     assert '"installed": []' in out
+
+
+RECEIPT = {
+    "schema": "skill-receipt/1",
+    "skill": NAME,
+    "version": "0.1.1",
+    "evidence": "verified",
+    "status": "regressed",
+    "regressions": [
+        {"id": "pos-002", "kind": "positive", "prompt": "p", "before": "pass", "after": "fail"}
+    ],
+    "gains": [],
+}
+
+
+def test_install_records_the_evidence_and_regression_count_from_the_receipt(root):
+    make_version(root, NAME, "0.1.0")
+    make_version(root, NAME, "0.1.1", receipt=RECEIPT)
+    record = install.install_skill(root, NAME, "claude", "project", "0.1.1")
+    assert (record.evidence, record.regressions) == ("verified", 1)
+    stored = install.load_registry(root)["current"][f"{NAME}:claude:project"]
+    assert (stored["evidence"], stored["regressions"]) == ("verified", 1)
+    record = install.install_skill(root, NAME, "codex", "project", "0.1.0")
+    assert record.evidence is None and record.regressions is None
+    stored = install.load_registry(root)["current"][f"{NAME}:codex:project"]
+    assert stored["evidence"] is None and stored["regressions"] is None
+
+
+def test_rollback_records_the_evidence_of_the_version_it_returns_to(root):
+    make_version(root, NAME, "0.1.0", receipt={**RECEIPT, "evidence": "self-judged", "regressions": []})
+    make_version(root, NAME, "0.2.0", receipt=RECEIPT)
+    assert _install(root) == 0
+    [record] = install.rollback_skill(root, NAME)
+    assert (record.version, record.evidence, record.regressions) == ("0.1.0", "self-judged", 0)
+
+
+def test_list_shows_an_evidence_column(root, capsys):
+    make_version(root, NAME, "0.1.0", receipt={**RECEIPT, "evidence": "self-judged"})
+    make_version(root, NAME, "0.1.1", approved=False)
+    assert _install(root) == 0
+    capsys.readouterr()
+    assert run(root, "list") == 0
+    out = capsys.readouterr().out
+    header = next(line for line in out.splitlines() if line.startswith("NAME"))
+    assert "EVIDENCE" in header
+    installed_row = next(line for line in out.splitlines() if "claude" in line and "project" in line)
+    assert "self-judged" in installed_row
+    assert re.search(rf"{NAME}\s+0\.1\.0\s+approved\s+\S+\s+self-judged", out)
+    assert re.search(rf"{NAME}\s+0\.1\.1\s+awaiting-approval\s+\S+\s+-", out)
+    assert run(root, "list", "--json") == 0
+    data = json.loads(capsys.readouterr().out)
+    assert data["installed"][0]["evidence"] == "self-judged"
+    assert [row["evidence"] for row in data["skills"][NAME]] == ["self-judged", None]
+
+
+def test_old_registry_entries_without_evidence_still_load(root, capsys):
+    make_version(root, NAME, "0.1.0")
+    assert _install(root) == 0
+    registry_path = root / "skills" / "registry.json"
+    registry = json.loads(registry_path.read_text(encoding="utf-8"))
+    for record in (*registry["installs"], *registry["current"].values()):
+        del record["evidence"]
+        del record["regressions"]
+    registry_path.write_text(json.dumps(registry), encoding="utf-8")
+    capsys.readouterr()
+    assert run(root, "list") == 0
+    out = capsys.readouterr().out
+    installed_row = next(line for line in out.splitlines() if "claude" in line and "project" in line)
+    assert NAME in installed_row and "alice" in installed_row
+    assert run(root, "list", "--json") == 0
+    assert "evidence" not in json.loads(capsys.readouterr().out)["installed"][0]
+    assert run(root, "rollback", NAME) == 1  # the old record is still a usable current install
 
 
 @pytest.mark.parametrize("bad", ["..", "../evil", "a/b", "a\\b", "Upper", ""])

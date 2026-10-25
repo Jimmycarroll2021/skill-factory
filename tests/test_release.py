@@ -322,3 +322,52 @@ def test_malformed_baseline_reports_raise_integrity_error(root, report, payload)
     with pytest.raises(release.IntegrityError):
         release.regression_check(skill_dir(root), "0.1.1")
 
+
+def describe(skill: Path, text: str) -> None:
+    md = skill / "SKILL.md"
+    lines = md.read_text(encoding="utf-8").split("\n")
+    out = [f"description: {json.dumps(text)}" if ln.startswith("description:") else ln for ln in lines]
+    md.write_text("\n".join(out), encoding="utf-8", newline="\n")
+
+
+def test_trigger_cases_that_failed_before_and_pass_now_are_gains(tmp_path):
+    project = tmp_path / "vague"
+    project.mkdir()
+    skill = generate(capture_spec_file(FIXTURES / "eval" / "vague.json"), project)
+    release.package_skill(skill)
+    release.approve(skill, "0.1.0", user="tester")
+    results = read_json(skill / ".factory" / "versions" / "0.1.0" / "reports" / "eval.json")["results"]
+    failed_before = {r["id"] for r in results if r["status"] == "fail"}
+    assert failed_before == {"pos-001", "pos-002"}
+    describe(
+        skill,
+        "Helps with things: remove duplicate rows from a spreadsheet and summarise the "
+        "quarterly invoices.",
+    )
+    report = release.regression_check(skill, "0.1.1")
+    assert report["status"] == "pass" and report["newly_failing"] == []
+    gains = {case["id"]: case for case in report["newly_passing"]}
+    assert set(gains) == failed_before
+    assert gains["pos-001"]["before"] == "fail" and gains["pos-001"]["after"] == "pass"
+    assert gains["pos-001"]["kind"] == "positive"
+    assert gains["pos-001"]["prompt"] == "Remove duplicate rows from a spreadsheet"
+    assert gains["pos-001"]["score"] >= 0.3
+    assert report["checked"] == 9  # every trigger case the baseline graded, not only its passes
+    markdown = release._regression_markdown(report)
+    assert "## Regressions" in markdown and "## Gains" in markdown
+    assert markdown.index("## Regressions") < markdown.index("## Gains")
+    assert "`pos-001`" in markdown.split("## Gains", 1)[1]
+    assert "`pos-001`" not in markdown.split("## Gains", 1)[0]
+
+
+def test_unchanged_skill_has_no_gains_and_no_baseline_has_empty_lists(root):
+    assert cli(root, "package", NAME) == 0
+    first = read_json(versions_dir(root) / "0.1.0" / "regression.json")
+    assert first["newly_passing"] == [] and first["newly_failing"] == []
+    assert cli(root, "approve", NAME, "0.1.0") == 0
+    assert cli(root, "package", NAME) == 0
+    report = read_json(versions_dir(root) / "0.1.1" / "regression.json")
+    assert report["newly_passing"] == [] and report["newly_failing"] == []
+    markdown = (versions_dir(root) / "0.1.1" / "regression.md").read_text(encoding="utf-8")
+    assert "## Regressions" in markdown and "## Gains" in markdown
+
