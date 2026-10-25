@@ -100,6 +100,14 @@ def test_destructive_finding_points_at_the_script(tmp_path):
     assert finding.line == 2
 
 
+def test_evals_dir_is_allowed(tmp_path):
+    # scripts/check.py requires evals/evals.json; render never ships it (see test_render).
+    skill = _make(tmp_path, "with-evals", "Does a thing. NOT for anything else.")
+    (skill / "evals").mkdir()
+    (skill / "evals" / "evals.json").write_text("[]\n", encoding="utf-8", newline="\n")
+    assert _only(val.validate_skill(skill), "path-not-allowed") == []
+
+
 def test_path_not_allowed_names_the_entry(tmp_path):
     report = val.validate_skill(_copy(tmp_path, "path-not-allowed"))
     assert [f.path for f in _only(report, "path-not-allowed")] == ["src"]

@@ -90,6 +90,15 @@ def test_meta_skill_validates_cleanly():
     assert report.errors == 0 and report.warnings == 0
 
 
+def test_every_committed_skill_validates_cleanly():
+    # scripts/check.py gates skills/ too; both standards must accept every skill.
+    skills = sorted(p.parent for p in (REPO / "skills").glob("*/SKILL.md"))
+    assert len(skills) >= 2
+    for skill in skills:
+        report = validate.validate_skill(skill)
+        assert report.findings == [], (skill.name, report.findings)
+
+
 def test_meta_skill_frontmatter_name_matches_directory():
     text = (SKILL_DIR / "SKILL.md").read_text(encoding="utf-8")
     assert text.startswith("---\n")

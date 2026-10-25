@@ -6,42 +6,15 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
-### Changed
-
-- Generated descriptions now carry the paragraph's "use it when" and "do not use it" sentences.
-  Claude reads only the frontmatter description when choosing a skill, so `capture` composes
-  them into the description (first trigger and first boundary before any others, each kept
-  whole and only if it fits 1,024 characters), and the body no longer repeats them. On the
-  README example the evaluation goes from 6 passed, 2 failed to 7 passed, 1 failed.
-- The offline grader ignores the description's boundary sentences ("Do not use it for X",
-  "Never Y", "It does not handle X") when collecting trigger words, so stating a boundary cannot make a request about
-  X look like a match.
-- `skillz improve` extends a description with whole requests ("Also use for requests like
-  "..."") instead of a list of loose keywords. A keyword list such as "help, write, md, file"
-  makes a skill load on unrelated prompts. If no whole request fits, the first is cut to its
-  task words (dropping words the description or a should-not-trigger prompt already has) and
-  shortened from the end, down to three words; a request with no task words is skipped. The meta-skill's own keyword list is replaced.
-- `generate` no longer writes placeholder `README.md` files into resource directories; an
-  empty directory is reported by the validator instead.
-- `.claude/settings.json` keeps every guardrail the harness had, without the harness: the
-  sandbox stays on with unsandboxed commands off, and its network allowlist drops only the npm
-  and Playwright hosts this Python project never used. The deny list still blocks force pushes,
-  pushes to `main`, history rewrites, `git branch -D`, `git checkout --`, merges, `rm -rf`,
-  `pip install`, `PowerShell` and `.env` files. Its six harness hook scripts (guard, idempotency,
-  budget, anchor, stop gate, subagent check) are replaced by one stdlib hook, `.claude/hooks/guard.py`, which
-  catches what a prefix rule cannot: `push -uf`, `HEAD:main`, `rm -r -f`, `cat .env` (any
-  case), `cd` before `git`, and the same commands behind wrappers (`env -i`, `sudo`, `find -exec`),
-  inside `if`/`for`/`{ }` bodies, `$(...)`, backticks, `bash -c` (or `-lc`) or `eval`, across
-  line continuations, after a comment, or spelled `git.exe`. It also denies PowerShell and `cmd`
-  run from Bash, `gh` PR merges with `--repo` anywhere, write-side `gh api` (payload flags,
-  `graphql`), a `merge_pull_request` tool from any MCP server, writes to hosting, infra and
-  deploy config, any hook event with a missing or mistyped field, and any command it cannot
-  read: one it cannot tokenise (an unquoted heredoc body with an apostrophe) or shells nested
-  more than three deep. `defaultMode: acceptEdits` and
-  the broad allow rules (`npm`, `python`, `cat`, `cd`) are gone, so more calls ask first.
-
 ### Added
 
+- Moved in from `Jimmycarroll2021/skillz-factory`, with its history: the skill standard
+  (`docs/SKILL-STANDARD.md`), the study behind it (`docs/research/claude-skills-study.md`), its
+  stdlib gate `scripts/check.py` with `scripts/allowlist.txt` and self-tests in
+  `tests/test_check.py`, and the reference skill `skills/demo-spec-lint/`. CI now runs
+  `scripts/check.py`, and `CLAUDE.md` carries the standard's rules and lessons.
+- `skills/skill-factory/evals/evals.json`: prompts with assertions for the meta-skill, which the
+  gate requires.
 - Validator quality rules, from a study of a 398-skill public collection in which these
   signals separated stronger skills from weaker ones. Errors (the skill cannot work as
   written): `reserved-name` (a name that replaces a bundled Claude Code command, such as
@@ -73,6 +46,49 @@ All notable changes to this project are documented here. The format follows
   and packages a new awaiting-approval version. The pipeline and `skillz run` never promote.
 - The meta-skill documents the loop and was improved through it; the challenge report is
   committed under `docs/evidence/`.
+
+### Changed
+
+- `skillz validate` accepts an `evals/` directory in a skill, for committed eval prompts.
+  Render never ships it, so installed skills are unchanged.
+- `skills/demo-spec-lint/SKILL.md` writes its description on one line, which `skillz validate`
+  can parse; the text is unchanged.
+- `scripts/check.py` no longer passes a broken skill in three cases Codex found: an
+  `evals.json` holding JSON `null`, a verdict script in a subdirectory of `scripts/`, and a
+  documented command with a quoted script path or a line continuation, and a case naming a
+  script the skill does not have. It also stops calling a documented extensionless file (such
+  as `assets/Dockerfile`) an orphan.
+- Generated descriptions now carry the paragraph's "use it when" and "do not use it" sentences.
+  Claude reads only the frontmatter description when choosing a skill, so `capture` composes
+  them into the description (first trigger and first boundary before any others, each kept
+  whole and only if it fits 1,024 characters), and the body no longer repeats them. On the
+  README example the evaluation goes from 6 passed, 2 failed to 7 passed, 1 failed.
+- The offline grader ignores the description's boundary sentences ("Do not use it for X",
+  "Never Y", "It does not handle X") when collecting trigger words, so stating a boundary cannot make a request about
+  X look like a match.
+- `skillz improve` extends a description with whole requests ("Also use for requests like
+  "..."") instead of a list of loose keywords. A keyword list such as "help, write, md, file"
+  makes a skill load on unrelated prompts. If no whole request fits, the first is cut to its
+  task words (dropping words the description or a should-not-trigger prompt already has) and
+  shortened from the end, down to three words; a request with no task words is skipped. The meta-skill's own keyword list is replaced.
+- `generate` no longer writes placeholder `README.md` files into resource directories; an
+  empty directory is reported by the validator instead.
+- `.claude/settings.json` keeps every guardrail the harness had, without the harness: the
+  sandbox stays on with unsandboxed commands off, and its network allowlist drops only the npm
+  and Playwright hosts this Python project never used. The deny list still blocks force pushes,
+  pushes to `main`, history rewrites, `git branch -D`, `git checkout --`, merges, `rm -rf`,
+  `pip install`, `PowerShell` and `.env` files. Its six harness hook scripts (guard, idempotency,
+  budget, anchor, stop gate, subagent check) are replaced by one stdlib hook, `.claude/hooks/guard.py`, which
+  catches what a prefix rule cannot: `push -uf`, `HEAD:main`, `rm -r -f`, `cat .env` (any
+  case), `cd` before `git`, and the same commands behind wrappers (`env -i`, `sudo`, `find -exec`),
+  inside `if`/`for`/`{ }` bodies, `$(...)`, backticks, `bash -c` (or `-lc`) or `eval`, across
+  line continuations, after a comment, or spelled `git.exe`. It also denies PowerShell and `cmd`
+  run from Bash, `gh` PR merges with `--repo` anywhere, write-side `gh api` (payload flags,
+  `graphql`), a `merge_pull_request` tool from any MCP server, writes to hosting, infra and
+  deploy config, any hook event with a missing or mistyped field, and any command it cannot
+  read: one it cannot tokenise (an unquoted heredoc body with an apostrophe) or shells nested
+  more than three deep. `defaultMode: acceptEdits` and
+  the broad allow rules (`npm`, `python`, `cat`, `cd`) are gone, so more calls ask first.
 
 ### Removed
 
