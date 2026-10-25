@@ -1,0 +1,16 @@
+name: "Skill standard gate"
+description: "Runs scripts/check.py, the skill-standard gate, over the skills/ directory of a repository. Exit 0 PASS, 1 FAIL, 2 could not run."
+author: "Jimmy Carroll"
+
+inputs:
+  root:
+    description: "Repository root that contains skills/ (default: the checked-out workspace)."
+    required: false
+    default: ${{ github.workspace }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Run the skill-standard gate
+      shell: bash
+      run: python3 "${{ github.action_path }}/scripts/check.py" --root "${{ inputs.root }}"
