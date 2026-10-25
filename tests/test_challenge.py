@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pytest
 
-from skill_factory import candidates, captured, challenge, improve
+from skill_factory import candidate, candidates, captured, challenge, render, yamlish
 from skill_factory.candidates import CandidateError
 from skill_factory.capture import capture_spec_file
 from skill_factory.generate import generate
@@ -20,6 +20,7 @@ FIXTURES = Path(__file__).parent / "fixtures"
 MISSED = "Help me tidy up my spreadsheet export before the quarterly review"
 OFF_TOPIC = "Design a logo for my bakery"
 DEDUPE = "Remove duplicate rows from my spreadsheet"
+VAGUE_TRIGGERS = ["Remove duplicate rows from a spreadsheet", "Summarise the quarterly invoices"]
 KEYS = {
     "schema", "skill", "candidate", "created_at", "method", "threshold", "verdict",
     "validation", "cases", "summary", "regressions", "improvements", "behaviour", "weak_areas",
@@ -99,13 +100,26 @@ def tree_hashes(project: Path, skip: set[str]) -> dict[str, str]:
     return found
 
 
-def improved_vague(vague: Path) -> str:
+def extend_description(skill: Path, cid: str, prompts: list[str]) -> None:
+    """Name the prompts in the candidate's frontmatter description; the body stays as it is."""
+    md = candidates.candidate_skill_dir(skill, cid) / "SKILL.md"
+    meta = render._frontmatter(md)
+    _head, body = md.read_text(encoding="utf-8").split("\n---\n", 1)
+    quoted = "; ".join(f'"{p}"' for p in prompts)
+    meta["description"] = f"{meta['description']} Also use for requests like {quoted}."
+    md.write_text(yamlish.frontmatter_dumps(meta) + body, encoding="utf-8", newline="\n")
+
+
+def better_vague(vague: Path) -> str:
+    """A hand-edited candidate whose description names the missed prompt and the spec's triggers."""
     captured.append_captured(vague, MISSED, "positive")
-    return improve.improve_skill(vague)["id"]
+    cid = candidate.create_candidate(vague)["id"]
+    extend_description(vague, cid, [MISSED, *VAGUE_TRIGGERS])
+    return cid
 
 
-def test_an_improved_candidate_is_better_and_both_reports_are_written(vague):
-    cid = improved_vague(vague)
+def test_an_edited_candidate_is_better_and_both_reports_are_written(vague):
+    cid = better_vague(vague)
     report = challenge.challenge_candidate(vague, cid)
     assert report["verdict"] == "candidate-better"
     assert set(report) == KEYS
@@ -148,7 +162,7 @@ def test_an_improved_candidate_is_better_and_both_reports_are_written(vague):
 
 
 def test_challenge_json_carries_digests_for_both_sides(vague):
-    cid = improved_vague(vague)
+    cid = better_vague(vague)
     report = challenge.challenge_candidate(vague, cid)
     assert report["sha256"]["stable"] == candidates.stable_digests(vague)
     assert report["sha256"]["candidate"] == candidates.candidate_digests(vague, cid)
@@ -159,7 +173,7 @@ def test_challenge_json_carries_digests_for_both_sides(vague):
 
 def test_a_gutted_candidate_is_worse_and_names_the_regressed_case(well):
     captured.append_captured(well, "Tidy the spreadsheet before the review", "positive")
-    cid = improve.improve_skill(well)["id"]
+    cid = candidate.create_candidate(well)["id"]
     gut(well, cid)
     report = challenge.challenge_candidate(well, cid)
     assert report["verdict"] == "candidate-worse"
@@ -176,7 +190,7 @@ def test_a_gutted_candidate_is_worse_and_names_the_regressed_case(well):
 
 def test_a_destructive_script_makes_the_candidate_unsafe_even_with_regressions(well):
     captured.append_captured(well, OFF_TOPIC, "negative")
-    cid = improve.improve_skill(well)["id"]
+    cid = candidate.create_candidate(well)["id"]
     gut(well, cid)
     scripts = candidates.candidate_skill_dir(well, cid) / "scripts"
     scripts.mkdir()
@@ -197,7 +211,7 @@ def test_a_destructive_script_makes_the_candidate_unsafe_even_with_regressions(w
 
 def test_a_name_mismatch_is_unsafe(well):
     captured.append_captured(well, OFF_TOPIC, "negative")
-    cid = improve.improve_skill(well)["id"]
+    cid = candidate.create_candidate(well)["id"]
     md = candidates.candidate_skill_dir(well, cid) / "SKILL.md"
     md.write_text(
         md.read_text(encoding="utf-8").replace(
@@ -211,15 +225,15 @@ def test_a_name_mismatch_is_unsafe(well):
 
 def test_an_unchanged_candidate_is_no_difference(well):
     captured.append_captured(well, OFF_TOPIC, "negative")
-    cid = improve.improve_skill(well)["id"]
+    cid = candidate.create_candidate(well)["id"]
     report = challenge.challenge_candidate(well, cid)
     assert report["verdict"] == "no-difference"
     assert report["regressions"] == [] and report["improvements"] == []
     assert report["summary"]["unchanged"] == report["summary"]["cases"]
 
 
-def test_a_failure_captured_after_improve_is_graded_on_both_sides(vague):
-    cid = improved_vague(vague)
+def test_a_failure_captured_after_the_candidate_is_graded_on_both_sides(vague):
+    cid = better_vague(vague)
     captured.append_captured(
         vague, "Summarise the quarterly invoices please", "positive"
     )
@@ -231,7 +245,7 @@ def test_a_failure_captured_after_improve_is_graded_on_both_sides(vague):
 
 
 def test_the_union_has_stable_and_candidate_origins_and_both_validations(vague):
-    cid = improved_vague(vague)
+    cid = better_vague(vague)
     report = challenge.challenge_candidate(vague, cid)
     origins = {o for c in report["cases"] for o in c["origins"]}
     assert origins == {"captured", "stable", "candidate"}
@@ -250,7 +264,7 @@ def test_the_union_has_stable_and_candidate_origins_and_both_validations(vague):
 
 
 def test_challenge_writes_only_the_two_reports_inside_the_candidate(vague):
-    cid = improved_vague(vague)
+    cid = better_vague(vague)
     project = vague.parent.parent
     before = tree_hashes(project, {"challenge.json", "challenge.md"})
     challenge.challenge_candidate(vague, cid)
@@ -262,7 +276,7 @@ def test_challenge_writes_only_the_two_reports_inside_the_candidate(vague):
 
 
 def test_challenge_is_deterministic(vague):
-    cid = improved_vague(vague)
+    cid = better_vague(vague)
     cdir = candidates.candidate_dir(vague, cid)
     first = challenge.challenge_candidate(vague, cid)
     md_first = (cdir / "challenge.md").read_bytes()
@@ -277,7 +291,7 @@ def test_missing_or_invalid_candidates_raise_candidate_error(vague):
         challenge.challenge_candidate(vague, "c009")
     with pytest.raises(CandidateError):
         challenge.challenge_candidate(vague, "../x")
-    cid = improved_vague(vague)
+    cid = better_vague(vague)
     (candidates.candidate_dir(vague, cid) / "spec.json").unlink()
     with pytest.raises(CandidateError):
         challenge.challenge_candidate(vague, cid)
@@ -287,7 +301,7 @@ def test_cli_prints_the_verdict_and_exits_0_for_every_verdict(
     vague, well, tmp_path, capsys
 ):
     project = tmp_path / "project"
-    cid = improved_vague(vague)
+    cid = better_vague(vague)
     assert cli(project, "general-helper", cid) == 0
     out = capsys.readouterr().out
     assert (
@@ -295,7 +309,7 @@ def test_cli_prints_the_verdict_and_exits_0_for_every_verdict(
     )
 
     captured.append_captured(well, OFF_TOPIC, "negative")
-    wid = improve.improve_skill(well)["id"]
+    wid = candidate.create_candidate(well)["id"]
     gut(well, wid)
     assert cli(project, "csv-data-cleaner", wid) == 0
     assert "candidate-worse" in capsys.readouterr().out
@@ -317,7 +331,7 @@ def test_cli_exit_2_for_bad_inputs(vague, tmp_path, capsys):
 
 
 def test_a_symlinked_candidate_dir_is_refused(vague, tmp_path):
-    cid = improved_vague(vague)
+    cid = better_vague(vague)
     cdir = candidates.candidate_dir(vague, cid)
     moved = tmp_path / "moved"
     cdir.rename(moved)

@@ -16,16 +16,18 @@ from pathlib import Path
 import pytest
 
 from skill_factory import (
+    candidate,
     candidates,
     captured,
     challenge,
     cli,
     evaluate,
-    improve,
     judge,
     pipeline,
     release,
+    render,
     runner,
+    yamlish,
 )
 from skill_factory.capture import capture_spec_file
 from skill_factory.generate import generate
@@ -141,12 +143,21 @@ def vague(tmp_path):
 def same_text_candidate(skill: Path, marker: str = "") -> str:
     """A candidate that is lexically identical to the stable skill, plus a body marker."""
     captured.append_captured(skill, OFF_TOPIC, "negative")
-    cid = improve.improve_skill(skill)["id"]
+    cid = candidate.create_candidate(skill)["id"]
     if marker:
         md = candidates.candidate_skill_dir(skill, cid) / "SKILL.md"
         with md.open("a", encoding="utf-8", newline="\n") as handle:
             handle.write(f"\n{marker}\n")
     return cid
+
+
+def extend_description(skill: Path, cid: str, prompt: str) -> None:
+    """Name the prompt in the candidate's frontmatter description; the body stays as it is."""
+    md = candidates.candidate_skill_dir(skill, cid) / "SKILL.md"
+    meta = render._frontmatter(md)
+    _head, body = md.read_text(encoding="utf-8").split("\n---\n", 1)
+    meta["description"] = f'{meta["description"]} Also use for requests like "{prompt}".'
+    md.write_text(yamlish.frontmatter_dumps(meta) + body, encoding="utf-8", newline="\n")
 
 
 def behaviour_rows(report: dict) -> dict[str, dict]:
@@ -231,7 +242,8 @@ def test_equal_scores_are_unchanged_and_no_difference(well):
 
 def test_a_behaviour_regression_outweighs_a_trigger_improvement(vague):
     captured.append_captured(vague, MISSED, "positive")
-    cid = improve.improve_skill(vague)["id"]
+    cid = candidate.create_candidate(vague)["id"]
+    extend_description(vague, cid, MISSED)
     md = candidates.candidate_skill_dir(vague, cid) / "SKILL.md"
     with md.open("a", encoding="utf-8", newline="\n") as handle:
         handle.write("\n[[Q1]]\n")
