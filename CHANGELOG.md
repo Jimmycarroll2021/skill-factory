@@ -70,7 +70,17 @@ All notable changes to this project are documented here. The format follows
 
 - `skillz approve` refuses a version whose receipt status is `regressed` unless
   `--accept-regressions "<reason>"` is given; the reason and the regressed case ids are recorded in
-  `approval.json`.
+  `approval.json`. A reason given for a version that did not regress is recorded too, with an
+  empty id list.
+- `skillz install` and `rollback` verify the whole version against its manifest (reports and
+  receipt included), not only the `dist/` files, so an edited `receipt.json` is refused with a
+  non-zero exit and nothing installed. A receipt whose `schema` is not `skill-receipt/1` is
+  refused by `approve`, `install` and `skillz receipt` instead of being read with guesses.
+- `skillz eval`, `judge`, `package` and `challenge` grade the name and description that SKILL.md
+  carries even when `.factory/spec.json` exists, so an edited or promoted skill is never judged
+  against a stale spec.
+- `evals/evals.json` rejects an id that collides with another entry's behaviour case id
+  (`<id>-beh`), with the same `SpecError` as a duplicate id.
 - The regression report splits the comparison into gains and regressions instead of one
   `newly_failing` list; the pipeline's regression line reads like
   `pass (2 gains, 0 regressions vs 0.1.0; 7 cases compared)`.

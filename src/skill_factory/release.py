@@ -586,17 +586,21 @@ def _approval_record(
         "approved_by": user or "unknown",
         "receipt": "missing",
     }
-    data = receipt.load_receipt(version_dir)
-    if data is None:
-        return record
-    record["receipt"] = data.get("status")
-    if data.get("status") == receipt.REGRESSED:
-        ids = sorted(str(row.get("id")) for row in data.get("regressions", []))
-        if accept_regressions is None:
-            raise RegressionsNotAccepted(
-                f"version {version_dir.name} regressed against {data.get('baseline')}: "
-                f"{', '.join(ids)}; pass --accept-regressions \"<reason>\" to approve it anyway"
-            )
+    try:
+        data = receipt.load_receipt(version_dir)
+    except ValueError as exc:
+        raise ReleaseError(str(exc)) from exc
+    ids: list[str] = []
+    if data is not None:
+        record["receipt"] = data.get("status")
+        if data.get("status") == receipt.REGRESSED:
+            ids = sorted(str(row.get("id")) for row in data.get("regressions", []))
+            if accept_regressions is None:
+                raise RegressionsNotAccepted(
+                    f"version {version_dir.name} regressed against {data.get('baseline')}: "
+                    f"{', '.join(ids)}; pass --accept-regressions \"<reason>\" to approve it anyway"
+                )
+    if accept_regressions is not None:  # recorded even when nothing regressed: the approver said it
         record["accepted_regressions"] = {"reason": accept_regressions.strip(), "ids": ids}
     return record
 

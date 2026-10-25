@@ -57,8 +57,14 @@ A regression is a case that passed in the previous approved version and fails no
 case whose judge score dropped. A gain is the reverse: a case that failed before and passes now, or
 a behaviour case whose judge score rose. Both lists carry the case id, its kind (`positive`,
 `negative` or `behaviour`), the prompt, and the before and after results, so a reader can see what
-changed without re-running anything. Cases come from the previous version's stored reports, from
-`evals/evals.json` and from `.factory/cases/captured.json`.
+changed without re-running anything.
+
+The comparison covers exactly the cases the baseline version recorded in its own reports, re-graded
+against the new version. A case the baseline never saw (an `evals.json` entry or a captured failure
+added since) is graded in this version's `trigger` and `behaviour` counts but can be neither a gain
+nor a regression, so those counts and the two lists can legitimately disagree. A generated case whose
+prompt changed with the description (for example `pos-001`) appears in the lists under the baseline's
+prompt.
 
 The pipeline's regression line sums them up, for example
 `pass (2 gains, 0 regressions vs 0.1.0; 7 cases compared)`.

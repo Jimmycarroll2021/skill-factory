@@ -285,3 +285,33 @@ def test_captured_prompts_match_the_committed_meta_skill_description():
         case = evalcases.Case("cap", "positive", prompt, "captured")
         (grade,) = evalcases.grade_offline([case], meta["name"], meta["description"])
         assert grade.score >= evalcases.MATCH_THRESHOLD, prompt
+
+
+def _break_description(skill_dir: Path, description: str) -> None:
+    skill_md = skill_dir / "SKILL.md"
+    lines = skill_md.read_text(encoding="utf-8").split("\n")
+    out = [f"description: {description}" if ln.startswith("description:") else ln for ln in lines]
+    skill_md.write_text("\n".join(out), encoding="utf-8", newline="\n")
+
+
+def test_readme_receipt_sample_is_what_a_run_prints(tmp_path, monkeypatch):
+    """The README's receipt.md sample is real output: the foreign-skill fixture packaged at 0.1.0,
+    approved, its description replaced by an unrelated one, and packaged again at 0.1.1 with
+    ``--allow-regression``."""
+    from skill_factory import release
+
+    monkeypatch.setenv("HOME", str(tmp_path / "home"))
+    monkeypatch.setenv("USERPROFILE", str(tmp_path / "home"))
+    skill_dir = tmp_path / "skills" / "foreign-skill"
+    shutil.copytree(REPO / "tests" / "fixtures" / "foreign-skill", skill_dir)
+    release.package_skill(skill_dir)
+    release.approve(skill_dir, "0.1.0", user="t")
+    _break_description(skill_dir, "Plan a week of dinners from the ingredients left in the fridge.")
+    release.package_skill(skill_dir, allow_regression=True)
+    printed = (skill_dir / ".factory" / "versions" / "0.1.1" / "receipt.md").read_text(
+        encoding="utf-8"
+    )
+    readme = _read("README.md")
+    block = re.search(r"```markdown\n(# Receipt: foreign-skill 0\.1\.1.*?)```", readme, re.DOTALL)
+    assert block, "README needs the receipt.md sample from the foreign-skill run"
+    assert block.group(1) == printed

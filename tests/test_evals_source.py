@@ -202,3 +202,18 @@ def test_a_generic_negative_duplicated_in_evals_keeps_the_generated_case(root):
 
 def test_grade_markers_with_no_expected_markers_is_not_a_failure():
     assert runner.grade_markers("anything at all", []) == {"passed": True, "found": [], "missing": []}
+
+
+def test_a_trigger_id_that_collides_with_a_behaviour_id_is_rejected(tmp_path):
+    skill = tmp_path / "skills" / "clash"
+    skill.mkdir(parents=True)
+    (skill / "SKILL.md").write_text("---\nname: clash\ndescription: x. NOT y.\n---\n", encoding="utf-8")
+    _write_evals(
+        skill,
+        [
+            {"id": "x", "prompt": "do x", "should_trigger": True, "assertions": ["does x"]},
+            {"id": "x-beh", "prompt": "do x again", "should_trigger": True},
+        ],
+    )
+    with pytest.raises(SpecError, match="x-beh"):
+        evalcases.load_evals(skill)

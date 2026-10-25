@@ -346,7 +346,7 @@ def test_a_blank_reason_is_not_a_reason(root, capsys):
 
 def test_a_clean_version_approves_without_a_reason_and_records_its_receipt_status(root):
     version = package(root)
-    release.approve(skill_dir(root), "0.1.0", user="tester", accept_regressions="not needed")
+    release.approve(skill_dir(root), "0.1.0", user="tester")
     approval = read_json(version.path / "approval.json")
     assert approval["receipt"] == "no-baseline" and "accepted_regressions" not in approval
     second = package(root)
@@ -448,3 +448,52 @@ def test_receipt_source_never_spawns_or_imports_release():
     source = Path(receipt.__file__).read_text(encoding="utf-8")
     assert "subprocess" not in source and "os.system" not in source
     assert "release" not in re.findall(r"^(?:from|import) skill_factory\.?(\w*)", source, re.MULTILINE)
+
+
+# --- review round: the receipt must be trustworthy end to end -----------------------------------
+
+
+def test_evaluation_grades_the_skill_md_description_not_a_stale_spec(root):
+    from skill_factory import evaluate
+
+    set_description(root, "Turns quarterly budget spreadsheets into variance commentary. NOT for PDFs.")
+    assert "variance commentary" in evaluate.load_spec(skill_dir(root)).description
+
+
+def test_install_refuses_a_version_whose_receipt_was_edited(root):
+    from skill_factory import install
+
+    release.package_skill(skill_dir(root))
+    release.approve(skill_dir(root), "0.1.0", user="t")
+    path = versions_dir(root) / "0.1.0" / "receipt.json"
+    data = read_json(path)
+    data["evidence"] = "verified"
+    path.write_text(json.dumps(data, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    with pytest.raises(install.InstallIntegrityError, match="receipt.json"):
+        install.install_skill(root, NAME, "claude", "project", home=root / "home")
+    assert not (root / ".claude" / "skills" / NAME).exists()
+
+
+def test_an_unknown_receipt_schema_is_refused(tmp_path):
+    version_dir = tmp_path / "0.9.0"
+    version_dir.mkdir()
+    (version_dir / "receipt.json").write_text(
+        json.dumps({"schema": "skill-receipt/2", "status": "worse"}), encoding="utf-8"
+    )
+    with pytest.raises(release.ReleaseError, match="skill-receipt/2"):
+        release._approval_record("x", version_dir, "t", None)
+    with pytest.raises(ValueError, match="skill-receipt/2"):
+        receipt.load_receipt(version_dir)
+
+
+def test_an_accept_reason_is_recorded_even_when_nothing_regressed(root):
+    release.package_skill(skill_dir(root))
+    release.approve(skill_dir(root), "0.1.0", user="t", accept_regressions="known flaky prompt")
+    approval = read_json(versions_dir(root) / "0.1.0" / "approval.json")
+    assert approval["accepted_regressions"] == {"reason": "known flaky prompt", "ids": []}
+
+
+def test_latest_version_is_the_one_load_versions_ranks_highest(root):
+    release.package_skill(skill_dir(root), set_version="0.9.0")
+    release.package_skill(skill_dir(root), set_version="0.10.0")
+    assert receipt.latest_version(skill_dir(root)) == release.load_versions(skill_dir(root))[-1].version == "0.10.0"

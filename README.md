@@ -36,23 +36,32 @@ uv run skillz approve <name> 0.1.1 --accept-regressions "the dropped case was a 
 uv run skillz install <name> --platform claude --scope project
 ```
 
-The receipt is `skills/<name>/.factory/versions/<semver>/receipt.json` with a Markdown rendering next to it, both covered by the version's checksum manifest. As an illustration of the shape (not pasted from a run), `receipt.md` reads like this:
+The receipt is `skills/<name>/.factory/versions/<semver>/receipt.json` with a Markdown rendering next to it, both covered by the version's checksum manifest. This `receipt.md` is real output, reproduced by `tests/test_docs.py`: the hand-written skill in `tests/fixtures/foreign-skill/` was packaged at 0.1.0 and approved, its description was replaced with one about planning dinners, and it was packaged again with `--allow-regression`:
 
 ```markdown
-# Receipt: draft-release-notes 0.1.1
+# Receipt: foreign-skill 0.1.1 — evidence: unverified
 
-Evidence: verified (runner claude, judge codex)   Status: regressed   Baseline: 0.1.0
+- Baseline: 0.1.0
+- Trigger: 10 checked, 8 passed, 2 failed (lexical-overlap, threshold 0.3)
+- Behaviour: no judge ran
+- Status: regressed
 
-Trigger: lexical-overlap, threshold 0.3, 8 checked, 7 passed, 1 failed
-Behaviour: 5 cases, skill better 3, worse 1, tie 1, errors 0
+## Regressions
 
-## Regressions (1)
-- beh-003 (behaviour) "Summarise these commits for the changelog": judge 8/10 -> 6/10
+| id | kind | prompt | before → after |
+| --- | --- | --- | --- |
+| `evl-announcement-from-changelog` | positive | Turn the changelog entries for this release into a GitHub release announcement | pass → fail |
+| `evl-drafts-release-notes` | positive | Draft release notes for version 2.3 from our CHANGELOG.md | pass → fail |
+| `pos-001` | positive | Convert a Markdown changelog into GitHub release notes grouped by section. | pass → fail |
 
-## Gains (2)
-- cap-001 (positive) "Help me write a changelog entry": fail -> pass
-- beh-001 (behaviour) "Draft release notes from these merged PRs": judge 7/10 -> 9/10
+## Gains
+
+None.
+
+Judge: none; runner: none.
 ```
+
+The two lines count different things, on purpose. The trigger line grades this version's own cases: the two `evals.json` prompts about release notes now fail. The regression table re-grades the cases the baseline recorded, and only those, so it also catches `pos-001`, the prompt generated from the old description, which the new version no longer has. A case that exists only in the new version (a new `evals.json` entry, a newly captured failure) is graded on the trigger line but cannot be a gain or a regression, because the baseline never saw it.
 
 Three evidence levels, earned not declared: `unverified` means only the lexical grading ran and no model saw the skill; `self-judged` means one model ran the cases and scored its own transcripts; `verified` means a different model judged (the default when both `claude` and `codex` CLIs are installed). `skillz list` shows the level of every installed version.
 
@@ -180,13 +189,13 @@ Pass `--out <dir>` to any command to work on a different project root; the defau
 | `skillz judge <name> [--runner {claude,codex}] [--judge {claude,codex}]` | Run each behaviour case with and without the skill, have a judge model score both transcripts 0 to 5 against the rubric, and write `.factory/judge.json` and `judge.md`. Cross-model by default when both CLIs are on PATH; `skipped: no runner` without `--runner`. | 0, 2 |
 | `skillz package <name> [--minor \| --major] [--set-version X.Y.Z] [--allow-regression] [--runner {claude,codex}] [--judge {claude,codex}]` | Validate, render and evaluate, compare with the last approved version into gains and regressions, and write an immutable version with its receipt under `.factory/versions/<semver>/`. | 0, 1 validation or regression, 2 clash or missing |
 | `skillz approve <name> <version> [--accept-regressions REASON]` | Verify checksums and record approval (UTC time and local user). Refuses a `regressed` receipt without a reason. The only way a version becomes installable. | 0, 1 integrity or regressed, 2 missing |
-| `skillz receipt <name> [version] [--json]` | Print a version's receipt (default: the highest version): evidence level, trigger and behaviour counts, gains and regressions. | 0, 2 missing |
+| `skillz receipt <name> [version] [--json]` | Print a version's receipt (default: the highest version): evidence level, trigger and behaviour counts, gains and regressions. | 0, 1 no receipt, 2 missing |
 | `skillz install <name> --platform {claude,codex} --scope {project,user} [--version X.Y.Z]` | Install an approved version (default: highest approved) and record it, with its evidence level, in `skills/registry.json`. | 0, 1 not approved or integrity, 2 |
 | `skillz rollback <name> [--platform {claude,codex}] [--scope {project,user}]` | Reinstall the highest approved version below the installed one. Versions are never deleted. | 0, 1 nothing to roll back to, 2 |
 | `skillz list [--json]` | Show the registry and each skill's versions with their status and evidence level. | 0 |
 | `skillz run <source> [--name NAME] [--runner {claude,codex}] [--judge {claude,codex}] [--force]` | The pipeline from a paragraph or spec: capture, generate, validate, render, evaluate, (judge with `--runner`), regression, package; stops at awaiting approval and writes `.factory/pipeline.json` and `pipeline.md`. | 0 awaiting approval, 1 stopped by a failed stage, 2 input error |
 | `skillz capture-failure <name> --prompt TEXT (--should-trigger \| --should-not-trigger \| --expect MARKER ...) [--note TEXT]` | Record a real failure as a persistent eval case in `.factory/cases/captured.json`. | 0, 2 |
-| `skillz candidate <name>` | Copy the stable skill into `.factory/candidates/<id>/skill/` for a human to edit; stable files are untouched. | 0, 2 |
+| `skillz candidate <name>` | Copy the stable skill into `.factory/candidates/<id>/skill/` for a human to edit; stable files are untouched. | 0, 1 cannot copy, 2 missing |
 | `skillz challenge <name> <candidate-id> [--runner {claude,codex}] [--judge {claude,codex}]` | Validate stable and candidate, grade the union of cases on both sides (with `--runner`, also judge behaviour cases on both), write `challenge.json` and `challenge.md`. | 0 for every verdict, 2 |
 | `skillz promote <name> <candidate-id>` | Explicit human command: replace the canonical files with a challenged candidate and package a new version that waits for approval. | 0, 1 refused or rolled back, 2 |
 

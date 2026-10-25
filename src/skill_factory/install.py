@@ -49,7 +49,7 @@ class NothingToRollBack(InstallError):
 
 
 class InstallIntegrityError(InstallError):
-    """The dist files do not match the checksums in manifest.json."""
+    """The version's files do not match the checksums in manifest.json."""
 
 
 class UnsafeTarget(InstallError):
@@ -125,7 +125,12 @@ def _approval(version_dir: Path) -> dict | None:
 
 def _evidence(version_dir: Path) -> tuple[str | None, int | None]:
     """(evidence level, regression count) from the version's receipt.json; Nones without one."""
-    data = _read_json(version_dir / "receipt.json")
+    from skill_factory import receipt  # the receipt module imports nothing from here
+
+    try:
+        data = receipt.load_receipt(version_dir)
+    except ValueError as exc:
+        raise InstallIntegrityError(str(exc)) from exc
     if data is None:
         return None, None
     regressions = data.get("regressions")
@@ -213,6 +218,17 @@ def _dist_files(dist: Path) -> list[str]:
     return sorted(files)
 
 
+def _verify_version(version_dir: Path) -> None:
+    """Refuse a version whose files (reports and receipt included) differ from its manifest."""
+    from skill_factory import release  # release does not import this module
+
+    bad = release.verify_version(version_dir)
+    if bad:
+        raise InstallIntegrityError(
+            f"{version_dir} does not match its manifest: {', '.join(bad)}"
+        )
+
+
 def _verify_dist(version_dir: Path, platform: str) -> list[str]:
     """Check ``dist/<platform>/`` against manifest.json; return the files to copy."""
     manifest = _read_json(version_dir / "manifest.json")
@@ -283,6 +299,7 @@ def _plan(
     approval = _approval(version_dir)
     if approval is None:
         raise NotApproved(f"version {version} of {name!r} is not approved")
+    _verify_version(version_dir)
     files = _verify_dist(version_dir, platform)
     target = target_dir(root, name, platform, scope, home)
     _check_no_symlinks(_base(root, scope, home), target)

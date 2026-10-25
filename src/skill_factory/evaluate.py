@@ -10,6 +10,7 @@ PATH, and is recorded as skipped otherwise. Eval is advisory.
 from __future__ import annotations
 
 import argparse
+import dataclasses
 import json
 import sys
 from collections.abc import Callable
@@ -35,16 +36,18 @@ def _read_text(path: Path, label: str) -> str:
 
 
 def load_spec(skill_dir: Path) -> SkillSpec:
-    """Load ``.factory/spec.json``; without it, fall back to the SKILL.md name and description."""
+    """Load ``.factory/spec.json`` for the cases; the name and description graded are always the
+    ones SKILL.md carries, so an edited skill is never judged against a stale spec. Without a
+    spec.json the frontmatter alone is the spec."""
     skill_dir = Path(skill_dir)
     spec_path = skill_dir / FACTORY_DIR / "spec.json"
+    skill_md = skill_dir / "SKILL.md"
     if spec_path.exists() or spec_path.is_symlink():
         try:
             data = json.loads(_read_text(spec_path, "spec"))
         except json.JSONDecodeError as exc:
             raise SpecError(f"invalid JSON in {spec_path}: {exc}") from exc
-        return SkillSpec.from_dict(data)
-    skill_md = skill_dir / "SKILL.md"
+        return _from_skill_md(SkillSpec.from_dict(data), skill_md)
     _read_text(skill_md, "SKILL.md")
     try:
         data = render._frontmatter(skill_md)
@@ -56,6 +59,24 @@ def load_spec(skill_dir: Path) -> SkillSpec:
     if not isinstance(description, str) or not description.strip():
         raise SpecError("SKILL.md frontmatter needs a non-empty description")
     return SkillSpec(name=name, description=description, source_kind="yaml")
+
+
+def _from_skill_md(spec: SkillSpec, skill_md: Path) -> SkillSpec:
+    """``spec`` with the name and description the SKILL.md frontmatter actually carries."""
+    if not skill_md.is_file() or skill_md.is_symlink():
+        return spec
+    try:
+        meta = render._frontmatter(skill_md)
+    except render.RenderError:
+        return spec  # validation reports the unreadable frontmatter as an error
+    name, description = meta.get("name"), meta.get("description")
+    return dataclasses.replace(
+        spec,
+        name=name if isinstance(name, str) and name else spec.name,
+        description=description
+        if isinstance(description, str) and description.strip()
+        else spec.description,
+    )
 
 
 def _summary(grades: list[evalcases.Grade]) -> dict:

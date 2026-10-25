@@ -179,21 +179,26 @@ def write_receipt(version_dir: Path, data: dict) -> None:
 
 
 def load_receipt(version_dir: Path) -> dict | None:
-    """The version's receipt.json, or None when it has none (made before receipts existed)."""
-    return _read_json(Path(version_dir) / RECEIPT_JSON)
+    """The version's receipt.json, or None when it has none (made before receipts existed).
+
+    A receipt written to a schema this version of skillz does not know raises ValueError
+    rather than being read with guesses about what its fields mean.
+    """
+    data = _read_json(Path(version_dir) / RECEIPT_JSON)
+    if data is not None and data.get("schema") != SCHEMA:
+        raise ValueError(
+            f"{Path(version_dir) / RECEIPT_JSON}: schema {data.get('schema')!r} is not {SCHEMA}"
+        )
+    return data
 
 
 def latest_version(skill_dir: Path) -> str | None:
-    """The highest semver directory under ``<skill>/.factory/versions/``, approved or not."""
-    root = Path(skill_dir) / ".factory" / "versions"
-    if root.is_symlink() or not root.is_dir():
-        return None
-    found = [
-        (tuple(int(part) for part in entry.name.split(".")), entry.name)
-        for entry in root.iterdir()
-        if _SEMVER_RE.fullmatch(entry.name) and entry.is_dir() and not entry.is_symlink()
-    ]
-    return max(found)[1] if found else None
+    """The highest version ``release.load_versions`` lists, approved or not; None without one."""
+    # release imports this module, so the cycle is resolved lazily here.
+    from skill_factory import release
+
+    versions = release.load_versions(skill_dir)
+    return versions[-1].version if versions else None
 
 
 def add_parser(sub: argparse._SubParsersAction) -> None:

@@ -283,15 +283,17 @@ def load_evals(skill_dir: Path) -> list[Case]:
     seen: set[str] = set()
     for i, entry in enumerate(_read_evals(path)):
         case_id = _eval_id(entry, i)
-        if case_id in seen:
-            raise SpecError(f"{path}: entry {i} has a duplicate id {case_id!r}")
-        seen.add(case_id)
         prompt = entry["prompt"].strip()
         triggers = bool(entry.get("should_trigger", True))
-        cases.append(Case(case_id, "positive" if triggers else "negative", prompt, EVALS_SOURCE))
         rubric = _assertions(entry)
+        new = [Case(case_id, "positive" if triggers else "negative", prompt, EVALS_SOURCE)]
         if triggers and rubric:
-            cases.append(Case(f"{case_id}-beh", "behaviour", prompt, EVALS_SOURCE, [], rubric))
+            new.append(Case(f"{case_id}-beh", "behaviour", prompt, EVALS_SOURCE, [], rubric))
+        for case in new:  # an entry's behaviour case id must not collide with another entry's id
+            if case.id in seen:
+                raise SpecError(f"{path}: entry {i} has a duplicate id {case.id!r}")
+            seen.add(case.id)
+        cases.extend(new)
     return cases
 
 
