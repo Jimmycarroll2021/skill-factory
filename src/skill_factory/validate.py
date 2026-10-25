@@ -130,7 +130,7 @@ _FENCE_RE = re.compile(
     r"^[ \t]*(`{3,}|~{3,})[^\n]*\n(.*?)^[ \t]*\1[ \t]*$", re.MULTILINE | re.DOTALL
 )
 _SCRIPT_CALL_RE = re.compile(
-    _REL_START + r"(scripts/[A-Za-z0-9_./-]+\.py)((?:\s+[^\s|;&>#]+)*)"
+    _REL_START + r"(scripts/[A-Za-z0-9_./-]+\.py)(?![A-Za-z0-9_])((?:\s+[^\s|;&>#]+)*)"
 )
 # What may precede a script path for the line to run it: a command start, an optional
 # `uv run` and Python interpreter, and the skill-dir prefix. A path in a string literal
@@ -366,6 +366,12 @@ def _script_options(path: Path) -> set[str] | None:
             and any(kw.arg == "parents" for kw in node.keywords)
         ):
             return None  # options inherited from another parser cannot be listed here
+        if (
+            isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Attribute)
+            and node.func.attr in ("parse_known_args", "parse_known_intermixed_args")
+        ):
+            return None  # the script accepts unknown options on purpose
     # A script that parses its arguments another way (sys.argv, getopt, click) is not checked.
     return options if declared else None
 

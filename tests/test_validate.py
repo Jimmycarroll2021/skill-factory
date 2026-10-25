@@ -599,3 +599,22 @@ def test_a_quoted_script_path_still_has_its_flags_checked(tmp_path):
     _script(skill, "scripts/tool.py", "import argparse\np = argparse.ArgumentParser()\np.add_argument('--input')\n")
     assert _errored(val.validate_skill(skill), "script-flag-missing")
 
+
+def test_a_parser_using_parse_known_args_is_not_flag_checked(tmp_path):
+    body = "```bash\npython3 scripts/tool.py --verbose --draft\n```\n"
+    skill = _make(tmp_path, "known-args", BOUNDED, body)
+    _script(
+        skill,
+        "scripts/tool.py",
+        "import argparse\np = argparse.ArgumentParser()\np.add_argument('--verbose', action='store_true')\n"
+        "args, remaining = p.parse_known_args()\n",
+    )
+    assert "script-flag-missing" not in _rules(val.validate_skill(skill))
+
+
+def test_a_pyz_archive_is_not_read_as_a_missing_py_script(tmp_path):
+    body = "Run the bundled tool:\n\n```bash\npython3 scripts/tool.pyz\n```\n"
+    skill = _make(tmp_path, "zipapp", BOUNDED, body)
+    _script(skill, "scripts/tool.pyz", "PK")
+    assert "missing-script" not in _rules(val.validate_skill(skill))
+
