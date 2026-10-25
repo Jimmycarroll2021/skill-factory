@@ -324,6 +324,16 @@ class GateTest(unittest.TestCase):
         (self.skill / "evals" / "evals.json").write_text("null\n", encoding="utf-8")
         self.assertFails("evals", "list")
 
+    def test_nested_script_is_run_by_the_cases_check(self):
+        (self.skill / "scripts" / "nested").mkdir()
+        (self.skill / "scripts" / "tiny.py").rename(self.skill / "scripts" / "nested" / "tiny.py")
+        for rel in ("SKILL.md", "evals/cases.json"):
+            p = self.skill / rel
+            p.write_text(p.read_text(encoding="utf-8").replace("scripts/tiny.py", "scripts/nested/tiny.py"),
+                         encoding="utf-8")
+        self.edit("scripts/nested/tiny.py", 'code = 0 if text == "ok" else 4', "code = 0")
+        self.assertFails("cases", "expected 4")
+
     # -- harness errors ------------------------------------------------------------
     def test_unknown_check_name_is_exit_2(self):
         code, out = self.gate("--only", "nonsense")

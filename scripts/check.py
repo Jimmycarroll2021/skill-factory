@@ -259,7 +259,9 @@ class Skill:
                 self.fm = parse_frontmatter(block)
             except FrontmatterError as e:
                 self.fm_error = str(e)
-        self.scripts = sorted(p for p in (folder / "scripts").glob("*.py")) if (folder / "scripts").is_dir() else []
+        # Recursive: a script in scripts/sub/ is documented and reachable, so it must be run too.
+        self.scripts = sorted(p for p in (folder / "scripts").rglob("*.py")
+                              if "__pycache__" not in p.parts) if (folder / "scripts").is_dir() else []
 
     def path(self, sub=""):
         return f"{self.rel}/{sub}" if sub else f"{self.rel}/SKILL.md"
