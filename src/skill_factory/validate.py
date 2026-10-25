@@ -460,6 +460,8 @@ def _check_quality(skill_dir: Path, name, description, body: str, add) -> None:
         if options is None:
             continue
         for arg in args:
+            if arg == "--":
+                break  # argparse: every word after a standalone -- is positional
             if arg.startswith("--") or re.fullmatch(r"-[A-Za-z]", arg):
                 flag = arg.split("=", 1)[0]
                 # argparse accepts any unambiguous prefix of a long option by default.

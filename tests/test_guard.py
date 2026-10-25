@@ -78,6 +78,10 @@ _spec.loader.exec_module(guard)
         "# '\nrm -r -f build\n# '",
         "gh api graphql -F query=@request.graphql",
         "gh api repos/o/r/issues -f title=x",
+        # Codex review round 3: what the guard cannot read is denied
+        "cat <<'EOF'\n'\nEOF\nr\\m -r -f build",
+        "cat <<EOF > notes.txt\ndon't stop\nEOF",
+        "printf '%s\\n' \\ #literal; rm -r -f build",
     ],
 )
 def test_denied(command):
@@ -98,7 +102,6 @@ def test_denied(command):
         "cat .env.example",
         'git -C /repo commit -m "Deny git push --force and cat .env"',
         "git -C /repo commit -m \"$(cat <<'EOF'\nsubject\n\nbody\nEOF\n)\"",
-        "cat <<EOF > notes.txt\ndon't stop\nEOF",
         "git -C /repo log --grep '#123'",
         "cat infra/main.tf",
         "uv run pytest -q tests/test_guard.py",
@@ -168,3 +171,14 @@ def test_merge_tools_are_denied_whatever_the_mcp_server_is_called():
     ):
         assert guard.reason_for({"tool_name": tool, "tool_input": {}})
     assert guard.reason_for({"tool_name": "mcp__github__pull_request_read", "tool_input": {}}) is None
+
+
+def test_shell_nesting_past_the_inspection_limit_is_denied():
+    import shlex
+
+    command = "true; rm -r -f build"
+    for _ in range(4):
+        command = "bash -c " + shlex.quote(command)
+    assert guard.bash_reason(command)
+    command = "eval eval eval eval git push -f"
+    assert guard.bash_reason(command)

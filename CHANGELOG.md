@@ -55,7 +55,9 @@ All notable changes to this project are documented here. The format follows
   can parse; the text is unchanged.
 - `scripts/check.py` no longer passes a broken skill in three cases Codex found: an
   `evals.json` holding JSON `null`, a verdict script in a subdirectory of `scripts/`, and a
-  documented command with a quoted script path or a line continuation.
+  documented command with a quoted script path or a line continuation, and a case naming a
+  script the skill does not have. It also stops calling a documented extensionless file (such
+  as `assets/Dockerfile`) an orphan.
 - Generated descriptions now carry the paragraph's "use it when" and "do not use it" sentences.
   Claude reads only the frontmatter description when choosing a skill, so `capture` composes
   them into the description (first trigger and first boundary before any others, each kept
@@ -83,7 +85,9 @@ All notable changes to this project are documented here. The format follows
   line continuations, after a comment, or spelled `git.exe`. It also denies PowerShell and `cmd`
   run from Bash, `gh` PR merges with `--repo` anywhere, write-side `gh api` (payload flags,
   `graphql`), a `merge_pull_request` tool from any MCP server, writes to hosting, infra and
-  deploy config, and any hook event with a missing or mistyped field. `defaultMode: acceptEdits` and
+  deploy config, any hook event with a missing or mistyped field, and any command it cannot
+  read: one it cannot tokenise (an unquoted heredoc body with an apostrophe) or shells nested
+  more than three deep. `defaultMode: acceptEdits` and
   the broad allow rules (`npm`, `python`, `cat`, `cd`) are gone, so more calls ask first.
 
 ### Removed

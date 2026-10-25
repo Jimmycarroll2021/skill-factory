@@ -572,3 +572,11 @@ def test_options_declared_through_a_variable_are_not_flag_checked(tmp_path):
         "p = argparse.ArgumentParser(parents=[base])\np.add_argument('--out')\n",
     )
     assert "script-flag-missing" not in _rules(val.validate_skill(inherited))
+
+
+def test_words_after_a_double_dash_are_not_flags(tmp_path):
+    body = "```bash\npython3 scripts/tool.py -- --draft\n```\n"
+    skill = _make(tmp_path, "double-dash", BOUNDED, body)
+    _script(skill, "scripts/tool.py", "import argparse\np = argparse.ArgumentParser()\np.add_argument('values', nargs='*')\n")
+    assert "script-flag-missing" not in _rules(val.validate_skill(skill))
+
