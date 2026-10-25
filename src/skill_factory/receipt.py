@@ -196,11 +196,14 @@ def load_receipt(version_dir: Path) -> dict | None:
     A receipt written to a schema this version of skillz does not know raises ValueError
     rather than being read with guesses about what its fields mean.
     """
-    data = _read_json(Path(version_dir) / RECEIPT_JSON)
+    path = Path(version_dir) / RECEIPT_JSON
+    if not path.exists() and not path.is_symlink():
+        return None
+    if path.is_symlink() or not path.is_file():  # a symlink, FIFO or device is never opened
+        raise ValueError(f"{path} is not a regular file")
+    data = _read_json(path)
     if data is not None and data.get("schema") != SCHEMA:
-        raise ValueError(
-            f"{Path(version_dir) / RECEIPT_JSON}: schema {data.get('schema')!r} is not {SCHEMA}"
-        )
+        raise ValueError(f"{path}: schema {data.get('schema')!r} is not {SCHEMA}")
     return data
 
 

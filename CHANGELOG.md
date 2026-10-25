@@ -88,7 +88,11 @@ All notable changes to this project are documented here. The format follows
 - `skillz list` and the version listing read a receipt of an unknown schema as no evidence
   instead of failing, so one such version cannot block installing or rolling back to another.
 - Version verification never opens a FIFO or device file; a special file in a version directory
-  is reported as not matching the manifest.
+  is reported as not matching the manifest, and a `receipt.json` that is not a regular file is
+  refused without being read.
+- An `evals/evals.json` entry without an `id` is named after a digest of its prompt
+  (`evl-<10 hex>`) instead of its position, so reordering or inserting entries cannot hand one
+  prompt's history to another in the receipt's comparison.
 - The regression report splits the comparison into gains and regressions instead of one
   `newly_failing` list; the pipeline's regression line reads like
   `pass (2 gains, 0 regressions vs 0.1.0; 7 cases compared)`.

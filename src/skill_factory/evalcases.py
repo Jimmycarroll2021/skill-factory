@@ -9,6 +9,7 @@ also appear in the skill's name and description.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 from dataclasses import dataclass, field
@@ -259,10 +260,19 @@ def _read_evals(path: Path) -> list[dict]:
 
 
 def _eval_id(entry: dict, index: int) -> str:
-    """``evl-<id>`` with the id reduced to ``[A-Za-z0-9_-]``; ``evl-<index>`` without an id."""
+    """``evl-<id>`` with the id reduced to ``[A-Za-z0-9_-]``.
+
+    Without an id the case is named after its prompt (the first 10 hex digits of the sha256 of
+    the whitespace-normalised prompt), never after its position: a receipt compares cases by id
+    across versions, and a positional id would hand one prompt's history to another whenever the
+    file is reordered or an entry is inserted. ``index`` is only used for error messages.
+    """
     raw = entry.get("id")
     cleaned = _ID_UNSAFE_RE.sub("-", raw).strip("-") if isinstance(raw, str) else ""
-    return f"evl-{cleaned}" if cleaned else f"evl-{index:03d}"
+    if cleaned:
+        return f"evl-{cleaned}"
+    prompt = " ".join(str(entry.get("prompt", "")).split())
+    return "evl-" + hashlib.sha256(prompt.encode("utf-8")).hexdigest()[:10]
 
 
 def _assertions(entry: dict) -> list[str]:

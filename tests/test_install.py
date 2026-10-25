@@ -548,3 +548,31 @@ def test_a_fifo_in_place_of_a_dist_file_is_refused_not_opened(root):
     assert outcome and isinstance(outcome[0], install.InstallIntegrityError)
     assert "dist/claude/SKILL.md" in str(outcome[0])
     assert not (root / ".claude" / "skills" / NAME).exists()
+
+
+@pytest.mark.skipif(not hasattr(os, "mkfifo"), reason="needs POSIX special files")
+def test_a_fifo_receipt_on_any_version_is_never_opened(root):
+    """Listing versions reads every receipt, so a special file there must be skipped, not read."""
+    import threading
+
+    make_version(root, NAME, "0.1.0", receipt={**RECEIPT, "version": "0.1.0", "status": "clean", "regressions": []})
+    bad = make_version(root, NAME, "0.1.1", approved=False)
+    os.mkfifo(bad / "receipt.json")
+    outcome: list[object] = []
+
+    def attempt() -> None:
+        outcome.append(install.version_status(root, NAME))
+        outcome.append(install.install_skill(root, NAME, "claude", "project"))
+        try:
+            install.install_skill(root, NAME, "codex", "project", "0.1.1")
+        except install.InstallError as exc:
+            outcome.append(exc)
+
+    worker = threading.Thread(target=attempt, daemon=True)
+    worker.start()
+    worker.join(timeout=10)
+    assert not worker.is_alive(), "a FIFO receipt.json was opened and hung the listing"
+    rows, record, refused = outcome
+    assert {r["version"]: r["evidence"] for r in rows} == {"0.1.0": "verified", "0.1.1": None}
+    assert record.version == "0.1.0"
+    assert isinstance(refused, install.InstallError) and "0.1.1" in str(refused)

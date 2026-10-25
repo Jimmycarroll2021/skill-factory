@@ -6,6 +6,7 @@ Nothing here may start a process.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import re
@@ -111,7 +112,7 @@ def test_fixture_entries_map_to_trigger_and_behaviour_cases(foreign):
     assert evalcases.load_evals(foreign) == cases
 
 
-def test_ids_fall_back_to_the_index_and_are_sanitised(root):
+def test_ids_fall_back_to_the_prompt_digest_and_are_sanitised(root):
     skill = _bare(root)
     _write_evals(
         skill,
@@ -123,9 +124,10 @@ def test_ids_fall_back_to_the_index_and_are_sanitised(root):
         ],
     )
     cases = evalcases.load_evals(skill)
+    first = "evl-" + hashlib.sha256(b"first").hexdigest()[:10]
     assert [c.id for c in cases] == [
-        "evl-000",
-        "evl-000-beh",
+        first,
+        first + "-beh",
         "evl-has-space-and-colon",
         "evl-no-assertions",
         "evl-x",
@@ -217,3 +219,24 @@ def test_a_trigger_id_that_collides_with_a_behaviour_id_is_rejected(tmp_path):
     )
     with pytest.raises(SpecError, match="x-beh"):
         evalcases.load_evals(skill)
+
+
+def test_an_id_less_eval_keeps_its_identity_when_the_file_is_reordered(root):
+    """A fallback id comes from the prompt, not the position: reordering or inserting entries
+    must not hand an existing case id to a different prompt, or the regression comparison would
+    pair unrelated tasks."""
+    skill = _bare(root)
+    entries = [
+        {"prompt": "Summarise  this\nchangelog", "assertions": ["Keeps every heading"]},
+        {"prompt": "Draft release notes", "assertions": ["Names the version"]},
+    ]
+    _write_evals(skill, entries)
+    _triggers = lambda: {c.prompt: c.id for c in evalcases.load_evals(skill) if c.kind != "behaviour"}
+    before = _triggers()
+    _write_evals(skill, [{"prompt": "Write a tweet", "should_trigger": False}, *reversed(entries)])
+    after = _triggers()
+    assert {p: after[p] for p in before} == before
+    assert "evl-000" not in after.values() and "evl-001" not in after.values()
+    # the digest ignores whitespace differences, so a reflowed prompt is still the same case
+    _write_evals(skill, [{"prompt": "Summarise this changelog", "assertions": ["Keeps every heading"]}])
+    assert evalcases.load_evals(skill)[0].id == before["Summarise  this\nchangelog"]
