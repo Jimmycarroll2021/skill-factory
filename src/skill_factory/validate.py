@@ -7,6 +7,7 @@ imports, executes or spawns anything from the skill and does not follow symlinks
 from __future__ import annotations
 
 import argparse
+import ast
 import json
 import os
 import re
@@ -16,7 +17,13 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
 from skill_factory import yamlish
-from skill_factory.capture import MAX_DESCRIPTION, MAX_NAME, NAME_RE, RESOURCE_DIRS
+from skill_factory.capture import (
+    MAX_DESCRIPTION,
+    MAX_NAME,
+    NAME_RE,
+    NEGATIVE_RE,
+    RESOURCE_DIRS,
+)
 
 # Size limits. Module-level so tests can lower them instead of writing megabytes.
 MAX_FILE_BYTES = 1_048_576  # a single file over this is an error
@@ -85,6 +92,43 @@ _DESTRUCTIVE_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
         re.compile(r"\bgit\s+(?:reset\s+--hard|clean\s+-\S*f|push\s+(?:\S+\s+)*--force)"),
     ),
     ("world-writable chmod on root", re.compile(r"\bchmod\s+(?:-\S+\s+)*[0-7]*777\s+/")),
+)
+
+
+# Quality rules from a study of a 398-skill public collection (see CHANGELOG): signals that
+# predicted weaker skills are warnings; a skill that cannot work as written is an error.
+
+# A project skill named like a bundled Claude Code command replaces that command.
+# Bundled names as of Claude Code 2.1.302; extend when new built-ins land.
+RESERVED_NAMES = frozenset({
+    "add-dir", "agents", "bug", "claude-api", "clear", "code-review", "commit", "compact",
+    "config", "context", "cost", "doctor", "export", "fewer-permission-prompts", "go", "help",
+    "hooks", "init", "keybindings-help", "login", "logout", "loop", "mcp", "memory", "model",
+    "permissions", "plugin", "pr", "resume", "review", "rewind", "run", "security-review",
+    "settings", "simplify", "status", "terminal", "todos", "update-config", "usage", "verify",
+    "vim",
+})
+_KEYWORD_LIST_RE = re.compile(
+    r"\b(?:mentions?|keywords?)\s*:\s*[\w.-]+(?:\s*,\s*[\w.-]+){2,}", re.IGNORECASE
+)
+_PERSONA_RE = re.compile(
+    r"^\s*You are an? (?:expert|seasoned|world-class|senior)\b", re.IGNORECASE | re.MULTILINE
+)
+_BROCHURE_HEADINGS = frozenset({
+    "overview", "core capabilities", "best practices", "common pitfalls", "installation",
+    "features", "introduction",
+})
+# A resource path at a token start, after ${CLAUDE_SKILL_DIR}/, or after a leading ./
+_REL_START = r"(?:(?<![\w/.-])|(?<=\$\{CLAUDE_SKILL_DIR\}/)|(?<=(?<![\w/.-])\./))"
+_IGNORED_FILES = frozenset({".DS_Store", "Thumbs.db"})
+_RESOURCE_PATH_RE = re.compile(
+    _REL_START + r"((?:scripts|references|assets)/[A-Za-z0-9_./-]+\.[A-Za-z0-9]+)"
+)
+_FENCE_RE = re.compile(
+    r"^[ \t]*(`{3,}|~{3,})[^\n]*\n(.*?)^[ \t]*\1[ \t]*$", re.MULTILINE | re.DOTALL
+)
+_SCRIPT_CALL_RE = re.compile(
+    _REL_START + r"(scripts/[A-Za-z0-9_./-]+\.py)((?:\s+[^\s|;&>#]+)*)"
 )
 
 
@@ -231,6 +275,157 @@ def _check_skill_md(skill_dir: Path, findings: list[Finding]) -> None:
             f"body is {body_lines} lines, the recommended limit is {MAX_BODY_LINES}",
             "warning",
         )
+    _check_quality(skill_dir, name, description, body, add)
+
+
+def _resource_files(skill_dir: Path) -> dict[str, list[str]]:
+    """Regular files under each existing resource directory, as POSIX paths; no symlinks."""
+    found: dict[str, list[str]] = {}
+    for resource in RESOURCE_DIRS:
+        root = skill_dir / resource
+        if root.is_symlink() or not root.is_dir():
+            continue
+        files: list[str] = []
+        for current, dirnames, filenames in os.walk(root, followlinks=False):
+            dirnames[:] = sorted(d for d in dirnames if not (Path(current) / d).is_symlink())
+            dirnames[:] = [d for d in dirnames if d != "__pycache__"]
+            for entry in sorted(filenames):
+                path = Path(current) / entry
+                if entry in _IGNORED_FILES or entry.endswith(".pyc"):
+                    continue
+                if path.is_file() and not path.is_symlink():
+                    files.append(path.relative_to(skill_dir).as_posix())
+        found[resource] = files
+    return found
+
+
+def _script_options(path: Path) -> set[str] | None:
+    """Option strings a Python script declares with add_argument; parsed, never executed."""
+    try:
+        tree = ast.parse(_read_capped(path).decode("utf-8"), filename=str(path))
+    except (SyntaxError, ValueError):
+        return None
+    options = {"-h", "--help"}
+    declared = False
+    for node in ast.walk(tree):
+        if (
+            isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Attribute)
+            and node.func.attr == "add_argument"
+        ):
+            declared = True
+            for arg in node.args:
+                if (
+                    isinstance(arg, ast.Constant)
+                    and isinstance(arg.value, str)
+                    and arg.value.startswith("-")
+                ):
+                    options.add(arg.value)
+    # A script that parses its arguments another way (sys.argv, getopt, click) is not checked.
+    return options if declared else None
+
+
+def _inside(skill_dir: Path, rel: str) -> Path | None:
+    """The path for ``rel`` if it stays inside the skill with no symlinked part, else None."""
+    parts = Path(rel).parts
+    if not parts or ".." in parts or Path(rel).is_absolute():
+        return None
+    current = skill_dir
+    for part in parts:
+        current = current / part
+        if current.is_symlink():
+            return None
+    return current
+
+
+def _imported_modules(path: Path) -> set[str]:
+    """Top-level module names a Python script imports; parsed, never executed."""
+    try:
+        tree = ast.parse(_read_capped(path).decode("utf-8"), filename=str(path))
+    except (SyntaxError, ValueError):
+        return set()
+    names: set[str] = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            names.update(alias.name.split(".")[0] for alias in node.names)
+        elif isinstance(node, ast.ImportFrom) and node.module and not node.level:
+            names.add(node.module.split(".")[0])
+    return names
+
+
+def _check_quality(skill_dir: Path, name, description, body: str, add) -> None:
+    if isinstance(name, str) and name in RESERVED_NAMES:
+        add("reserved-name", f"{name!r} is a bundled Claude Code command; a skill with this "
+            "name replaces it for everyone who installs it")
+    # A missing or over-long description is already an error; one finding per problem.
+    if isinstance(description, str) and description.strip() and len(description) <= MAX_DESCRIPTION:
+        if not NEGATIVE_RE.search(description):
+            add("description-no-boundary", "description does not say what the skill is NOT "
+                "for or refuses; Claude reads only the description when choosing a skill",
+                "warning")
+        if _KEYWORD_LIST_RE.search(description):
+            add("description-keyword-list", "description ends in a list of loose keywords, which "
+                "makes the skill load on unrelated prompts; describe whole requests instead",
+                "warning")
+    if _PERSONA_RE.search(body):
+        add("persona-opener", "'You are an expert...' openers predicted weaker skills; state the "
+            "job and what the skill refuses", "warning")
+    for heading in re.findall(r"^##\s+(.+?)\s*$", body, re.MULTILINE):
+        if heading.strip().lower() in _BROCHURE_HEADINGS:
+            add("brochure-heading", f"'## {heading}' is a brochure heading; the strongest skills "
+                "use workflow, rules and done-when sections instead", "warning")
+
+    files = _resource_files(skill_dir)
+    named = {rel for rel in _RESOURCE_PATH_RE.findall(body) if _inside(skill_dir, rel)}
+    commands: list[tuple[str, list[str]]] = []
+    for block in _FENCE_RE.finditer(body):
+        for line in block.group(2).splitlines():
+            for match in _SCRIPT_CALL_RE.finditer(line):
+                commands.append((match.group(1), match.group(2).split()))
+    run_scripts = {rel for rel, _ in commands}
+    for rel in sorted(named - run_scripts):
+        if not (skill_dir / rel).is_file():
+            # A prose path may be a file the skill writes at run time.
+            add("phantom-path", f"SKILL.md mentions {rel}, which does not exist; fine if the "
+                "skill creates it, otherwise fix the path", "warning")
+    imported: dict[str, set[str]] = {}
+    for rel in sorted(named):
+        path = _inside(skill_dir, rel)
+        if rel.endswith(".py") and path is not None and path.is_file():
+            imported.setdefault(str(Path(rel).parent.as_posix()), set()).update(
+                _imported_modules(path)
+            )
+    for resource, paths in files.items():
+        if not paths:
+            add("empty-resource-dir", f"{resource}/ is empty; add the files the skill needs or "
+                "remove the directory", "warning")
+        for rel in paths:
+            helper = Path(rel)
+            if rel in named or (
+                helper.suffix == ".py" and helper.stem in imported.get(helper.parent.as_posix(), ())
+            ):
+                continue
+            add("orphan-file", f"{rel} is never named in SKILL.md, so the skill "
+                "cannot tell the model to use it", "warning")
+    reported: set[str] = set()
+    for rel, args in commands:
+        script = _inside(skill_dir, rel)
+        if script is None:
+            continue  # outside the skill or through a symlink: never read
+        if not script.is_file():
+            if rel not in reported:
+                reported.add(rel)
+                add("missing-script", f"a documented command runs {rel}, which does not exist")
+            continue
+        options = _script_options(script)
+        if options is None:
+            continue
+        for arg in args:
+            if arg.startswith("--") or re.fullmatch(r"-[A-Za-z]", arg):
+                flag = arg.split("=", 1)[0]
+                if flag not in options:
+                    add("script-flag-missing", f"{rel} declares no option {flag}, so "
+                        "the documented command fails")
 
 
 def _redacted(label: str) -> str:

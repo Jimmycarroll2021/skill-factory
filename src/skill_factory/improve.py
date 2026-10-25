@@ -26,13 +26,31 @@ from skill_factory import (
     yamlish,
 )
 from skill_factory.candidates import CandidateError
-from skill_factory.capture import MAX_DESCRIPTION, NAME_RE, SkillSpec, SpecError
+from skill_factory.capture import (
+    EXCLUSION_RE,
+    MAX_DESCRIPTION,
+    NAME_RE,
+    SkillSpec,
+    SpecError,
+)
 
 SCHEMA = 1
-_SUGGESTED_WORDS = (
-    6  # evalcases suggests the first six trigger words for a vague description
-)
-_SENTENCE = " Also use when the user mentions: {words}."
+_SUGGESTED_PHRASES = 3  # at most three trigger situations for a vague description
+# Whole requests, not loose keywords: a list of generic words ("help, write, file") makes a
+# skill load on unrelated prompts, while a quoted request gives a model the situation.
+_SENTENCE = " Also use for requests like {phrases}."
+_MAX_SITUATION_WORDS = 12
+_MIN_SITUATION_WORDS = 3
+
+
+def _situation(text: str) -> str:
+    """A request trimmed to at most _MAX_SITUATION_WORDS words, without trailing punctuation."""
+    words = text.replace('"', "'").split()[:_MAX_SITUATION_WORDS]
+    return " ".join(words).rstrip(".!?,;:")
+
+
+def _quoted(phrases: list[str]) -> str:
+    return "; ".join(f'"{p}"' for p in phrases)
 
 
 class NothingToImprove(ValueError):
@@ -74,12 +92,27 @@ def _new_words(prompts: list[str], known: set[str]) -> list[str]:
 
 
 def _fit(description: str, tagged: list[tuple[str, str]]) -> list[tuple[str, str]]:
-    """Drop words from the end until the extended description is at most MAX_DESCRIPTION."""
+    """Drop requests from the end until the extended description is at most MAX_DESCRIPTION.
+
+    If not even one whole request fits, shorten the first one word by word, down to
+    _MIN_SITUATION_WORDS, rather than add nothing.
+    """
+
+    def fits(items: list[tuple[str, str]]) -> bool:
+        return len(description + _SENTENCE.format(phrases=_quoted([w for w, _ in items]))) <= (
+            MAX_DESCRIPTION
+        )
+
     kept = list(tagged)
-    while kept and len(
-        description + _SENTENCE.format(words=", ".join(w for w, _ in kept))
-    ) > (MAX_DESCRIPTION):
+    while kept and not fits(kept):
         kept.pop()
+    if not kept and tagged:
+        phrase, area = tagged[0]
+        words = phrase.split()
+        while len(words) > _MIN_SITUATION_WORDS and not fits([(" ".join(words), area)]):
+            words.pop()
+        if fits([(" ".join(words), area)]):
+            kept = [(" ".join(words).rstrip(".!?,;:"), area)]
     return kept
 
 
@@ -107,7 +140,8 @@ def _plan(
         )
 
     by_id = {case.id: case for case in cases}
-    known = set(evalcases.content_words(f"{spec.name} {spec.description}"))
+    # The same words the grader counts: boundary sentences are not trigger vocabulary.
+    known = set(evalcases.content_words(f"{spec.name} {evalcases.trigger_text(spec.description)}"))
     areas = [p.area for p in proposals]
     described: list[dict] = []
     applied: list[dict] = []
@@ -121,13 +155,19 @@ def _plan(
 
     for proposal in proposals:
         if proposal.area == "trigger-vocabulary":
+            prompts = [by_id[c].prompt for c in proposal.cases]
+            # A request that itself reads as an exclusion would be dropped by the grader.
             tag(
                 proposal.area,
-                _new_words([by_id[c].prompt for c in proposal.cases], known),
+                [
+                    _situation(p)
+                    for p in prompts
+                    if _new_words([p], known) and not EXCLUSION_RE.search(p)
+                ],
             )
         elif proposal.area == "vague-description":
-            wanted = evalcases.content_words(" ".join(spec.triggers))[:_SUGGESTED_WORDS]
-            tag(proposal.area, [w for w in wanted if w not in known])
+            wanted = [t for t in spec.triggers if _new_words([t], known)]
+            tag(proposal.area, [_situation(t) for t in wanted[:_SUGGESTED_PHRASES]])
         elif proposal.area == "negative-overlap":
             for case_id in proposal.cases:
                 prompt = by_id[case_id].prompt
@@ -149,30 +189,30 @@ def _plan(
     for area in ("trigger-vocabulary", "vague-description"):
         if area not in areas:
             continue
-        words = [w for w, a in kept if a == area]
-        if words:
+        phrases = [w for w, a in kept if a == area]
+        if phrases:
             described.append(
                 {
                     "area": area,
                     "action": "extend-description",
-                    "detail": ", ".join(words),
+                    "detail": _quoted(phrases),
                 }
             )
         elif any(a == area for _, a in tagged):
             skipped.append(
                 {
                     "area": area,
-                    "reason": f"no words fit within {MAX_DESCRIPTION} characters",
+                    "reason": f"no request fits within {MAX_DESCRIPTION} characters",
                 }
             )
         else:
             skipped.append(
-                {"area": area, "reason": "no new words to add to the description"}
+                {"area": area, "reason": "no new requests to add to the description"}
             )
     new_description = spec.description
     if kept:
         new_description = spec.description.rstrip() + _SENTENCE.format(
-            words=", ".join(w for w, _ in kept)
+            phrases=_quoted([w for w, _ in kept])
         )
 
     used: list[str] = []

@@ -6,18 +6,22 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
-### Removed
-
-- The quickship v0.3 agent harness that built the project: the controller and hook scripts
-  under `scripts/`, its bash self-tests under `tests/`, `.quickship/`, `BRIEF*.yaml`,
-  `IDEA*.md`, the `*.cmd` launchers, its subagent definitions, its `CLAUDE.md` contract and
-  hook settings, its PR template, and the build records in `docs/missions/`, `docs/runs/`,
-  `docs/PROGRAM.md`, `docs/PRD_TEMPLATE.md` and `docs/design/contracts.md`. They stay in git
-  history. `CLAUDE.md` and the PR template are replaced with plain project versions; the
-  `skillz` package is unchanged.
-
 ### Changed
 
+- Generated descriptions now carry the paragraph's "use it when" and "do not use it" sentences.
+  Claude reads only the frontmatter description when choosing a skill, so `capture` composes
+  them into the description (first trigger and first boundary before any others, each kept
+  whole and only if it fits 1,024 characters), and the body no longer repeats them. On the
+  README example the evaluation goes from 6 passed, 2 failed to 7 passed, 1 failed.
+- The offline grader ignores the description's boundary sentences ("Do not use it for X",
+  "Never Y") when collecting trigger words, so stating a boundary cannot make a request about
+  X look like a match.
+- `skillz improve` extends a description with whole requests ("Also use for requests like
+  "..."") instead of a list of loose keywords. A keyword list such as "help, write, md, file"
+  makes a skill load on unrelated prompts. If no whole request fits, the first is shortened
+  word by word, down to three words. The meta-skill's own keyword list is replaced.
+- `generate` no longer writes placeholder `README.md` files into resource directories; an
+  empty directory is reported by the validator instead.
 - `.claude/settings.json` keeps every guardrail the harness had, without the harness: the
   sandbox stays on with unsandboxed commands off, and its network allowlist drops only the npm
   and Playwright hosts this Python project never used. The deny list still blocks force pushes,
@@ -29,6 +33,15 @@ All notable changes to this project are documented here. The format follows
   the broad allow rules (`npm`, `python`, `cat`, `cd`) are gone, so more calls ask first.
 
 ### Added
+
+- Validator quality rules, from a study of a 398-skill public collection in which these
+  signals separated stronger skills from weaker ones. Errors (the skill cannot work as
+  written): `reserved-name` (a name that replaces a bundled Claude Code command, such as
+  `verify`), `phantom-path` (SKILL.md names a resource file that does not exist) and
+  `script-flag-missing` (a fenced command passes an option the Python script never declares;
+  read with `ast`, never executed). Warnings: `description-no-boundary`,
+  `description-keyword-list`, `persona-opener`, `brochure-heading`, `orphan-file` and
+  `empty-resource-dir`.
 
 - The model-backed quality tier (mission 07): behaviour cases now carry a task prompt, a rubric
   and expected markers, one per spec behaviour and per trigger. `skillz judge` runs each case
@@ -49,6 +62,16 @@ All notable changes to this project are documented here. The format follows
   and packages a new awaiting-approval version. The pipeline and `skillz run` never promote.
 - The meta-skill documents the loop and was improved through it; the challenge report is
   committed under `docs/evidence/`.
+
+### Removed
+
+- The quickship v0.3 agent harness that built the project: the controller and hook scripts
+  under `scripts/`, its bash self-tests under `tests/`, `.quickship/`, `BRIEF*.yaml`,
+  `IDEA*.md`, the `*.cmd` launchers, its subagent definitions, its `CLAUDE.md` contract and
+  hook settings, its PR template, and the build records in `docs/missions/`, `docs/runs/`,
+  `docs/PROGRAM.md`, `docs/PRD_TEMPLATE.md` and `docs/design/contracts.md`. They stay in git
+  history. `CLAUDE.md` and the PR template are replaced with plain project versions; the
+  `skillz` package is unchanged.
 
 ## 0.1.0 - 2026-10-10
 
