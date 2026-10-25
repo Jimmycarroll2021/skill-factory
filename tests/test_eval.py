@@ -209,3 +209,9 @@ def test_vague_proposal_suggests_whole_requests_not_a_keyword_list():
     text = proposals["vague-description"].proposal
     assert "trigger words such as" not in text
     assert '"Remove duplicate rows from a spreadsheet"' in text
+
+
+def test_an_unsupported_input_sentence_is_not_trigger_vocabulary():
+    description = "Convert tabular exports. Use it when processing CSV tables. It does not handle PDF documents."
+    assert ev.match_score("Handle PDF documents", "tabular", description) < ev.MATCH_THRESHOLD
+    assert ev.match_score("Process CSV tables", "tabular", description) >= ev.MATCH_THRESHOLD
