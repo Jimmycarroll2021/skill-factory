@@ -368,3 +368,83 @@ def test_approve_help_documents_accept_regressions(capsys):
         cli.main(["approve", "--help"])
     assert info.value.code == 0
     assert "--accept-regressions REASON" in capsys.readouterr().out
+
+
+# --- skillz receipt -----------------------------------------------------------------------------
+
+
+def show(root: Path, *argv: str) -> int:
+    return cli.main(["receipt", *argv, "--out", str(root)])
+
+
+def test_receipt_prints_the_latest_version_approved_or_not(root, capsys):
+    first = package(root)
+    release.approve(skill_dir(root), "0.1.0", user="tester")
+    second = package(root)
+    assert release.load_versions(skill_dir(root))[-1].status == "awaiting-approval"
+    assert show(root, NAME) == 0
+    out = capsys.readouterr().out
+    assert out == (second.path / "receipt.md").read_text(encoding="utf-8")
+    assert out.splitlines()[0] == f"# Receipt: {NAME} 0.1.1 — evidence: unverified"
+    assert show(root, NAME, "0.1.0") == 0
+    assert capsys.readouterr().out == (first.path / "receipt.md").read_text(encoding="utf-8")
+
+
+def test_receipt_json_prints_the_stored_receipt(root, capsys):
+    version = package(root)
+    assert show(root, NAME, "--json") == 0
+    out = capsys.readouterr().out
+    assert json.loads(out) == receipt_of(version)
+    assert out == (version.path / "receipt.json").read_text(encoding="utf-8")
+
+
+def test_receipt_latest_is_by_semver_not_by_name_order(root, capsys):
+    package(root, set_version="0.9.0")
+    package(root, set_version="0.10.0")
+    assert show(root, NAME, "--json") == 0
+    assert json.loads(capsys.readouterr().out)["version"] == "0.10.0"
+
+
+@pytest.mark.parametrize(
+    "argv",
+    [
+        ("no-such-skill",),
+        ("Bad Name",),
+        (NAME, "9.9.9"),
+        (NAME, "latest"),
+        (NAME, "١.٢.٣"),
+    ],
+)
+def test_receipt_exits_2_when_the_skill_or_version_does_not_exist(root, capsys, argv):
+    package(root)
+    assert show(root, *argv) == 2
+    captured = capsys.readouterr()
+    assert captured.out == "" and "skillz: error:" in captured.err
+
+
+def test_receipt_exits_2_when_nothing_is_packaged(root, capsys):
+    assert show(root, NAME) == 2
+    assert "no packaged version" in capsys.readouterr().err
+
+
+def test_receipt_exits_1_when_the_version_has_no_receipt(root, capsys):
+    version = package(root)
+    strip_receipt(version)
+    assert show(root, NAME) == 1
+    captured = capsys.readouterr()
+    assert captured.out == "" and "no receipt" in captured.err
+    assert show(root, NAME, "0.1.0", "--json") == 1
+
+
+def test_receipt_help_exits_zero(capsys):
+    with pytest.raises(SystemExit) as info:
+        cli.main(["receipt", "--help"])
+    assert info.value.code == 0
+    out = capsys.readouterr().out
+    assert "--json" in out and "--out" in out and "version" in out
+
+
+def test_receipt_source_never_spawns_or_imports_release():
+    source = Path(receipt.__file__).read_text(encoding="utf-8")
+    assert "subprocess" not in source and "os.system" not in source
+    assert "release" not in re.findall(r"^(?:from|import) skill_factory\.?(\w*)", source, re.MULTILINE)

@@ -11,10 +11,14 @@ process or consults a model.
 
 from __future__ import annotations
 
+import argparse
 import json
+import re
+import sys
 from pathlib import Path
 
 from skill_factory import evalcases
+from skill_factory.capture import NAME_RE
 
 SCHEMA = "skill-receipt/1"
 RECEIPT_JSON = "receipt.json"
@@ -27,6 +31,7 @@ REGRESSED = "regressed"
 NO_BASELINE = "no-baseline"
 TRIGGER_METHOD = "lexical-overlap"
 _ROW_KEYS = ("id", "kind", "prompt", "before", "after")
+_SEMVER_RE = re.compile(r"[0-9]{1,9}\.[0-9]{1,9}\.[0-9]{1,9}", re.ASCII)
 
 
 def _dumps(data: object) -> str:
@@ -176,3 +181,69 @@ def write_receipt(version_dir: Path, data: dict) -> None:
 def load_receipt(version_dir: Path) -> dict | None:
     """The version's receipt.json, or None when it has none (made before receipts existed)."""
     return _read_json(Path(version_dir) / RECEIPT_JSON)
+
+
+def latest_version(skill_dir: Path) -> str | None:
+    """The highest semver directory under ``<skill>/.factory/versions/``, approved or not."""
+    root = Path(skill_dir) / ".factory" / "versions"
+    if root.is_symlink() or not root.is_dir():
+        return None
+    found = [
+        (tuple(int(part) for part in entry.name.split(".")), entry.name)
+        for entry in root.iterdir()
+        if _SEMVER_RE.fullmatch(entry.name) and entry.is_dir() and not entry.is_symlink()
+    ]
+    return max(found)[1] if found else None
+
+
+def add_parser(sub: argparse._SubParsersAction) -> None:
+    parser = sub.add_parser(
+        "receipt",
+        help="print the receipt of a packaged version",
+        description=(
+            "Print receipt.md (or receipt.json with --json) of a version under "
+            "skills/<name>/.factory/versions/, as stored. Without a version the highest one is "
+            "shown, approved or not."
+        ),
+    )
+    parser.add_argument("name", help="skill name (the directory under skills/)")
+    parser.add_argument(
+        "version", nargs="?", default=None, help="version X.Y.Z (default: the highest)"
+    )
+    parser.add_argument("--json", action="store_true", help="print receipt.json instead")
+    parser.add_argument(
+        "--out", type=Path, default=None, help="root directory containing skills/ (default: cwd)"
+    )
+
+
+def _fail(message: str, code: int = 2) -> int:
+    print(f"skillz: error: {message}", file=sys.stderr)
+    return code
+
+
+def run(args: argparse.Namespace) -> int:
+    root = args.out if args.out is not None else Path.cwd()
+    if not NAME_RE.fullmatch(args.name):
+        return _fail(f"invalid skill name {args.name!r}")
+    skill_dir = Path(root) / "skills" / args.name
+    if not (skill_dir / "SKILL.md").is_file():
+        return _fail(f"skill {args.name!r} not found: {skill_dir / 'SKILL.md'} does not exist")
+    version = args.version
+    if version is None:
+        version = latest_version(skill_dir)
+        if version is None:
+            return _fail(f"skill {args.name!r} has no packaged version")
+    elif not _SEMVER_RE.fullmatch(version):
+        return _fail(f"invalid version {version!r}: expected MAJOR.MINOR.PATCH")
+    version_dir = skill_dir / ".factory" / "versions" / version
+    if version_dir.is_symlink() or not version_dir.is_dir():
+        return _fail(f"version {version} of {args.name!r} not found")
+    path = version_dir / (RECEIPT_JSON if args.json else RECEIPT_MD)
+    if path.is_symlink() or not path.is_file():
+        return _fail(f"version {version} of {args.name!r} has no receipt", 1)
+    try:
+        text = path.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError) as exc:
+        return _fail(f"cannot read {path}: {exc}", 1)
+    print(text, end="")
+    return 0
