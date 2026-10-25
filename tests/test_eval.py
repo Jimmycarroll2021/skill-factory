@@ -215,3 +215,9 @@ def test_an_unsupported_input_sentence_is_not_trigger_vocabulary():
     description = "Convert tabular exports. Use it when processing CSV tables. It does not handle PDF documents."
     assert ev.match_score("Handle PDF documents", "tabular", description) < ev.MATCH_THRESHOLD
     assert ev.match_score("Process CSV tables", "tabular", description) >= ev.MATCH_THRESHOLD
+
+
+def test_a_boundary_clause_keeps_the_positive_clause_before_it():
+    description = "Convert spreadsheet exports to CSV; not for PDF documents."
+    assert ev.match_score("Convert spreadsheet exports to CSV", "table-tool", description) >= ev.MATCH_THRESHOLD
+    assert ev.match_score("Read PDF documents", "table-tool", description) < ev.MATCH_THRESHOLD
