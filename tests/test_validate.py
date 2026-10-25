@@ -538,3 +538,29 @@ def test_boolean_optional_action_and_abbreviated_flags_are_declared(tmp_path):
         "p.add_argument('--verbose', action='store_true')\np.parse_args()\n",
     )
     assert "script-flag-missing" not in _rules(val.validate_skill(skill))
+
+
+def test_a_quoted_value_that_looks_like_a_flag_is_not_one(tmp_path):
+    body = '```bash\npython3 scripts/tool.py --title "notes --draft"\n```\n'
+    skill = _make(tmp_path, "quoted-value", BOUNDED, body)
+    _script(skill, "scripts/tool.py", "import argparse\np = argparse.ArgumentParser()\np.add_argument('--title')\n")
+    assert "script-flag-missing" not in _rules(val.validate_skill(skill))
+
+
+def test_options_declared_through_a_variable_are_not_flag_checked(tmp_path):
+    body = "```bash\npython3 scripts/tool.py --input notes.md\n```\n"
+    skill = _make(tmp_path, "var-flag", BOUNDED, body)
+    _script(
+        skill,
+        "scripts/tool.py",
+        "import argparse\nflag = '--input'\np = argparse.ArgumentParser()\np.add_argument(flag)\n",
+    )
+    assert "script-flag-missing" not in _rules(val.validate_skill(skill))
+    inherited = _make(tmp_path, "parent-flag", BOUNDED, body)
+    _script(
+        inherited,
+        "scripts/tool.py",
+        "import argparse\nfrom common import base\n"
+        "p = argparse.ArgumentParser(parents=[base])\np.add_argument('--out')\n",
+    )
+    assert "script-flag-missing" not in _rules(val.validate_skill(inherited))

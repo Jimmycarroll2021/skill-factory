@@ -11,6 +11,7 @@ import ast
 import json
 import os
 import re
+import shlex
 import stat
 import sys
 from dataclasses import asdict, dataclass, field
@@ -306,6 +307,22 @@ def _resource_files(skill_dir: Path) -> dict[str, list[str]]:
     return found
 
 
+def _command_args(rest: str) -> list[str]:
+    """The arguments after a script path, quoted the way the shell reads them, up to the first
+    operator (`|`, `;`, `&&`, `>`) or comment."""
+    lexer = shlex.shlex(rest, posix=True, punctuation_chars=";&|<>")
+    lexer.whitespace_split = True
+    args: list[str] = []
+    try:
+        for token in lexer:
+            if set(token) <= set(";&|<>"):
+                break
+            args.append(token)
+    except ValueError:  # an unbalanced quote: there is no reliable argument list to check
+        return []
+    return args
+
+
 def _script_options(path: Path) -> set[str] | None:
     """Option strings a Python script declares with add_argument; parsed, never executed."""
     try:
@@ -321,6 +338,8 @@ def _script_options(path: Path) -> set[str] | None:
             and node.func.attr == "add_argument"
         ):
             declared = True
+            if any(not isinstance(arg, ast.Constant) for arg in node.args):
+                return None  # a name set at run time (`add_argument(flag)`): unknown, not absent
             flags = [
                 arg.value
                 for arg in node.args
@@ -334,6 +353,11 @@ def _script_options(path: Path) -> set[str] | None:
                 for kw in node.keywords
             ):
                 options.update(f"--no-{f[2:]}" for f in flags if f.startswith("--"))
+        if (
+            isinstance(node, ast.Call)
+            and any(kw.arg == "parents" for kw in node.keywords)
+        ):
+            return None  # options inherited from another parser cannot be listed here
     # A script that parses its arguments another way (sys.argv, getopt, click) is not checked.
     return options if declared else None
 
@@ -395,7 +419,7 @@ def _check_quality(skill_dir: Path, name, description, body: str, add) -> None:
         for line in block.group(2).splitlines():
             for match in _SCRIPT_CALL_RE.finditer(line):
                 if _INVOCATION_PREFIX_RE.fullmatch(line[: match.start(1)].strip()):
-                    commands.append((match.group(1), match.group(2).split()))
+                    commands.append((match.group(1), _command_args(line[match.end(1) :])))
     run_scripts = {rel for rel, _ in commands}
     for rel in sorted(named - run_scripts):
         if not (skill_dir / rel).is_file():

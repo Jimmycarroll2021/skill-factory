@@ -57,13 +57,18 @@ def content_words(text: str) -> list[str]:
 
 
 def trigger_text(description: str) -> str:
-    """The description without its boundary sentences ("Do not use it for X", "Never Y").
+    """The description without its boundaries ("Do not use it for X", "Never Y"), each cut from
+    where the boundary starts to the end of its sentence.
 
     Those sentences tell the model to stay away from X, so their words are not trigger
     vocabulary and must not make a request about X look like a match.
     """
-    kept = [s for s in _sentences(description) if not EXCLUSION_RE.search(s)]
-    return " ".join(kept)
+    kept = []
+    for sentence in _sentences(description):
+        match = EXCLUSION_RE.search(sentence)
+        # "Convert exports to CSV; not for PDFs": the clause before the boundary still counts.
+        kept.append(sentence[: match.start()] if match else sentence)
+    return " ".join(k for k in kept if k.strip())
 
 
 def match_score(prompt: str, name: str, description: str) -> float:
