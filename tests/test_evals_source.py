@@ -124,7 +124,7 @@ def test_ids_fall_back_to_the_prompt_digest_and_are_sanitised(root):
         ],
     )
     cases = evalcases.load_evals(skill)
-    first = "evl-" + hashlib.sha256(b"first").hexdigest()[:10]
+    first = "evl-" + hashlib.sha256(b"first\nsays hi").hexdigest()[:10]
     assert [c.id for c in cases] == [
         first,
         first + "-beh",
@@ -265,3 +265,27 @@ def test_two_entries_with_one_prompt_and_different_assertions_are_both_judged(ro
     ]
     union = challenge._union(evalcases.load_evals(skill), [], [], [])
     assert {c.id for c, _ in union} >= {"evl-format-beh", "evl-secrets-beh"}
+
+
+def test_id_less_entries_with_one_prompt_and_different_assertions_get_different_ids(root):
+    """The fallback id covers the assertions as well as the prompt, so two id-less entries that
+    check different things on one prompt are two cases, not a duplicate-id error."""
+    skill = _bare(root)
+    prompt = "Draft release notes from this changelog"
+    _write_evals(
+        skill,
+        [
+            {"prompt": prompt, "assertions": ["Uses Markdown headings"]},
+            {"prompt": prompt, "assertions": ["Must NOT expose credentials"]},
+        ],
+    )
+    cases = evalcases.load_evals(skill)
+    behaviours = [c for c in cases if c.kind == "behaviour"]
+    assert len(behaviours) == 2 and len({c.id for c in behaviours}) == 2
+    assert sorted(c.rubric[0] for c in behaviours) == ["Must NOT expose credentials", "Uses Markdown headings"]
+    # the two trigger cases are the same check and the merge keeps one of them
+    from skill_factory import evaluate
+
+    merged = evalcases.all_cases(skill, evaluate.load_spec(skill))
+    assert len([c for c in merged if c.source == "evals.json" and c.kind == "positive"]) == 1
+    assert len([c for c in merged if c.source == "evals.json" and c.kind == "behaviour"]) == 2

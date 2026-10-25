@@ -262,17 +262,19 @@ def _read_evals(path: Path) -> list[dict]:
 def _eval_id(entry: dict, index: int) -> str:
     """``evl-<id>`` with the id reduced to ``[A-Za-z0-9_-]``.
 
-    Without an id the case is named after its prompt (the first 10 hex digits of the sha256 of
-    the whitespace-normalised prompt), never after its position: a receipt compares cases by id
-    across versions, and a positional id would hand one prompt's history to another whenever the
-    file is reordered or an entry is inserted. ``index`` is only used for error messages.
+    Without an id the case is named after what it checks (the first 10 hex digits of the sha256
+    of the whitespace-normalised prompt and its sorted, normalised assertions, joined by
+    newlines), never after its position: a receipt compares cases by id across versions, and a
+    positional id would hand one prompt's history to another whenever the file is reordered or
+    an entry is inserted. Two id-less entries on one prompt with different assertions are two
+    cases. ``index`` is only used for error messages.
     """
     raw = entry.get("id")
     cleaned = _ID_UNSAFE_RE.sub("-", raw).strip("-") if isinstance(raw, str) else ""
     if cleaned:
         return f"evl-{cleaned}"
-    prompt = " ".join(str(entry.get("prompt", "")).split())
-    return "evl-" + hashlib.sha256(prompt.encode("utf-8")).hexdigest()[:10]
+    parts = [_norm(str(entry.get("prompt", ""))), *sorted(_norm(a) for a in _assertions(entry))]
+    return "evl-" + hashlib.sha256("\n".join(parts).encode("utf-8")).hexdigest()[:10]
 
 
 def _assertions(entry: dict) -> list[str]:

@@ -93,9 +93,10 @@ All notable changes to this project are documented here. The format follows
 - Cases are de-duplicated across sources by what they check (kind, prompt, assertions and
   expected markers), not by prompt alone, so two `evals.json` entries with one prompt and
   different assertions are both judged, in `eval`, `package` and `challenge`.
-- An `evals/evals.json` entry without an `id` is named after a digest of its prompt
-  (`evl-<10 hex>`) instead of its position, so reordering or inserting entries cannot hand one
-  prompt's history to another in the receipt's comparison.
+- An `evals/evals.json` entry without an `id` is named after a digest of its prompt and
+  assertions (`evl-<10 hex>`) instead of its position, so reordering or inserting entries cannot
+  hand one prompt's history to another in the receipt's comparison, and two id-less entries that
+  check different things on one prompt are two cases.
 - The regression report splits the comparison into gains and regressions instead of one
   `newly_failing` list; the pipeline's regression line reads like
   `pass (2 gains, 0 regressions vs 0.1.0; 7 cases compared)`.
