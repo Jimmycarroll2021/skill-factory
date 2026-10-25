@@ -19,7 +19,7 @@ import sys
 from collections.abc import Callable
 from pathlib import Path
 
-from skill_factory import captured, evalcases, evaluate
+from skill_factory import evalcases, evaluate
 from skill_factory import runner as runner_mod
 from skill_factory.capture import NAME_RE, SpecError
 from skill_factory.runner import EXECUTABLES, Runner, RunnerError
@@ -388,7 +388,7 @@ def judge_skill(
 
     found, judge_runner, skip = resolve_runners(runner_name, judge_name, runner_factory)
     if skip is None:
-        cases = evalcases.generate_cases(spec) + captured.load_captured(skill_dir)
+        cases = evalcases.all_cases(skill_dir, spec)
         behaviours = [c.to_dict() for c in cases if c.kind == "behaviour"]
         report = judge_cases(found, judge_runner, behaviours, skill_text)
     else:
