@@ -10,11 +10,6 @@ from skill_factory.capture import RESOURCE_DIRS, SkillSpec, validate_spec
 
 _MAX_BULLETS = 20
 
-_RESOURCE_NOTES = {
-    "scripts": "Executable helpers the skill can run. Add scripts here.",
-    "references": "Longer reference material loaded on demand. Add documents here.",
-    "assets": "Static files used in outputs (templates, images, data). Add assets here.",
-}
 
 
 class GenerateError(ValueError):
@@ -26,8 +21,15 @@ def _write(path: Path, text: str) -> None:
         handle.write(text)
 
 
-def _bullets(items: list[str]) -> list[str]:
-    return [f"- {' '.join(item.split())}" for item in items[:_MAX_BULLETS] if item.strip()]
+def _bullets(items: list[str], already: str = "") -> list[str]:
+    """Bullet lines for items not already stated in ``already`` (the description)."""
+    seen = " ".join(already.split())
+    lines = []
+    for item in items[:_MAX_BULLETS]:
+        text = " ".join(item.split())
+        if text and text.rstrip(".!?") not in seen:
+            lines.append(f"- {text}")
+    return lines
 
 
 def _frontmatter(spec: SkillSpec) -> str:
@@ -50,7 +52,7 @@ def render_skill_md(spec: SkillSpec) -> str:
         ("What to do", spec.behaviours),
     )
     for title, items in sections:
-        bullets = _bullets(items)
+        bullets = _bullets(items, spec.description)
         if bullets:
             lines += ["", f"## {title}", "", *bullets]
     resources = [r for r in RESOURCE_DIRS if r in spec.resources]
@@ -77,10 +79,9 @@ def generate(spec: SkillSpec, root: Path, force: bool = False) -> Path:
         for resource in RESOURCE_DIRS:
             if resource not in spec.resources:
                 continue
+            # An empty directory, not a placeholder file: the validator reports it as
+            # unfinished until real files are added.
             (skill_dir / resource).mkdir(exist_ok=True)
-            readme = skill_dir / resource / "README.md"
-            if not readme.exists():
-                _write(readme, f"# {resource}\n\n{_RESOURCE_NOTES[resource]}\n")
     except OSError as exc:
         raise GenerateError(f"cannot write {skill_dir}: {exc}") from exc
     return skill_dir

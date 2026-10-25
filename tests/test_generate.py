@@ -82,6 +82,22 @@ def test_body_sections_and_size(tmp_path):
     assert len(text.splitlines()) < 100
 
 
+def test_body_skips_bullets_already_in_the_description(tmp_path):
+    assert _new("paragraph.txt", tmp_path) == 0
+    skill_md = tmp_path / "skills" / "draft-release-notes-software" / "SKILL.md"
+    body = skill_md.read_text(encoding="utf-8").split("---\n", 2)[2]
+    assert "## When to use" not in body
+    assert "## When not to use" not in body
+    assert "## What to do" in body
+
+
+def test_resource_directories_get_no_placeholder_files(tmp_path):
+    assert _new("spec.json", tmp_path) == 0
+    scripts = tmp_path / "skills" / "csv-data-cleaner" / "scripts"
+    assert scripts.is_dir()
+    assert list(scripts.iterdir()) == []
+
+
 def test_body_stays_under_100_lines_for_large_specs(tmp_path):
     many = [f"item {i}" for i in range(200)]
     spec = cap.SkillSpec(

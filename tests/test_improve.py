@@ -93,7 +93,10 @@ def test_vague_skill_gets_vocabulary_and_stable_files_stay_identical(vague):
     meta = render._frontmatter(cskill / "SKILL.md")
     assert meta["name"] == "general-helper"
     assert meta["description"].startswith("Helps with things.")
-    assert "Also use when the user mentions:" in meta["description"]
+    # a whole trigger situation, not a list of loose keywords
+    assert "Also use for requests like " in meta["description"]
+    assert f'"{MISSED}"' in meta["description"]
+    assert "mentions:" not in meta["description"]
     assert len(meta["description"]) <= MAX_DESCRIPTION
     spec = candidates.load_candidate_spec(vague, "c001")
     assert spec.description == meta["description"]
@@ -262,3 +265,19 @@ def test_a_symlinked_candidates_dir_is_refused(vague, tmp_path):
     candidates.candidates_root(vague).symlink_to(elsewhere, target_is_directory=True)
     assert cli(tmp_path / "project", "general-helper") == 2
     assert list(elsewhere.iterdir()) == []
+
+
+def test_words_only_in_a_boundary_sentence_still_count_as_missing(vague):
+    # The grader ignores boundary sentences, so improve must too: a request whose words
+    # appear only in "Do not use it for ..." is still a missing trigger.
+    base = "Helps with things."
+    description = base + " Do not use it for spreadsheet exports."
+    spec = read_json(vague / ".factory" / "spec.json")
+    spec["description"] = description
+    (vague / ".factory" / "spec.json").write_text(json.dumps(spec), encoding="utf-8")
+    text = (vague / "SKILL.md").read_text(encoding="utf-8").replace(base, description, 1)
+    (vague / "SKILL.md").write_text(text, encoding="utf-8")
+    captured.append_captured(vague, "Spreadsheet exports", "positive")
+    improve.improve_skill(vague)
+    improved = candidates.load_candidate_spec(vague, "c001").description
+    assert '"Spreadsheet exports"' in improved
