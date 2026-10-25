@@ -116,12 +116,18 @@ def _eval_verdict(report: dict) -> str:
     return f"{passed} passed, {failed} failed (heuristic); baseline: {report['baseline']['status']}"
 
 
+def _count(items: list, noun: str) -> str:
+    return f"{len(items)} {noun}" + ("" if len(items) == 1 else "s")
+
+
 def _regression_verdict(report: dict) -> str:
+    failing = report.get("newly_failing", [])
+    counts = f"{_count(report.get('newly_passing', []), 'gain')}, {_count(failing, 'regression')}"
     if report.get("status") == "regressed":
-        ids = ", ".join(case["id"] for case in report.get("newly_failing", []))
-        return f"regressed ({len(report.get('newly_failing', []))} newly failing: {ids})"
+        ids = ", ".join(sorted(case["id"] for case in failing))
+        return f"regressed ({counts} vs {report.get('baseline')}: {ids})"
     if report.get("status") == "pass":
-        return f"pass ({report.get('checked', 0)} cases compared with {report.get('baseline')})"
+        return f"pass ({counts} vs {report.get('baseline')}; {report.get('checked', 0)} cases compared)"
     return str(report.get("status"))
 
 
