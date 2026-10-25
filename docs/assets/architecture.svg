@@ -51,8 +51,8 @@
   <text x="140.0" y="402.5" font-size="14" fill="#101820" font-weight="600" text-anchor="middle">captured.py</text>
   <text x="140.0" y="419.5" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">capture-failure</text>
   <rect x="250.0" y="380.0" width="180.0" height="54.0" rx="10" fill="#f3f7fa" stroke="#3e6577" stroke-width="1.6"/>
-  <text x="340.0" y="402.5" font-size="14" fill="#101820" font-weight="600" text-anchor="middle">improve.py</text>
-  <text x="340.0" y="419.5" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">builds a candidate</text>
+  <text x="340.0" y="402.5" font-size="14" fill="#101820" font-weight="600" text-anchor="middle">candidate.py</text>
+  <text x="340.0" y="419.5" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">copies stable to edit</text>
   <rect x="450.0" y="380.0" width="180.0" height="54.0" rx="10" fill="#f3f7fa" stroke="#3e6577" stroke-width="1.6"/>
   <text x="540.0" y="402.5" font-size="14" fill="#101820" font-weight="600" text-anchor="middle">challenge.py</text>
   <text x="540.0" y="419.5" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">grades both sides</text>

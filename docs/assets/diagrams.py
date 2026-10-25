@@ -306,17 +306,18 @@ def lifecycle() -> Path:
 
 def loop() -> Path:
     s = Svg(1240, 470, "The challenger loop",
-            "capture-failure records a real failure; improve builds a candidate; challenge "
-            "grades stable and candidate on the same cases and returns a verdict; promote is "
-            "a human command that replaces the stable skill and packages a new version.")
+            "capture-failure records a real failure; candidate copies the stable skill for a "
+            "human to edit; challenge grades stable and candidate on the same cases and returns "
+            "a verdict; promote is a human command that replaces the stable skill and packages "
+            "a new version.")
     s.box(24, 60, 150, 70, "a real failure", ["a prompt the skill", "got wrong"], fill="#fff8d6",
           stroke="#e6cf6a")
     s.arrow(174, 95, 272, 95, "capture-failure", label_dy=-10)
     s.store(272, 55, 210, 80, "captured.json", ["persistent case, included by",
                                                 "every later eval and challenge"])
-    s.arrow(482, 95, 570, 95, "improve", label_dy=-10)
-    s.box(570, 50, 240, 90, "candidate", [".factory/candidates/<id>/",
-                                          "description + triggers extended",
+    s.arrow(482, 95, 570, 95, "candidate", label_dy=-10)
+    s.box(570, 50, 240, 90, "candidate", [".factory/candidates/<id>/skill/",
+                                          "a copy you edit by hand",
                                           "stable files untouched"])
     s.arrow(810, 95, 892, 95, "challenge", label_dy=-10)
     s.box(892, 40, 324, 110, "challenge", ["validate stable and candidate",
@@ -374,7 +375,7 @@ def architecture() -> Path:
     s.box(880, 214, 330, 100, "install.py", ["install, rollback, list", "skills/registry.json",
                                              "exact platform directories only"])
     s.group(30, 350, 820, 100, "the challenger loop")
-    loopmods = [("captured.py", ["capture-failure"]), ("improve.py", ["builds a candidate"]),
+    loopmods = [("captured.py", ["capture-failure"]), ("candidate.py", ["copies stable to edit"]),
                 ("challenge.py", ["grades both sides"]), ("promote.py", ["human command"])]
     for i, (t, sub) in enumerate(loopmods):
         s.box(50 + i * 200, 380, 180, 54, t, sub, title_size=14)
