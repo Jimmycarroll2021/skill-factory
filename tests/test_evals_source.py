@@ -180,8 +180,8 @@ def test_an_evals_entry_wins_over_a_captured_failure_with_the_same_prompt(foreig
     captured.append_captured(foreign, prompt, "negative")
     cases = evalcases.all_cases(foreign, spec)
     ids = [c.id for c in cases]
-    assert "cap-001" not in ids  # same kind and prompt as evl-drafts-release-notes
-    assert "cap-002" not in ids  # same kind and prompt as evl-drafts-release-notes-beh
+    assert "cap-001" not in ids  # same kind and prompt as evl-drafts-release-notes, no criteria of its own
+    assert "cap-002" in ids  # its expected marker is a criterion the evals rubric does not check
     assert "cap-003" in ids  # a different kind is a different case
     assert "evl-drafts-release-notes" in ids and "evl-drafts-release-notes-beh" in ids
 
@@ -260,6 +260,8 @@ def test_two_entries_with_one_prompt_and_different_assertions_are_both_judged(ro
     assert cases["evl-format-beh"].rubric == ["Uses Markdown headings"]
     assert cases["evl-secrets-beh"].rubric == ["Must NOT expose credentials"]
     # the same prompt with the same rubric is still one case
-    assert [c.id for c in cases.values() if c.kind == "positive"] == ["evl-format"]
+    assert [c.id for c in cases.values() if c.source == "evals.json" and c.kind == "positive"] == [
+        "evl-format"
+    ]
     union = challenge._union(evalcases.load_evals(skill), [], [], [])
     assert {c.id for c, _ in union} >= {"evl-format-beh", "evl-secrets-beh"}

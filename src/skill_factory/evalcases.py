@@ -312,11 +312,7 @@ def _norm(text: str) -> str:
 
 
 def case_key(case: Case) -> tuple:
-    """What a case checks: its kind, prompt and criteria (rubric and expected markers).
-
-    Two cases with one prompt but different assertions are two checks, so both are kept; the
-    same prompt with the same criteria from two sources is one check, and the first source wins.
-    """
+    """What a case checks: its kind, prompt and criteria (rubric and expected markers)."""
     return (
         case.kind,
         _norm(case.prompt),
@@ -325,27 +321,58 @@ def case_key(case: Case) -> tuple:
     )
 
 
+class CaseIndex:
+    """The cases already kept, by what they check, for de-duplication across sources.
+
+    Two cases with one prompt but different criteria are two checks and both are kept. The same
+    criteria on the same prompt is one check, and the first source wins. A case with no criteria
+    of its own (a bare trigger prompt, or a captured behaviour failure without a rubric) adds
+    nothing to a case already kept for that kind and prompt, so it is covered by whichever came
+    first.
+    """
+
+    def __init__(self) -> None:
+        self._keys: set[tuple] = set()
+        self._first: dict[tuple, tuple] = {}
+
+    def covering(self, case: Case) -> tuple | None:
+        """The key of the kept case that already checks what ``case`` checks, or None."""
+        key = case_key(case)
+        if key in self._keys:
+            return key
+        if key[2:] == ((), ()):
+            return self._first.get(key[:2])
+        return None
+
+    def add(self, case: Case) -> tuple:
+        key = case_key(case)
+        self._keys.add(key)
+        self._first.setdefault(key[:2], key)
+        return key
+
+
 def _merge(generated: list[Case], *extra: list[Case]) -> list[Case]:
-    """The generated cases unchanged, then each extra case whose ``case_key`` is new.
+    """The generated cases unchanged, then each extra case that ``CaseIndex`` does not cover.
 
     Generated ids are pinned by the spec and may legitimately repeat a prompt (a trigger-derived
     behaviour case beside a behaviour-derived one), so only the extra sources are de-duplicated,
     first occurrence winning: an evals entry beats a captured failure with the same prompt.
     """
     merged = list(generated)
-    seen = {case_key(case) for case in merged}
+    index = CaseIndex()
+    for case in merged:
+        index.add(case)
     for cases in extra:
         for case in cases:
-            key = case_key(case)
-            if key not in seen:
-                seen.add(key)
+            if index.covering(case) is None:
+                index.add(case)
                 merged.append(case)
     return merged
 
 
 def all_cases(skill_dir: Path, spec: SkillSpec) -> list[Case]:
     """Every case for a skill: generated from the spec, then evals.json, then captured failures,
-    the first occurrence of a ``case_key`` (kind, prompt, criteria) winning across sources."""
+    the first case that checks the same thing (see ``CaseIndex``) winning across sources."""
     # captured imports Case from this module, so it is resolved at call time, not at import.
     from skill_factory import captured
 

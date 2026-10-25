@@ -67,10 +67,6 @@ def _identity(skill_md: Path, spec: SkillSpec) -> SkillSpec:
     )
 
 
-def _key(case: evalcases.Case) -> tuple:
-    return evalcases.case_key(case)  # kind, prompt and criteria: a second rubric is a second case
-
-
 def _union(
     evals: list[evalcases.Case],
     extra: list[evalcases.Case],
@@ -79,6 +75,7 @@ def _union(
 ) -> list[tuple[evalcases.Case, list[str]]]:
     """Cases in order evals, captured, stable, candidate, deduplicated; each with its origins."""
     merged: dict[tuple, tuple[evalcases.Case, list[str]]] = {}
+    index = evalcases.CaseIndex()  # by what a case checks: a second rubric is a second case
     groups = (
         ("evals", "", evals),
         ("captured", "", extra),
@@ -87,11 +84,12 @@ def _union(
     )
     for origin, prefix, cases in groups:
         for case in cases:
-            key = _key(case)
-            if key in merged:
-                if origin not in merged[key][1]:
-                    merged[key][1].append(origin)
+            covering = index.covering(case)
+            if covering is not None:
+                if origin not in merged[covering][1]:
+                    merged[covering][1].append(origin)
                 continue
+            key = index.add(case)
             merged[key] = (dataclasses.replace(case, id=f"{prefix}{case.id}"), [origin])
     return list(merged.values())
 
