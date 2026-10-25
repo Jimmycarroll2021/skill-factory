@@ -309,7 +309,9 @@ def _resource_files(skill_dir: Path) -> dict[str, list[str]]:
 
 def _command_args(rest: str) -> list[str]:
     """The arguments after a script path, quoted the way the shell reads them, up to the first
-    operator (`|`, `;`, `&&`, `>`) or comment."""
+    operator (`|`, `;`, `&&`, `>`) or comment. A closing quote around the path is dropped."""
+    if rest[:1] in ("\"", "'"):
+        rest = rest[1:]
     lexer = shlex.shlex(rest, posix=True, punctuation_chars=";&|<>")
     lexer.whitespace_split = True
     args: list[str] = []
@@ -340,6 +342,11 @@ def _script_options(path: Path) -> set[str] | None:
             declared = True
             if any(not isinstance(arg, ast.Constant) for arg in node.args):
                 return None  # a name set at run time (`add_argument(flag)`): unknown, not absent
+            if any(
+                kw.arg == "nargs" and ast.unparse(kw.value) in ("argparse.REMAINDER", "REMAINDER", "'...'")
+                for kw in node.keywords
+            ):
+                return None  # REMAINDER takes option-looking words too; nothing can be flagged
             flags = [
                 arg.value
                 for arg in node.args

@@ -91,6 +91,15 @@ def _new_words(prompts: list[str], known: set[str]) -> list[str]:
     return found
 
 
+def _extend(description: str, phrases: list[str]) -> str:
+    """The description with the request sentence appended, after a full stop if it has none:
+    otherwise the requests would join a final boundary ("Not for PDFs") and be cut with it."""
+    base = description.rstrip()
+    if not base.endswith((".", "!", "?")):
+        base += "."
+    return base + _SENTENCE.format(phrases=_quoted(phrases))
+
+
 def _task_word(word: str, avoid: set[str]) -> bool:
     found = evalcases.content_words(word)
     return bool(found) and found[0] not in avoid
@@ -109,9 +118,7 @@ def _fit(
     """
 
     def fits(items: list[tuple[str, str]]) -> bool:
-        return len(description + _SENTENCE.format(phrases=_quoted([w for w, _ in items]))) <= (
-            MAX_DESCRIPTION
-        )
+        return len(_extend(description, [w for w, _ in items])) <= MAX_DESCRIPTION
 
     kept = list(tagged)
     while kept and not fits(kept):
@@ -231,9 +238,7 @@ def _plan(
             )
     new_description = spec.description
     if kept:
-        new_description = spec.description.rstrip() + _SENTENCE.format(
-            phrases=_quoted([w for w, _ in kept])
-        )
+        new_description = _extend(spec.description, [w for w, _ in kept])
 
     used: list[str] = []
     for case in extra:
