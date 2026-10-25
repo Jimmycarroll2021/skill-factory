@@ -44,9 +44,23 @@ _MIN_SITUATION_WORDS = 3
 
 
 def _situation(text: str) -> str:
-    """A request trimmed to at most _MAX_SITUATION_WORDS words, without trailing punctuation."""
-    words = text.replace('"', "'").split()[:_MAX_SITUATION_WORDS]
-    return " ".join(words).rstrip(".!?,;:")
+    """A request trimmed to at most _MAX_SITUATION_WORDS words, without trailing punctuation.
+
+    A longer request keeps the window with the most content words (the earliest on a tie),
+    so a polite preamble ("I would like you to help me with this:") cannot crowd out the task.
+    """
+    words = text.replace('"', "'").split()
+    if len(words) > _MAX_SITUATION_WORDS:
+        starts = range(len(words) - _MAX_SITUATION_WORDS + 1)
+        best = max(
+            starts,
+            key=lambda s: (
+                len(evalcases.content_words(" ".join(words[s : s + _MAX_SITUATION_WORDS]))),
+                -s,
+            ),
+        )
+        words = words[best : best + _MAX_SITUATION_WORDS]
+    return " ".join(words).strip(".!?,;: ")
 
 
 def _quoted(phrases: list[str]) -> str:

@@ -302,3 +302,13 @@ def test_appended_requests_start_a_new_sentence_after_an_unterminated_boundary()
     score = evalcases.match_score("Deduplicate spreadsheet rows", "csv-tool", extended)
     assert score >= evalcases.MATCH_THRESHOLD
 
+
+def test_a_long_request_keeps_its_task_not_its_preamble():
+    prompt = (
+        "I would like you to help me with this if you can: deduplicate spreadsheet "
+        "exports and identify duplicate invoice identifiers"
+    )
+    situation = improve._situation(prompt)
+    assert "deduplicate" in situation and "invoice" in situation
+    assert len(situation.split()) <= improve._MAX_SITUATION_WORDS
+
