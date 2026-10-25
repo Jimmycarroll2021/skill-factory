@@ -23,6 +23,22 @@ All notable changes to this project are documented here. The format follows
   shortened from the end, down to three words; a request with no task words is skipped. The meta-skill's own keyword list is replaced.
 - `generate` no longer writes placeholder `README.md` files into resource directories; an
   empty directory is reported by the validator instead.
+- `.claude/settings.json` keeps every guardrail the harness had, without the harness: the
+  sandbox stays on with unsandboxed commands off, and its network allowlist drops only the npm
+  and Playwright hosts this Python project never used. The deny list still blocks force pushes,
+  pushes to `main`, history rewrites, `git branch -D`, `git checkout --`, merges, `rm -rf`,
+  `pip install`, `PowerShell` and `.env` files. Its six harness hook scripts (guard, idempotency,
+  budget, anchor, stop gate, subagent check) are replaced by one stdlib hook, `.claude/hooks/guard.py`, which
+  catches what a prefix rule cannot: `push -uf`, `HEAD:main`, `rm -r -f`, `cat .env` (any
+  case), `cd` before `git`, and the same commands behind wrappers (`env -i`, `sudo`, `find -exec`),
+  inside `if`/`for`/`{ }` bodies, `$(...)`, backticks, `bash -c` (or `-lc`) or `eval`, across
+  line continuations, after a comment, or spelled `git.exe`. It also denies PowerShell and `cmd`
+  run from Bash, `gh` PR merges with `--repo` anywhere, write-side `gh api` (payload flags,
+  `graphql`), a `merge_pull_request` tool from any MCP server, writes to hosting, infra and
+  deploy config, any hook event with a missing or mistyped field, and any command it cannot
+  read: one it cannot tokenise (an unquoted heredoc body with an apostrophe) or shells nested
+  more than three deep. `defaultMode: acceptEdits` and
+  the broad allow rules (`npm`, `python`, `cat`, `cd`) are gone, so more calls ask first.
 
 ### Added
 
@@ -57,6 +73,16 @@ All notable changes to this project are documented here. The format follows
   and packages a new awaiting-approval version. The pipeline and `skillz run` never promote.
 - The meta-skill documents the loop and was improved through it; the challenge report is
   committed under `docs/evidence/`.
+
+### Removed
+
+- The quickship v0.3 agent harness that built the project: the controller and hook scripts
+  under `scripts/`, its bash self-tests under `tests/`, `.quickship/`, `BRIEF*.yaml`,
+  `IDEA*.md`, the `*.cmd` launchers, its subagent definitions, its `CLAUDE.md` contract and
+  hook settings, its PR template, and the build records in `docs/missions/`, `docs/runs/`,
+  `docs/PROGRAM.md`, `docs/PRD_TEMPLATE.md` and `docs/design/contracts.md`. They stay in git
+  history. `CLAUDE.md` and the PR template are replaced with plain project versions; the
+  `skillz` package is unchanged.
 
 ## 0.1.0 - 2026-10-10
 

@@ -1,83 +1,90 @@
 {
   "permissions": {
-    "defaultMode": "acceptEdits",
     "allow": [
-      "Bash(npm *)",
-      "Bash(npx *)",
-      "Bash(pnpm *)",
-      "Bash(yarn *)",
-      "Bash(git add *)",
-      "Bash(git commit *)",
-      "Bash(git checkout *)",
-      "Bash(git branch *)",
-      "Bash(git worktree *)",
-      "Bash(git merge *)",
-      "Bash(git fetch *)",
-      "Bash(git diff *)",
-      "Bash(git log *)",
-      "Bash(git status *)",
-      "Bash(git rev-parse *)",
-      "Bash(python *)",
-      "Bash(python3 *)",
-      "Bash(pytest *)",
-      "Bash(uv *)",
-      "Bash(make *)",
-      "Bash(bash scripts/gate.sh *)",
-      "Bash(bash scripts/diffbase.sh *)",
-      "Bash(bash tests/run.sh *)",
-      "Bash(bash tests/guard.sh *)",
-      "Bash(bash tests/gate.sh *)",
-      "Bash(bash tests/diffbase.sh *)",
-      "Bash(cat *)",
-      "Bash(ls *)",
-      "Bash(echo *)",
-      "Bash(date *)",
-      "Bash(mkdir *)",
-      "Bash(rm -f .claude/state/force_replan)",
-      "Bash(rm -f .claude/state/cancel)",
-      "Bash(touch *)",
-      "Bash(cd *)",
+      "Bash(uv sync*)",
+      "Bash(uv run ruff*)",
+      "Bash(uv run pytest*)",
+      "Bash(uv run skillz*)",
+      "Bash(uv build*)",
       "Bash(git -C *)",
-      "Bash(sleep *)",
-      "Bash(tail *)",
-      "Bash(head *)",
-      "Bash(grep *)",
-      "Bash(wc *)",
-      "Bash(git remote *)",
-      "Bash(git ls-remote *)",
-      "Bash(gh pr view *)",
-      "Bash(gh pr list *)",
-      "Bash(gh auth status)",
-      "Bash(gh repo view *)"
+      "Bash(git status*)",
+      "Bash(git diff*)",
+      "Bash(git log*)"
     ],
     "deny": [
       "Bash(git push --force*)",
       "Bash(git push -f*)",
-      "Bash(git push --force-with-lease*)",
-      "Bash(git push * main)",
-      "Bash(git push * master)",
-      "Bash(git push origin main*)",
-      "Bash(git push origin master*)",
+      "Bash(git push * --force*)",
+      "Bash(git push * -f*)",
+      "Bash(git push * +*)",
+      "Bash(git push * main*)",
+      "Bash(git push * master*)",
+      "Bash(git * push --force*)",
+      "Bash(git * push -f*)",
+      "Bash(git * push * --force*)",
+      "Bash(git * push * -f*)",
+      "Bash(git * push * +*)",
+      "Bash(git * push * main*)",
+      "Bash(git * push * master*)",
       "Bash(git reset --hard*)",
-      "Bash(git branch -D*)",
-      "Bash(git checkout -- *)",
       "Bash(git filter-branch*)",
       "Bash(git filter-repo*)",
-      "Bash(pip install*)",
-      "Bash(pip3 install*)",
+      "Bash(git * reset --hard*)",
+      "Bash(git * filter-branch*)",
+      "Bash(git * filter-repo*)",
+      "Bash(git branch -D*)",
+      "Bash(git * branch -D*)",
+      "Bash(git checkout -- *)",
+      "Bash(git * checkout -- *)",
+      "PowerShell(*)",
+      "Bash(git --git-dir*)",
+      "Bash(git -c *)",
+      "Bash(gh pr merge*)",
+      "mcp__github__merge_pull_request",
+      "mcp__github__enable_pr_auto_merge",
       "Bash(rm -rf*)",
       "Bash(rm -fr*)",
-      "Read(./.env)",
-      "Read(./.env.local)",
-      "Read(./.env.production)",
-      "Read(./.env.development)",
-      "Edit(./.env)",
-      "Edit(./.env.local)",
-      "Edit(./.env.production)",
-      "Edit(./.env.development)",
-      "Bash(gh pr merge *)",
-      "PowerShell(*)",
-      "Bash(git push *)"
+      "Bash(pip install*)",
+      "Bash(pip3 install*)",
+      "Read(**/.env)",
+      "Read(**/.env.local)",
+      "Read(**/.env.production)",
+      "Read(**/.env.development)",
+      "Read(**/.env.staging)",
+      "Read(**/.env.test)",
+      "Read(**/.env.prod)",
+      "Read(**/.env.dev)",
+      "Read(**/.env.ci)",
+      "Read(**/.env.backup)",
+      "Read(**/.env.bak)",
+      "Read(**/.env.*.local)",
+      "Read(**/.envrc)",
+      "Edit(**/.env)",
+      "Edit(**/.env.local)",
+      "Edit(**/.env.production)",
+      "Edit(**/.env.development)",
+      "Edit(**/.env.staging)",
+      "Edit(**/.env.test)",
+      "Edit(**/.env.prod)",
+      "Edit(**/.env.dev)",
+      "Edit(**/.env.ci)",
+      "Edit(**/.env.backup)",
+      "Edit(**/.env.bak)",
+      "Edit(**/.env.*.local)",
+      "Edit(**/.envrc)",
+      "Write(**/.env)",
+      "Write(**/.env.local)",
+      "Write(**/.env.production)",
+      "Write(**/.env.development)",
+      "Write(**/.env.staging)",
+      "Write(**/.env.test)",
+      "Write(**/.env.prod)",
+      "Write(**/.env.dev)",
+      "Write(**/.env.ci)",
+      "Write(**/.env.backup)",
+      "Write(**/.env.bak)",
+      "Write(**/.env.*.local)",
+      "Write(**/.envrc)"
     ]
   },
   "attribution": {
@@ -92,125 +99,21 @@
         "github.com",
         "api.github.com",
         "*.githubusercontent.com",
-        "registry.npmjs.org",
-        "*.npmjs.org",
         "pypi.org",
         "files.pythonhosted.org",
-        "*.pythonhosted.org",
-        "cdn.playwright.dev",
-        "playwright.download.prss.microsoft.com",
-        "playwright.azureedge.net"
+        "*.pythonhosted.org"
       ]
     }
   },
   "hooks": {
-    "SessionStart": [
-      {
-        "matcher": "compact|resume",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR\"/scripts/hooks/anchor.sh",
-            "timeout": 30
-          }
-        ]
-      }
-    ],
     "PreToolUse": [
       {
-        "matcher": ".*",
+        "matcher": "Bash|Read|Edit|MultiEdit|Write|NotebookEdit|Grep|Glob|mcp__.*",
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR\"/scripts/hooks/guard.sh",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/guard.py\"",
             "timeout": 10
-          }
-        ]
-      },
-      {
-        "matcher": "Bash|mcp__.*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR\"/scripts/hooks/idem.sh",
-            "timeout": 10
-          }
-        ]
-      },
-      {
-        "matcher": ".*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR\"/scripts/hooks/budget.sh",
-            "timeout": 20
-          }
-        ]
-      }
-    ],
-    "PostToolUse": [
-      {
-        "matcher": "Bash|Read|WebFetch|WebSearch|mcp__.*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR\"/scripts/hooks/guard.sh",
-            "timeout": 10
-          }
-        ]
-      },
-      {
-        "matcher": "Bash|mcp__.*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR\"/scripts/hooks/idem.sh",
-            "timeout": 10
-          }
-        ]
-      },
-      {
-        "matcher": ".*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR\"/scripts/hooks/budget.sh",
-            "timeout": 20
-          }
-        ]
-      }
-    ],
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR\"/scripts/hooks/stop.sh",
-            "timeout": 900
-          }
-        ]
-      }
-    ],
-    "SubagentStop": [
-      {
-        "matcher": "reviewer|security",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR\"/scripts/hooks/agents.sh",
-            "timeout": 20
-          }
-        ]
-      }
-    ],
-    "PostToolUseFailure": [
-      {
-        "matcher": ".*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR\"/scripts/hooks/budget.sh",
-            "timeout": 20
           }
         ]
       }
