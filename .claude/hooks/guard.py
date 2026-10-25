@@ -41,10 +41,16 @@ _SUBST = re.compile(r"\$\(|`")
 _GH_WRITE_FLAGS = {"-X", "--method", "-f", "-F", "--field", "--raw-field", "--input"}
 _GH_WRITE_PREFIXES = ("-X", "--method=", "--field=", "--raw-field=", "--input=")
 _MCP_MERGE_TOOLS = ("merge_pull_request", "enable_pr_auto_merge")
+_MAX_DEPTH = 3  # nested shells inspected; one deeper is denied, not waved through
+_TOO_DEEP = "shell nesting too deep to inspect"
 
 
 class Malformed(ValueError):
     pass
+
+
+class Unparseable(Exception):
+    """Bash would read the command, this lexer cannot: deny rather than guess."""
 
 
 def _norm(word: str) -> str:
@@ -75,9 +81,10 @@ def protected_write(path: str) -> str | None:
 
 
 def _mark_newlines(command: str) -> str:
-    """Drop backslash-newline continuations, as Bash does, and make each unquoted newline a
-    separator token; quoted newlines stay."""
-    out, quote, i = [], None, 0
+    """Drop backslash-newline continuations and comments, as Bash does, and make each unquoted
+    newline a separator token; quoted newlines stay. A `#` starts a comment only at the start
+    of a word, judged after escapes (`\\ #` is a literal `#` in the same word)."""
+    out, quote, i, word_start = [], None, 0, True
     while i < len(command):
         c = command[i]
         if quote == "'":
@@ -85,19 +92,21 @@ def _mark_newlines(command: str) -> str:
         elif c == "\\" and i + 1 < len(command):
             if command[i + 1] != "\n":
                 out.append(command[i : i + 2])
+                word_start = False
             i += 2
             continue
         elif quote == '"':
             quote = None if c == '"' else quote
         elif c in "'\"":
             quote = c
-        elif c == "#" and (i == 0 or command[i - 1] in " \t\n;&|()"):
-            # A comment: Bash ignores it up to the newline, quotes included. A mid-word # is literal.
+        elif c == "#" and word_start:
+            # A comment: Bash ignores it up to the newline, quotes included.
             end = command.find("\n", i)
             i = len(command) if end == -1 else end
             continue
         elif c == "\n":
             c = " \n "
+        word_start = quote is None and c in (" ", "\t", " \n ", ";", "&", "|", "(", ")", "<", ">")
         out.append(c)
         i += 1
     return "".join(out)
@@ -112,8 +121,8 @@ def segments(command: str) -> list[list[str]]:
         lexer.whitespace_split = True
         lexer.commenters = ""  # `#` mid-word is literal in Bash; a comment can only add denials
         tokens = list(lexer)
-    except ValueError:  # an unbalanced quote, e.g. in an unquoted heredoc body: fall back to words
-        tokens = [t.strip("\"'") for t in re.split(r"[ \t\r]+|(?=[;&|\n])|(?<=[;&|\n])", marked)]
+    except ValueError as exc:  # e.g. an unbalanced quote in an unquoted heredoc body
+        raise Unparseable from exc
     out: list[list[str]] = [[]]
     for token in tokens:
         if token in SEPARATORS:
@@ -189,13 +198,13 @@ def _program_reason(prog: str, args: list[str], depth: int) -> str | None:
     ):
         # A payload (-f, -F @file, --input) or a mutation can merge a PR; its contents are not visible here.
         return "write-side gh api"
-    if depth < 3 and prog == "eval":
-        return bash_reason(" ".join(args), depth + 1)
-    if depth < 3 and prog in SHELLS:
+    if prog == "eval":
+        return bash_reason(" ".join(args), depth + 1) if depth < _MAX_DEPTH else _TOO_DEEP
+    if prog in SHELLS:
         # `-c`, or a combined cluster such as `-lc` or `-ec`: the next word is the script.
         for i, arg in enumerate(args[:-1]):
             if re.fullmatch(r"-[A-Za-z]*c[A-Za-z]*", arg):
-                return bash_reason(args[i + 1], depth + 1)
+                return bash_reason(args[i + 1], depth + 1) if depth < _MAX_DEPTH else _TOO_DEEP
     return None
 
 
@@ -215,12 +224,15 @@ def _segment_reason(seg: list[str], depth: int) -> str | None:
 def bash_reason(command: str, depth: int = 0) -> str | None:
     if not isinstance(command, str):
         raise Malformed("command must be a string")
-    segs = segments(command)
+    try:
+        segs = segments(command)
+    except Unparseable:
+        return "unparseable shell command; quote heredoc bodies or split the command"
     words = [word for seg in segs for token in seg for word in re.split(r"[=:]", token)]
     if any(is_env_file(word) for word in words):
         return ".env access"
     # Command substitution runs its contents too, even inside double quotes.
-    if depth < 3:
+    if depth < _MAX_DEPTH:
         for seg in segs:
             for token in seg:
                 if _SUBST.search(token):

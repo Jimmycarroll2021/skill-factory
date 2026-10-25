@@ -35,7 +35,9 @@ All notable changes to this project are documented here. The format follows
   line continuations, after a comment, or spelled `git.exe`. It also denies PowerShell and `cmd`
   run from Bash, `gh` PR merges with `--repo` anywhere, write-side `gh api` (payload flags,
   `graphql`), a `merge_pull_request` tool from any MCP server, writes to hosting, infra and
-  deploy config, and any hook event with a missing or mistyped field. `defaultMode: acceptEdits` and
+  deploy config, any hook event with a missing or mistyped field, and any command it cannot
+  read: one it cannot tokenise (an unquoted heredoc body with an apostrophe) or shells nested
+  more than three deep. `defaultMode: acceptEdits` and
   the broad allow rules (`npm`, `python`, `cat`, `cd`) are gone, so more calls ask first.
 
 ### Added
