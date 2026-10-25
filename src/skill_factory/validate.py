@@ -340,6 +340,11 @@ def _script_options(path: Path) -> set[str] | None:
             declared = True
             if any(not isinstance(arg, ast.Constant) for arg in node.args):
                 return None  # a name set at run time (`add_argument(flag)`): unknown, not absent
+            if any(
+                kw.arg == "nargs" and ast.unparse(kw.value) in ("argparse.REMAINDER", "REMAINDER", "'...'")
+                for kw in node.keywords
+            ):
+                return None  # REMAINDER takes option-looking words too; nothing can be flagged
             flags = [
                 arg.value
                 for arg in node.args

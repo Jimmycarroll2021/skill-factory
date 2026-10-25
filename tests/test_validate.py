@@ -572,3 +572,15 @@ def test_words_after_a_double_dash_are_not_flags(tmp_path):
     _script(skill, "scripts/tool.py", "import argparse\np = argparse.ArgumentParser()\np.add_argument('values', nargs='*')\n")
     assert "script-flag-missing" not in _rules(val.validate_skill(skill))
 
+
+def test_a_remainder_argument_is_not_flag_checked(tmp_path):
+    body = "```bash\npython3 scripts/tool.py echo --draft\n```\n"
+    skill = _make(tmp_path, "remainder", BOUNDED, body)
+    _script(
+        skill,
+        "scripts/tool.py",
+        "import argparse\np = argparse.ArgumentParser()\n"
+        "p.add_argument('command', nargs=argparse.REMAINDER)\n",
+    )
+    assert "script-flag-missing" not in _rules(val.validate_skill(skill))
+
