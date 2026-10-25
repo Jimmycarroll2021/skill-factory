@@ -53,7 +53,7 @@ def test_sandbox_stays_on_with_a_network_allowlist():
 
 def test_guard_hook_runs_before_bash_and_file_tools():
     (entry,) = CONFIG["hooks"]["PreToolUse"]
-    for tool in ("Bash", "Read", "Edit", "Write", "Grep"):
+    for tool in ("Bash", "Read", "Edit", "Write", "Grep", "mcp__github_enterprise__merge_pull_request"):
         assert re.fullmatch(entry["matcher"], tool)
     (hook,) = entry["hooks"]
     assert hook["command"] == 'python3 "$CLAUDE_PROJECT_DIR/.claude/hooks/guard.py"'

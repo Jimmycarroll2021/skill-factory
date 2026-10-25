@@ -38,6 +38,9 @@ _FILE_FIELDS = {
 _WRITE_TOOLS = {"Write", "Edit", "MultiEdit", "NotebookEdit"}
 _READ_ONLY = {"cat", "head", "tail", "grep", "rg", "less", "wc", "diff", "ls"}
 _SUBST = re.compile(r"\$\(|`")
+_GH_WRITE_FLAGS = {"-X", "--method", "-f", "-F", "--field", "--raw-field", "--input"}
+_GH_WRITE_PREFIXES = ("-X", "--method=", "--field=", "--raw-field=", "--input=")
+_MCP_MERGE_TOOLS = ("merge_pull_request", "enable_pr_auto_merge")
 
 
 class Malformed(ValueError):
@@ -88,6 +91,11 @@ def _mark_newlines(command: str) -> str:
             quote = None if c == '"' else quote
         elif c in "'\"":
             quote = c
+        elif c == "#" and (i == 0 or command[i - 1] in " \t\n;&|()"):
+            # A comment: Bash ignores it up to the newline, quotes included. A mid-word # is literal.
+            end = command.find("\n", i)
+            i = len(command) if end == -1 else end
+            continue
         elif c == "\n":
             c = " \n "
         out.append(c)
@@ -175,10 +183,19 @@ def _program_reason(prog: str, args: list[str], depth: int) -> str | None:
         "merge" in a for a in args
     ))):
         return "merging a pull request is the human's decision"
+    if prog == "gh" and "api" in args and (
+        "graphql" in args
+        or any(a in _GH_WRITE_FLAGS or a.startswith(_GH_WRITE_PREFIXES) for a in args)
+    ):
+        # A payload (-f, -F @file, --input) or a mutation can merge a PR; its contents are not visible here.
+        return "write-side gh api"
     if depth < 3 and prog == "eval":
         return bash_reason(" ".join(args), depth + 1)
-    if depth < 3 and prog in SHELLS and "-c" in args[:-1]:
-        return bash_reason(args[args.index("-c") + 1], depth + 1)
+    if depth < 3 and prog in SHELLS:
+        # `-c`, or a combined cluster such as `-lc` or `-ec`: the next word is the script.
+        for i, arg in enumerate(args[:-1]):
+            if re.fullmatch(r"-[A-Za-z]*c[A-Za-z]*", arg):
+                return bash_reason(args[i + 1], depth + 1)
     return None
 
 
@@ -228,6 +245,8 @@ def reason_for(event: dict) -> str | None:
     tool_input = event.get("tool_input")
     if not isinstance(tool, str) or not isinstance(tool_input, dict):
         raise Malformed("tool_name and tool_input are required")
+    if tool.startswith("mcp__") and tool.endswith(_MCP_MERGE_TOOLS):
+        return "merging a pull request is the human's decision"
     if tool == "Bash":
         if "command" not in tool_input:
             raise Malformed("Bash needs a command")
