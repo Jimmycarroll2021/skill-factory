@@ -2,8 +2,8 @@
 
 A version lives in ``<skill>/.factory/versions/<semver>/`` and is never modified once renamed into
 place, except that ``approve`` adds ``approval.json``. ``manifest.json`` lists a SHA-256 for every
-other file and is itself immutable, so the effective status of a version is read from
-``approval.json`` and never from the manifest. Nothing here spawns a process; a model is only
+other file (including the version's ``receipt.json``, see ``receipt.py``) and is itself immutable,
+so the effective status of a version is read from ``approval.json`` and never from the manifest. Nothing here spawns a process; a model is only
 consulted when ``package_skill`` is given a runner name (or a judge report made by one).
 """
 
@@ -23,7 +23,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 
-from skill_factory import evalcases, evaluate, judge, render, validate
+from skill_factory import evalcases, evaluate, judge, receipt, render, validate
 from skill_factory.capture import NAME_RE, SpecError
 from skill_factory.runner import EXECUTABLES, Runner
 
@@ -425,7 +425,7 @@ def _snapshot(
     version: str,
     judge_report: dict | None = None,
 ) -> None:
-    """Fill tmp with skill/, dist/, reports/ and regression files, then write the manifest last.
+    """Fill tmp with skill/, dist/, reports/, regression files and the receipt; the manifest last.
 
     The judge files are copied only when ``judge_report`` was made for this package call, so a
     stale ``.factory/judge.json`` from an earlier run never enters a version.
@@ -449,6 +449,19 @@ def _snapshot(
             _write(tmp / "reports" / "judge.json", _dumps(judge_report))
     _write(tmp / "regression.json", _dumps(regression))
     _write(tmp / "regression.md", _regression_markdown(regression))
+    created_at = _now()
+    receipt.write_receipt(
+        tmp,
+        receipt.build_receipt(
+            name=name,
+            version=version,
+            created_at=created_at,
+            skill_sha256=_sha256(tmp / "skill" / "SKILL.md"),
+            eval_report=_read_json(factory / "eval.json"),
+            judge_report=judge_report,
+            regression=regression,
+        ),
+    )
     entries = [
         {"path": path.relative_to(tmp).as_posix(), "sha256": _sha256(path)}
         for path in tmp.rglob("*")
@@ -458,7 +471,7 @@ def _snapshot(
         "schema": 1,
         "name": name,
         "version": version,
-        "created_at": _now(),
+        "created_at": created_at,
         "status": AWAITING,
         "previous_approved": regression["baseline"],
         "files": sorted(entries, key=lambda item: item["path"]),
