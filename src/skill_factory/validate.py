@@ -309,7 +309,9 @@ def _resource_files(skill_dir: Path) -> dict[str, list[str]]:
 
 def _command_args(rest: str) -> list[str]:
     """The arguments after a script path, quoted the way the shell reads them, up to the first
-    operator (`|`, `;`, `&&`, `>`) or comment."""
+    operator (`|`, `;`, `&&`, `>`) or comment. A closing quote around the path is dropped."""
+    if rest[:1] in ("\"", "'"):
+        rest = rest[1:]
     lexer = shlex.shlex(rest, posix=True, punctuation_chars=";&|<>")
     lexer.whitespace_split = True
     args: list[str] = []

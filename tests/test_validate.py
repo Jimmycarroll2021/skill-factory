@@ -584,3 +584,10 @@ def test_a_remainder_argument_is_not_flag_checked(tmp_path):
     )
     assert "script-flag-missing" not in _rules(val.validate_skill(skill))
 
+
+def test_a_quoted_script_path_still_has_its_flags_checked(tmp_path):
+    body = '```bash\npython3 "${CLAUDE_SKILL_DIR}/scripts/tool.py" --bogus\n```\n'
+    skill = _make(tmp_path, "quoted-path", BOUNDED, body)
+    _script(skill, "scripts/tool.py", "import argparse\np = argparse.ArgumentParser()\np.add_argument('--input')\n")
+    assert _errored(val.validate_skill(skill), "script-flag-missing")
+
