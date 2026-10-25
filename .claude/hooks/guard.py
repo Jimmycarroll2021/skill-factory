@@ -201,10 +201,19 @@ def _program_reason(prog: str, args: list[str], depth: int) -> str | None:
     if prog == "eval":
         return bash_reason(" ".join(args), depth + 1) if depth < _MAX_DEPTH else _TOO_DEEP
     if prog in SHELLS:
-        # `-c`, or a combined cluster such as `-lc` or `-ec`: the next word is the script.
+        # `-c`, or a combined cluster such as `-lc` or `-ec`. Options and `--` may come between it
+        # and the script (`-c -- 'x'`, `-c -o pipefail 'x'`), so every later non-option word is
+        # checked as a script rather than guessing which one Bash runs.
         for i, arg in enumerate(args[:-1]):
             if re.fullmatch(r"-[A-Za-z]*c[A-Za-z]*", arg):
-                return bash_reason(args[i + 1], depth + 1) if depth < _MAX_DEPTH else _TOO_DEEP
+                if depth >= _MAX_DEPTH:
+                    return _TOO_DEEP
+                for word in args[i + 1 :]:
+                    if not word.startswith(("-", "+")):
+                        reason = bash_reason(word, depth + 1)
+                        if reason:
+                            return reason
+                return None
     return None
 
 

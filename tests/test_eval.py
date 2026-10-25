@@ -221,3 +221,11 @@ def test_a_boundary_clause_keeps_the_positive_clause_before_it():
     description = "Convert spreadsheet exports to CSV; not for PDF documents."
     assert ev.match_score("Convert spreadsheet exports to CSV", "table-tool", description) >= ev.MATCH_THRESHOLD
     assert ev.match_score("Read PDF documents", "table-tool", description) < ev.MATCH_THRESHOLD
+
+
+def test_refuse_describing_the_problem_is_not_a_boundary():
+    description = "Troubleshoot servers that refuse TCP connections."
+    assert ev.match_score("Investigate TCP connection failures", "network-debugger", description) >= ev.MATCH_THRESHOLD
+    bounded = "Draft release notes. Refuses to invent changes that are not in the input."
+    assert ev.match_score("invent changes", "release-notes", bounded) < ev.MATCH_THRESHOLD
+

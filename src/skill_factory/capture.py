@@ -39,7 +39,7 @@ NEGATIVE_RE = _NEGATIVE_RE
 # parse" describes the job and stays.
 EXCLUSION_RE = re.compile(
     r"\bNOT\b|(?:^|[.!?]\s+)Never\b|(?i:\bnot for\b|\bdo not use\b|\bdon't use\b"
-    r"|\bnever use\b|\brefuses?\b|\bdistinct from\b|\b(?:use|see) [a-z0-9-]+ instead\b"
+    r"|\bnever use\b|\brefuses? to\b|\bdistinct from\b|\b(?:use|see) [a-z0-9-]+ instead\b"
     # "It does not handle PDFs": what the skill will not take. "files that do not parse" stays.
     r"|\b(?:(?:does|do|will|can) not|doesn't|don't|won't|can't|cannot)"
     r" (?:handle|support|cover|accept|process|work (?:on|with)|apply to|deal with)\b)"

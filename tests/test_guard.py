@@ -82,6 +82,9 @@ _spec.loader.exec_module(guard)
         "cat <<'EOF'\n'\nEOF\nr\\m -r -f build",
         "cat <<EOF > notes.txt\ndon't stop\nEOF",
         "printf '%s\\n' \\ #literal; rm -r -f build",
+        # Codex review round 4
+        "bash -c -- 'true; rm -r -f build'",
+        "bash -c -o pipefail 'git push -f origin topic'",
     ],
 )
 def test_denied(command):
