@@ -53,6 +53,9 @@ All notable changes to this project are documented here. The format follows
   Render never ships it, so installed skills are unchanged.
 - `skills/demo-spec-lint/SKILL.md` writes its description on one line, which `skillz validate`
   can parse; the text is unchanged.
+- `scripts/check.py` no longer passes a broken skill in three cases Codex found: an
+  `evals.json` holding JSON `null`, a verdict script in a subdirectory of `scripts/`, and a
+  documented command with a quoted script path or a line continuation.
 - Generated descriptions now carry the paragraph's "use it when" and "do not use it" sentences.
   Claude reads only the frontmatter description when choosing a skill, so `capture` composes
   them into the description (first trigger and first boundary before any others, each kept
@@ -76,10 +79,11 @@ All notable changes to this project are documented here. The format follows
   budget, anchor, stop gate, subagent check) are replaced by one stdlib hook, `.claude/hooks/guard.py`, which
   catches what a prefix rule cannot: `push -uf`, `HEAD:main`, `rm -r -f`, `cat .env` (any
   case), `cd` before `git`, and the same commands behind wrappers (`env -i`, `sudo`, `find -exec`),
-  inside `if`/`for`/`{ }` bodies, `$(...)`, backticks, `bash -c` or `eval`, across line
-  continuations, or spelled `git.exe`. It also denies PowerShell and `cmd` run from Bash, `gh`
-  PR merges with `--repo` anywhere, writes to hosting, infra and deploy config, and any hook
-  event with a missing or mistyped field. `defaultMode: acceptEdits` and
+  inside `if`/`for`/`{ }` bodies, `$(...)`, backticks, `bash -c` (or `-lc`) or `eval`, across
+  line continuations, after a comment, or spelled `git.exe`. It also denies PowerShell and `cmd`
+  run from Bash, `gh` PR merges with `--repo` anywhere, write-side `gh api` (payload flags,
+  `graphql`), a `merge_pull_request` tool from any MCP server, writes to hosting, infra and
+  deploy config, and any hook event with a missing or mistyped field. `defaultMode: acceptEdits` and
   the broad allow rules (`npm`, `python`, `cat`, `cd`) are gone, so more calls ask first.
 
 ### Removed

@@ -72,6 +72,12 @@ _spec.loader.exec_module(guard)
         'echo "$(cat .env)"',
         "echo `rm -rf build`",
         "echo deploy > infra/main.tf",
+        # Codex review round 2
+        "bash -lc 'true; rm -r -f build'",
+        "sh -ec 'git push -f origin topic'",
+        "# '\nrm -r -f build\n# '",
+        "gh api graphql -F query=@request.graphql",
+        "gh api repos/o/r/issues -f title=x",
     ],
 )
 def test_denied(command):
@@ -97,6 +103,8 @@ def test_denied(command):
         "cat infra/main.tf",
         "uv run pytest -q tests/test_guard.py",
         "git -C /repo rev-parse HEAD # where are we",
+        "gh api repos/o/r/pulls/4",
+        "echo 'a # not a comment' && git -C /repo status",
     ],
 )
 def test_allowed(command):
@@ -150,3 +158,13 @@ def test_hook_exit_codes():
     assert "force push" in denied.stderr
     assert _run("{not json").returncode == 2
     assert _run("[]").returncode == 2
+
+
+def test_merge_tools_are_denied_whatever_the_mcp_server_is_called():
+    for tool in (
+        "mcp__github__merge_pull_request",
+        "mcp__github_enterprise__merge_pull_request",
+        "mcp__gh__enable_pr_auto_merge",
+    ):
+        assert guard.reason_for({"tool_name": tool, "tool_input": {}})
+    assert guard.reason_for({"tool_name": "mcp__github__pull_request_read", "tool_input": {}}) is None
