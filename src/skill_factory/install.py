@@ -123,14 +123,21 @@ def _approval(version_dir: Path) -> dict | None:
     return data if data is not None and data.get("status") == APPROVED else None
 
 
-def _evidence(version_dir: Path) -> tuple[str | None, int | None]:
-    """(evidence level, regression count) from the version's receipt.json; Nones without one."""
+def _evidence(version_dir: Path, strict: bool = True) -> tuple[str | None, int | None]:
+    """(evidence level, regression count) from the version's receipt.json; Nones without one.
+
+    A receipt of an unknown schema is an integrity error for the version being installed
+    (``strict``); when merely listing versions it reads as no evidence, so one bad version
+    cannot block installing or rolling back to another.
+    """
     from skill_factory import receipt  # the receipt module imports nothing from here
 
     try:
         data = receipt.load_receipt(version_dir)
     except ValueError as exc:
-        raise InstallIntegrityError(str(exc)) from exc
+        if strict:
+            raise InstallIntegrityError(str(exc)) from exc
+        return None, None
     if data is None:
         return None, None
     regressions = data.get("regressions")
@@ -161,7 +168,7 @@ def version_status(root: Path, name: str) -> list[dict]:
                 "created_at": manifest.get("created_at"),
                 "approved_at": approval.get("approved_at") if approval else None,
                 "approved_by": approval.get("approved_by") if approval else None,
-                "evidence": _evidence(entry)[0],
+                "evidence": _evidence(entry, strict=False)[0],
             }
         )
     return rows

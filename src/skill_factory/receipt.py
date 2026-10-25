@@ -55,9 +55,21 @@ def _completed(judge_report: dict | None) -> bool:
     return judge_report is not None and judge_report.get("status") == "completed"
 
 
+def _scored_cases(judge_report: dict) -> int:
+    summary = judge_report.get("summary") or {}
+    try:
+        return int(summary.get("cases", 0)) - int(summary.get("errors", 0))
+    except (TypeError, ValueError):
+        return 0
+
+
 def evidence_level(judge_report: dict | None) -> str:
-    """``verified`` for a completed cross-model judge, ``self-judged`` for same-model, else not."""
-    if not _completed(judge_report):
+    """``verified`` for a completed cross-model judge, ``self-judged`` for same-model, else not.
+
+    A judge run that scored no case (none to run, or every model call failed) is no evidence of
+    behaviour however it completed, so it stays ``unverified``.
+    """
+    if not _completed(judge_report) or _scored_cases(judge_report) <= 0:
         return UNVERIFIED
     return VERIFIED if judge_report.get("judge") != judge_report.get("runner") else SELF_JUDGED
 

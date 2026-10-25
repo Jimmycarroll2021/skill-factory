@@ -48,6 +48,10 @@ is non-empty, and `clean` otherwise.
 - `verified`: a model ran the behaviour cases and a different model judged them (cross-model).
   This is the default when both `claude` and `codex` are installed and `--runner` is given.
 
+`self-judged` and `verified` both need at least one behaviour case that the judge actually scored
+(`behaviour.cases` minus `behaviour.errors` is above zero). A judge run with no cases, or one where
+every model call failed, is `unverified` whatever models were selected.
+
 A higher level means more was checked, not that the skill is correct. A judge is a model and can
 be wrong.
 

@@ -505,3 +505,46 @@ def test_install_source_has_no_process_or_vcs_access():
     )
     for path in SRC.rglob("*.py"):
         assert "git push" not in path.read_text(encoding="utf-8"), path
+
+
+# --- Codex review of the receipt branch ---------------------------------------------------------
+
+
+def test_an_unknown_receipt_schema_on_one_version_does_not_block_the_others(root):
+    """Only the version being installed is held to the receipt schema; listing never raises."""
+    make_version(root, NAME, "0.1.0", receipt={**RECEIPT, "version": "0.1.0", "status": "clean", "regressions": []})
+    make_version(root, NAME, "0.1.1", receipt=RECEIPT)
+    make_version(root, NAME, "0.1.2", receipt={**RECEIPT, "schema": "skill-receipt/2"})
+    rows = {row["version"]: row["evidence"] for row in install.version_status(root, NAME)}
+    assert rows["0.1.1"] == "verified" and rows["0.1.2"] is None
+    with pytest.raises(install.InstallIntegrityError, match="skill-receipt/2"):
+        install.install_skill(root, NAME, "claude", "project", "0.1.2")
+    record = install.install_skill(root, NAME, "claude", "project", "0.1.1")
+    assert record.version == "0.1.1"
+    [rolled] = install.rollback_skill(root, NAME)
+    assert rolled.version == "0.1.0"
+
+
+@pytest.mark.skipif(not hasattr(os, "mkfifo"), reason="needs POSIX special files")
+def test_a_fifo_in_place_of_a_dist_file_is_refused_not_opened(root):
+    import threading
+
+    make_version(root, NAME, "0.1.0")
+    target = root / "skills" / NAME / ".factory" / "versions" / "0.1.0" / "dist" / "claude" / "SKILL.md"
+    target.unlink()
+    os.mkfifo(target)
+    outcome: list[object] = []
+
+    def attempt() -> None:
+        try:
+            install.install_skill(root, NAME, "claude", "project", "0.1.0")
+        except install.InstallError as exc:
+            outcome.append(exc)
+
+    worker = threading.Thread(target=attempt, daemon=True)
+    worker.start()
+    worker.join(timeout=10)
+    assert not worker.is_alive(), "install opened the FIFO and hung instead of refusing it"
+    assert outcome and isinstance(outcome[0], install.InstallIntegrityError)
+    assert "dist/claude/SKILL.md" in str(outcome[0])
+    assert not (root / ".claude" / "skills" / NAME).exists()

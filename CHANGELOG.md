@@ -81,6 +81,14 @@ All notable changes to this project are documented here. The format follows
   against a stale spec.
 - `evals/evals.json` rejects an id that collides with another entry's behaviour case id
   (`<id>-beh`), with the same `SpecError` as a duplicate id.
+- A receipt is `self-judged` or `verified` only when the judge scored at least one behaviour
+  case; a completed run with no cases or with every call failed stays `unverified`.
+- `skillz promote` treats a challenge as stale when `evals/evals.json` or
+  `.factory/cases/captured.json` changed since it ran, as both are inputs the challenge graded.
+- `skillz list` and the version listing read a receipt of an unknown schema as no evidence
+  instead of failing, so one such version cannot block installing or rolling back to another.
+- Version verification never opens a FIFO or device file; a special file in a version directory
+  is reported as not matching the manifest.
 - The regression report splits the comparison into gains and regressions instead of one
   `newly_failing` list; the pipeline's regression line reads like
   `pass (2 gains, 0 regressions vs 0.1.0; 7 cases compared)`.

@@ -497,3 +497,16 @@ def test_latest_version_is_the_one_load_versions_ranks_highest(root):
     release.package_skill(skill_dir(root), set_version="0.9.0")
     release.package_skill(skill_dir(root), set_version="0.10.0")
     assert receipt.latest_version(skill_dir(root)) == release.load_versions(skill_dir(root))[-1].version == "0.10.0"
+
+
+def test_evidence_needs_at_least_one_successfully_judged_case():
+    """A completed judge run that scored nothing is no evidence of behaviour."""
+    judged = {"status": "completed", "runner": "claude", "judge": "codex"}
+    nothing = {"cases": 0, "skill_better": 0, "skill_worse": 0, "tie": 0, "errors": 0}
+    all_errors = {**nothing, "cases": 2, "errors": 2}
+    one_scored = {**nothing, "cases": 2, "skill_better": 1, "errors": 1}
+    assert receipt.evidence_level({**judged, "summary": nothing}) == "unverified"
+    assert receipt.evidence_level({**judged, "summary": all_errors}) == "unverified"
+    assert receipt.evidence_level({**judged, "summary": one_scored}) == "verified"
+    assert receipt.evidence_level({**judged, "judge": "claude", "summary": one_scored}) == "self-judged"
+    assert receipt.evidence_level({**judged, "summary": {}}) == "unverified"

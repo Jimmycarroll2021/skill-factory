@@ -208,7 +208,7 @@ def verify_version(version_dir: Path) -> list[str]:
             if rel in (MANIFEST, APPROVAL):
                 continue
             actual.add(rel)
-            if path.is_symlink():
+            if path.is_symlink() or not path.is_file():  # a FIFO or device is never opened
                 bad.add(rel)
     for rel, digest in expected.items():
         parts = rel.split("/")

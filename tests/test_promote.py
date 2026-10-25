@@ -394,3 +394,19 @@ def test_pipeline_does_not_call_promote(tmp_path, monkeypatch):
     project.mkdir()
     result = pipeline.run_pipeline(PARAGRAPH, project)
     assert result["status"] == "awaiting-approval"
+
+
+@pytest.mark.parametrize("target", ["evals/evals.json", ".factory/cases/captured.json"])
+def test_a_case_source_added_after_the_challenge_makes_it_stale(root, released, target, capsys):
+    """The challenge graded evals.json and captured.json too, so a change to either is stale."""
+    make_candidate(released, CID, "candidate-better")
+    path = released / target
+    assert not path.exists()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    entries = [{"id": "x", "prompt": "Convert my export into clean CSV", "should_trigger": True}]
+    body = entries if target.startswith("evals") else {"schema": 1, "cases": []}
+    path.write_text(json.dumps(body), encoding="utf-8", newline="\n")
+    before = snapshot(released)
+    assert cli_promote(root, NAME, CID) == 1
+    assert "stale" in capsys.readouterr().err
+    assert snapshot(released) == before
