@@ -443,8 +443,11 @@ def check_cases(root, skills, f):
         cases = cases if isinstance(cases, list) else []
         inventory = {p.relative_to(s.dir).as_posix() for p in s.scripts}
         for c in cases:
+            if not isinstance(c, dict):  # e.g. a case wrapped in an extra list: it would never run
+                f.add("cases", s.path("evals/cases.json"), f"a case is not an object: {json.dumps(c)[:60]}")
+                continue
             # A typo or a stale path after a rename would otherwise drop the case unseen.
-            if isinstance(c, dict) and c.get("script") not in inventory:
+            if c.get("script") not in inventory:
                 f.add("cases", s.path("evals/cases.json"), f"a case names {c.get('script')!r}, which is not a script in this skill")
         for p in s.scripts:
             rel = p.relative_to(s.dir).as_posix()

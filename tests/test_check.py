@@ -355,6 +355,12 @@ class GateTest(unittest.TestCase):
         code, out = self.gate()
         self.assertEqual(code, 0, out)
 
+    def test_case_entry_that_is_not_an_object_fails(self):
+        cases = json.loads((self.skill / "evals" / "cases.json").read_text(encoding="utf-8"))
+        cases.append([{"script": "scripts/tiny.py", "args": [], "expect_exit": 9, "why": "wrapped"}])
+        (self.skill / "evals" / "cases.json").write_text(json.dumps(cases), encoding="utf-8")
+        self.assertFails("cases", "not an object")
+
     # -- harness errors ------------------------------------------------------------
     def test_unknown_check_name_is_exit_2(self):
         code, out = self.gate("--only", "nonsense")
