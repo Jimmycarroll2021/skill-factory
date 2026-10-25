@@ -1,18 +1,24 @@
 """Deterministic evaluation cases, an offline lexical-overlap matcher, grading and proposals.
 
-Nothing here runs a model or spawns a process. The trigger matcher is a heuristic: it measures
-how many of a prompt's content words also appear in the skill's name and description.
+Cases come from three sources, assembled by ``all_cases``: the spec (``generate_cases``), the
+skill's committed ``evals/evals.json`` (``load_evals``), and captured failures. A skill written by
+hand has no spec, so its evals are what gets graded. Nothing here runs a model or spawns a
+process. The trigger matcher is a heuristic: it measures how many of a prompt's content words
+also appear in the skill's name and description.
 """
 
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass, field
+from pathlib import Path
 
 from skill_factory.capture import (
     _STOP_WORDS,
     EXCLUSION_RE,
     SkillSpec,
+    SpecError,
     _sentences,
     _words,
 )
@@ -35,6 +41,10 @@ GENERIC_NEGATIVES: tuple[str, ...] = (
 _MAX_MARKERS = 3
 _MAX_MISSING_WORDS = 8
 _MAX_SUGGESTED_REQUESTS = 3
+
+EVALS_FILE = Path("evals") / "evals.json"
+EVALS_SOURCE = "evals.json"
+_ID_UNSAFE_RE = re.compile(r"[^A-Za-z0-9_-]+")
 
 
 def _normalise(word: str) -> str:
@@ -221,6 +231,99 @@ def generate_cases(spec: SkillSpec) -> list[Case]:
         cases.append(Case(f"neg-{n:03d}", "negative", prompt, source))
     cases.extend(_behaviour_cases(spec))
     return cases
+
+
+def evals_path(skill_dir: Path) -> Path:
+    return Path(skill_dir) / EVALS_FILE
+
+
+def _read_evals(path: Path) -> list[dict]:
+    """The entries of evals.json, each with a non-empty string prompt; ``[]`` without the file."""
+    if not path.exists() and not path.is_symlink():
+        return []
+    if path.is_symlink() or not path.is_file():
+        raise SpecError(f"{path} is not a regular file")
+    try:
+        data = json.loads(path.read_text(encoding="utf-8-sig"))
+    except (OSError, UnicodeDecodeError) as exc:
+        raise SpecError(f"cannot read {path}: {exc}") from exc
+    except json.JSONDecodeError as exc:
+        raise SpecError(f"invalid JSON in {path}: {exc}") from exc
+    if not isinstance(data, list):
+        raise SpecError(f"{path} must be a JSON list of eval entries")
+    for i, entry in enumerate(data):
+        prompt = entry.get("prompt") if isinstance(entry, dict) else None
+        if not isinstance(prompt, str) or not prompt.strip():
+            raise SpecError(f"{path}: entry {i} needs a non-empty string prompt")
+    return data
+
+
+def _eval_id(entry: dict, index: int) -> str:
+    """``evl-<id>`` with the id reduced to ``[A-Za-z0-9_-]``; ``evl-<index>`` without an id."""
+    raw = entry.get("id")
+    cleaned = _ID_UNSAFE_RE.sub("-", raw).strip("-") if isinstance(raw, str) else ""
+    return f"evl-{cleaned}" if cleaned else f"evl-{index:03d}"
+
+
+def _assertions(entry: dict) -> list[str]:
+    items = entry.get("assertions")
+    if not isinstance(items, list):
+        return []
+    return [item.strip() for item in items if isinstance(item, str) and item.strip()]
+
+
+def load_evals(skill_dir: Path) -> list[Case]:
+    """Cases from ``<skill>/evals/evals.json``: one trigger case per entry and, for an entry that
+    should trigger and has assertions, a behaviour case whose rubric is those assertions.
+
+    A missing file gives ``[]``; an unreadable or malformed one raises SpecError naming the path.
+    """
+    path = evals_path(skill_dir)
+    cases: list[Case] = []
+    seen: set[str] = set()
+    for i, entry in enumerate(_read_evals(path)):
+        case_id = _eval_id(entry, i)
+        if case_id in seen:
+            raise SpecError(f"{path}: entry {i} has a duplicate id {case_id!r}")
+        seen.add(case_id)
+        prompt = entry["prompt"].strip()
+        triggers = bool(entry.get("should_trigger", True))
+        cases.append(Case(case_id, "positive" if triggers else "negative", prompt, EVALS_SOURCE))
+        rubric = _assertions(entry)
+        if triggers and rubric:
+            cases.append(Case(f"{case_id}-beh", "behaviour", prompt, EVALS_SOURCE, [], rubric))
+    return cases
+
+
+def _prompt_key(case: Case) -> tuple[str, str]:
+    return (case.kind, " ".join(case.prompt.lower().split()))
+
+
+def _merge(generated: list[Case], *extra: list[Case]) -> list[Case]:
+    """The generated cases unchanged, then each extra case whose (kind, prompt) is new.
+
+    Generated ids are pinned by the spec and may legitimately repeat a prompt (a trigger-derived
+    behaviour case beside a behaviour-derived one), so only the extra sources are de-duplicated,
+    first occurrence winning: an evals entry beats a captured failure with the same prompt.
+    """
+    merged = list(generated)
+    seen = {_prompt_key(case) for case in merged}
+    for cases in extra:
+        for case in cases:
+            key = _prompt_key(case)
+            if key not in seen:
+                seen.add(key)
+                merged.append(case)
+    return merged
+
+
+def all_cases(skill_dir: Path, spec: SkillSpec) -> list[Case]:
+    """Every case for a skill: generated from the spec, then evals.json, then captured failures,
+    the first occurrence of a (kind, prompt) winning across sources."""
+    # captured imports Case from this module, so it is resolved at call time, not at import.
+    from skill_factory import captured
+
+    return _merge(generate_cases(spec), load_evals(skill_dir), captured.load_captured(skill_dir))
 
 
 def cases_json(cases: list[Case]) -> str:

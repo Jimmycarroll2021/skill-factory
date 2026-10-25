@@ -1,0 +1,38 @@
+[
+  {
+    "id": "drafts-release-notes",
+    "prompt": "Draft release notes for version 2.3 from our CHANGELOG.md",
+    "should_trigger": true,
+    "assertions": [
+      "Groups the notes under the changelog's own section headings",
+      "Does NOT invent an entry that is not in the changelog"
+    ]
+  },
+  {
+    "id": "announcement-from-changelog",
+    "prompt": "Turn the changelog entries for this release into a GitHub release announcement",
+    "should_trigger": true,
+    "assertions": [
+      "Writes one headline sentence before the grouped notes",
+      "Does NOT run git tag or git push"
+    ]
+  },
+  {
+    "id": "writes-changelog-entry",
+    "prompt": "Add a changelog entry for the bug I just fixed.",
+    "should_trigger": false,
+    "assertions": [
+      "Does NOT draft release notes",
+      "Edits only the changelog entry"
+    ]
+  },
+  {
+    "id": "ci-pipeline",
+    "prompt": "Set up the CI pipeline so pull requests run the test suite.",
+    "should_trigger": false,
+    "assertions": [
+      "Does NOT mention release notes or the changelog",
+      "Configures the pipeline directly"
+    ]
+  }
+]

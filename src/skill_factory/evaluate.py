@@ -1,8 +1,10 @@
-"""Evaluate a skill offline: generate cases, grade them heuristically, optionally run a baseline.
+"""Evaluate a skill offline: assemble cases, grade them heuristically, optionally run a baseline.
 
-Writes ``cases.json``, ``eval.json`` and ``eval.md`` into ``<skill>/.factory/``. The trigger
-grading is a lexical-overlap heuristic; the baseline needs an explicit ``--runner`` whose
-executable is on PATH, and is recorded as skipped otherwise. Eval is advisory.
+Cases come from the spec, the skill's ``evals/evals.json`` and captured failures
+(``evalcases.all_cases``), so a skill written by hand is graded on the evals it ships. Writes
+``cases.json``, ``eval.json`` and ``eval.md`` into ``<skill>/.factory/``. The trigger grading is a
+lexical-overlap heuristic; the baseline needs an explicit ``--runner`` whose executable is on
+PATH, and is recorded as skipped otherwise. Eval is advisory.
 """
 
 from __future__ import annotations
@@ -13,7 +15,7 @@ import sys
 from collections.abc import Callable
 from pathlib import Path
 
-from skill_factory import captured, evalcases, render, runner
+from skill_factory import evalcases, render, runner
 from skill_factory.capture import NAME_RE, SkillSpec, SpecError
 from skill_factory.runner import EXECUTABLES, Runner
 
@@ -145,7 +147,7 @@ def evaluate_skill(
     if factory.is_symlink():
         raise SpecError(f"{factory} is a symlink; refusing to write through it")
 
-    cases = evalcases.generate_cases(spec) + captured.load_captured(skill_dir)
+    cases = evalcases.all_cases(skill_dir, spec)
     grades = evalcases.grade_offline(cases, spec.name, spec.description)
     weak_areas = evalcases.propose_improvements(spec, cases, grades)
 

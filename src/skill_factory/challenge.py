@@ -1,11 +1,11 @@
 """``skillz challenge``: compare a candidate with the stable skill and give a verdict.
 
-Both sides are validated and graded against the same union of cases (captured failures, the
-stable skill's cases and the candidate's cases). The result is written to ``challenge.json`` and
-``challenge.md`` inside the candidate directory only; the stable skill is never written. Grading is
-the offline lexical-overlap heuristic. With a runner (``--runner``) the behaviour cases are also
-scored by the model judge on both sides and folded into the verdict; without one no model is
-consulted and no process is spawned.
+Both sides are validated and graded against the same union of cases (the stable skill's
+``evals/evals.json``, captured failures, the stable skill's cases and the candidate's cases). The
+result is written to ``challenge.json`` and ``challenge.md`` inside the candidate directory only;
+the stable skill is never written. Grading is the offline lexical-overlap heuristic. With a
+runner (``--runner``) the behaviour cases are also scored by the model judge on both sides and
+folded into the verdict; without one no model is consulted and no process is spawned.
 """
 
 from __future__ import annotations
@@ -72,13 +72,15 @@ def _key(case: evalcases.Case) -> tuple:
 
 
 def _union(
+    evals: list[evalcases.Case],
     extra: list[evalcases.Case],
     stable: list[evalcases.Case],
     candidate: list[evalcases.Case],
 ) -> list[tuple[evalcases.Case, list[str]]]:
-    """Cases in order captured, stable, candidate, deduplicated; each with its origins."""
+    """Cases in order evals, captured, stable, candidate, deduplicated; each with its origins."""
     merged: dict[tuple, tuple[evalcases.Case, list[str]]] = {}
     groups = (
+        ("evals", "", evals),
         ("captured", "", extra),
         ("stable", "stable/", stable),
         ("candidate", "candidate/", candidate),
@@ -334,6 +336,7 @@ def challenge_candidate(
 
     try:
         stable_spec = evaluate.load_spec(skill_dir)
+        evals = evalcases.load_evals(skill_dir)
         extra = captured.load_captured(skill_dir)
     except SpecError as exc:
         raise CandidateError(str(exc)) from exc
@@ -356,6 +359,7 @@ def challenge_candidate(
     ]
 
     union = _union(
+        evals,
         extra,
         evalcases.generate_cases(stable_spec),
         evalcases.generate_cases(candidate_spec),
