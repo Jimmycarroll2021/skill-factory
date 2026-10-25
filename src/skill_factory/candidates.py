@@ -1,6 +1,6 @@
 """Shared layout of challenger candidates under ``<skill>/.factory/candidates/<id>/``.
 
-improve, challenge and promote all locate candidates, check ids and fingerprint trees through
+candidate, challenge and promote all locate candidates, check ids and fingerprint trees through
 these helpers. Ids are ``c001``, ``c002``, ... and the id check also blocks path traversal.
 Nothing here writes a file or spawns a process.
 """
@@ -13,7 +13,7 @@ import re
 from collections.abc import Iterable
 from pathlib import Path
 
-from skill_factory import render
+from skill_factory import captured, evalcases, render
 from skill_factory.capture import SkillSpec, SpecError
 
 FACTORY_DIR = ".factory"
@@ -85,11 +85,18 @@ def tree_digests(root: Path) -> dict[str, str]:
 
 
 def stable_digests(skill_dir: Path) -> dict[str, str]:
-    """The canonical tree plus ``.factory/spec.json`` when the stable skill has one."""
+    """The canonical tree plus every input the challenge graded that the stable skill has:
+    ``.factory/spec.json``, ``evals/evals.json`` and ``.factory/cases/captured.json``. A file
+    added or changed after the challenge changes the digests, so ``promote`` sees it as stale."""
+    skill_dir = Path(skill_dir)
     digests = tree_digests(skill_dir)
-    spec = Path(skill_dir) / FACTORY_DIR / SPEC_JSON
-    if spec.is_file() and not spec.is_symlink():
-        digests[f"{FACTORY_DIR}/{SPEC_JSON}"] = _sha256(spec)
+    for path in (
+        skill_dir / FACTORY_DIR / SPEC_JSON,
+        evalcases.evals_path(skill_dir),
+        captured.captured_path(skill_dir),
+    ):
+        if path.is_file() and not path.is_symlink():
+            digests[path.relative_to(skill_dir).as_posix()] = _sha256(path)
     return digests
 
 

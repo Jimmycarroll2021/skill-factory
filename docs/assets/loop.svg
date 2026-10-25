@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1240" height="470" viewBox="0 0 1240 470" role="img" aria-labelledby="t d" font-family="'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif">
   <title id="t">The challenger loop</title>
-  <desc id="d">capture-failure records a real failure; improve builds a candidate; challenge grades stable and candidate on the same cases and returns a verdict; promote is a human command that replaces the stable skill and packages a new version.</desc>
+  <desc id="d">capture-failure records a real failure; candidate copies the stable skill for a human to edit; challenge grades stable and candidate on the same cases and returns a verdict; promote is a human command that replaces the stable skill and packages a new version.</desc>
   <defs>
     <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#6f93a6"/></marker>
     <marker id="arrow-dim" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#a9bfcb"/></marker>
@@ -18,11 +18,11 @@
   <text x="377.0" y="105.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">persistent case, included by</text>
   <text x="377.0" y="120.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">every later eval and challenge</text>
   <line x1="482.0" y1="95.0" x2="570.0" y2="95.0" stroke="#6f93a6" stroke-width="2" marker-end="url(#arrow)"/>
-  <text x="526.0" y="85.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">improve</text>
+  <text x="526.0" y="85.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">candidate</text>
   <rect x="570.0" y="50.0" width="240.0" height="90.0" rx="10" fill="#f3f7fa" stroke="#3e6577" stroke-width="1.6"/>
   <text x="690.0" y="76.0" font-size="15" fill="#101820" font-weight="600" text-anchor="middle">candidate</text>
-  <text x="690.0" y="93.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">.factory/candidates/&lt;id&gt;/</text>
-  <text x="690.0" y="108.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">description + triggers extended</text>
+  <text x="690.0" y="93.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">.factory/candidates/&lt;id&gt;/skill/</text>
+  <text x="690.0" y="108.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">a copy you edit by hand</text>
   <text x="690.0" y="123.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">stable files untouched</text>
   <line x1="810.0" y1="95.0" x2="892.0" y2="95.0" stroke="#6f93a6" stroke-width="2" marker-end="url(#arrow)"/>
   <text x="851.0" y="85.0" font-size="12" fill="#46606e" font-weight="normal" text-anchor="middle">challenge</text>

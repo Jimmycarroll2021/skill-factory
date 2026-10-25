@@ -16,16 +16,18 @@ from pathlib import Path
 import pytest
 
 from skill_factory import (
+    candidate,
     candidates,
     captured,
     challenge,
     cli,
     evaluate,
-    improve,
     judge,
     pipeline,
     release,
+    render,
     runner,
+    yamlish,
 )
 from skill_factory.capture import capture_spec_file
 from skill_factory.generate import generate
@@ -141,12 +143,21 @@ def vague(tmp_path):
 def same_text_candidate(skill: Path, marker: str = "") -> str:
     """A candidate that is lexically identical to the stable skill, plus a body marker."""
     captured.append_captured(skill, OFF_TOPIC, "negative")
-    cid = improve.improve_skill(skill)["id"]
+    cid = candidate.create_candidate(skill)["id"]
     if marker:
         md = candidates.candidate_skill_dir(skill, cid) / "SKILL.md"
         with md.open("a", encoding="utf-8", newline="\n") as handle:
             handle.write(f"\n{marker}\n")
     return cid
+
+
+def extend_description(skill: Path, cid: str, prompt: str) -> None:
+    """Name the prompt in the candidate's frontmatter description; the body stays as it is."""
+    md = candidates.candidate_skill_dir(skill, cid) / "SKILL.md"
+    meta = render._frontmatter(md)
+    _head, body = md.read_text(encoding="utf-8").split("\n---\n", 1)
+    meta["description"] = f'{meta["description"]} Also use for requests like "{prompt}".'
+    md.write_text(yamlish.frontmatter_dumps(meta) + body, encoding="utf-8", newline="\n")
 
 
 def behaviour_rows(report: dict) -> dict[str, dict]:
@@ -231,7 +242,8 @@ def test_equal_scores_are_unchanged_and_no_difference(well):
 
 def test_a_behaviour_regression_outweighs_a_trigger_improvement(vague):
     captured.append_captured(vague, MISSED, "positive")
-    cid = improve.improve_skill(vague)["id"]
+    cid = candidate.create_candidate(vague)["id"]
+    extend_description(vague, cid, MISSED)
     md = candidates.candidate_skill_dir(vague, cid) / "SKILL.md"
     with md.open("a", encoding="utf-8", newline="\n") as handle:
         handle.write("\n[[Q1]]\n")
@@ -613,6 +625,56 @@ def test_a_behaviour_regression_stops_the_pipeline_at_regression(tmp_path):
         runner_factory=lambda n: Fake(skill_quality=1),
     )
     assert second["status"] == "stopped" and second["stopped_at"] == "regression"
-    assert "newly failing" in stage_of(second, "regression")["verdict"]
+    verdict = stage_of(second, "regression")["verdict"]
+    assert re.fullmatch(r"regressed \(0 gains, \d+ regressions? vs 0\.1\.0: beh-.*\)", verdict)
     assert stage_of(second, "judge")["status"] == "ok"
     assert [v.version for v in release.load_versions(skill)] == [first["version"]]
+
+
+def test_a_higher_score_than_the_approved_version_is_a_behaviour_gain(root, monkeypatch):
+    install(monkeypatch, Fake())
+    mark(root, "[[Q2]]")
+    assert package(root, "--runner", "claude") == 0
+    approve(root, "0.1.0")
+    mark(root, "[[Q5]]")
+    assert package(root, "--runner", "claude") == 0
+    regression = read_json(versions_dir(root) / "0.1.1" / "regression.json")
+    assert regression["status"] == "pass" and regression["newly_failing"] == []
+    gains = regression["newly_passing"]
+    assert gains and len(gains) == regression["behaviour"]["checked"]
+    for item in gains:
+        assert item["kind"] == "behaviour" and item["id"].startswith("beh-")
+        assert (item["before"], item["after"], item["score"]) == (4, 10, 10)
+        assert item["prompt"]
+    assert [item["id"] for item in gains] == sorted(item["id"] for item in gains)
+    markdown = (versions_dir(root) / "0.1.1" / "regression.md").read_text(encoding="utf-8")
+    assert "- `beh-" in markdown.split("## Gains", 1)[1]
+
+
+def test_regression_verdict_counts_gains_and_regressions():
+    report = {
+        "status": "pass",
+        "baseline": "0.1.0",
+        "checked": 7,
+        "newly_failing": [],
+        "newly_passing": [{"id": "pos-001"}, {"id": "pos-002"}],
+    }
+    assert pipeline._regression_verdict(report) == (
+        "pass (2 gains, 0 regressions vs 0.1.0; 7 cases compared)"
+    )
+    report = {
+        "status": "regressed",
+        "baseline": "0.1.0",
+        "checked": 7,
+        "newly_failing": [{"id": "neg-003"}],
+        "newly_passing": [],
+    }
+    assert pipeline._regression_verdict(report) == (
+        "regressed (0 gains, 1 regression vs 0.1.0: neg-003)"
+    )
+    report["newly_passing"] = [{"id": "pos-001"}]
+    report["newly_failing"].append({"id": "beh-001"})
+    assert pipeline._regression_verdict(report) == (
+        "regressed (1 gain, 2 regressions vs 0.1.0: beh-001, neg-003)"
+    )
+    assert pipeline._regression_verdict({"status": "no-baseline"}) == "no-baseline"

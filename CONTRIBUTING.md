@@ -36,6 +36,9 @@ Run all four before opening a pull request.
   relies on symlinks, so the suite passes on Linux and Windows.
 - The tool never runs a generated skill's scripts and never pushes or publishes anything;
   `skillz approve` and `skillz promote` are the human's commands.
+- A receipt (`docs/RECEIPT.md`) records what ran; it never claims more than its `evidence` field.
+  A change to package, approve, receipt or the regression report keeps every field of
+  `skill-receipt/1` meaning what that document says, or defines a new schema id.
 - A skill under `skills/` follows [docs/SKILL-STANDARD.md](docs/SKILL-STANDARD.md): copy the shape of
   `skills/demo-spec-lint/`, write its cases first (one that passes, one that must fail, one bad
   input), and pass both `scripts/check.py` and `skillz validate`. A wrong check is changed in its

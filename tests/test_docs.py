@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import re
 import shutil
+import subprocess
+import sys
 import tomllib
 from pathlib import Path
 
@@ -27,6 +29,23 @@ STAGES = [
 # Captured with `skillz capture-failure --should-trigger` on skills/skill-factory (dogfooding).
 CAPTURED_PROMPTS = ["Help me write a SKILL.md file so my agent learns this workflow"]
 EVIDENCE = "docs/evidence/skill-factory-challenge.md"
+# The fields of skill-receipt/1, as docs/RECEIPT.md must document them.
+RECEIPT_FIELDS = [
+    "schema",
+    "skill",
+    "version",
+    "created_at",
+    "skill_sha256",
+    "evidence",
+    "runner",
+    "judge",
+    "baseline",
+    "trigger",
+    "behaviour",
+    "regressions",
+    "gains",
+    "status",
+]
 
 
 def _read(name: str) -> str:
@@ -141,7 +160,7 @@ def test_gitignore_hides_factory_output_of_skills():
 def test_readme_documents_the_challenger_loop():
     readme = _read("README.md")
     assert "## Self-improvement (the challenger loop)" in readme
-    for command in ("capture-failure", "improve", "challenge", "promote"):
+    for command in ("capture-failure", "candidate", "challenge", "promote"):
         assert f"skillz {command}" in readme, command
     for verdict in ("candidate-unsafe", "candidate-worse", "candidate-better", "no-difference"):
         assert verdict in readme, verdict
@@ -182,9 +201,72 @@ def test_readme_command_table_lists_judge_and_runner_flags():
 
 def test_meta_skill_documents_the_loop_and_keeps_promote_human_only():
     body = (SKILL_DIR / "SKILL.md").read_text(encoding="utf-8")
-    for command in ("capture-failure", "improve", "challenge"):
+    for command in ("capture-failure", "candidate", "challenge"):
         assert f"skillz {command}" in body, command
     assert "Never run `skillz promote" in body
+
+
+def test_readme_documents_receipts():
+    readme = _read("README.md")
+    assert "skillz receipt" in readme
+    assert "docs/RECEIPT.md" in readme
+    assert (REPO / "docs" / "RECEIPT.md").is_file()
+    for level in ("unverified", "self-judged", "verified"):
+        assert level in readme, level
+
+
+def test_receipt_standard_lists_every_schema_field():
+    text = _read("docs/RECEIPT.md")
+    assert "skill-receipt/1" in text
+    for field in RECEIPT_FIELDS:
+        assert f"| `{field}` |" in text, field
+    for level in ("unverified", "self-judged", "verified"):
+        assert f"`{level}`" in text, level
+    for status in ("clean", "regressed", "no-baseline"):
+        assert f"`{status}`" in text, status
+    assert "arxiv.org/abs/2607.22520" in text
+    assert len(text.splitlines()) < 150
+
+
+def test_meta_skill_starts_from_the_receipt_and_refuses_unrelated_work():
+    body = (SKILL_DIR / "SKILL.md").read_text(encoding="utf-8")
+    assert "skillz receipt" in body
+    assert "## Get a receipt for a skill" in body
+    meta = yamlish.loads(body.split("---\n", 2)[1])
+    assert "NOT for writing application code" in meta["description"]
+
+
+def test_action_yml_is_a_composite_action_that_runs_the_gate():
+    text = _read("action.yml")
+    # The in-package YAML reader stops at one level of nesting, and PyYAML is not a
+    # dependency, so check the structure line by line instead of parsing the document.
+    for line in text.splitlines():
+        if not line.strip() or line.lstrip().startswith("#"):
+            continue
+        assert re.match(r"^ *(- )?[A-Za-z_-]+:( .*)?$", line), line
+    assert re.search(r"^runs:$", text, re.MULTILINE)
+    assert 'using: "composite"' in text
+    assert "shell: bash" in text
+    assert re.search(r"^inputs:\n  root:\n", text, re.MULTILINE)
+    assert "${{ github.workspace }}" in text
+    command = re.search(r"^ +run: (.+)$", text, re.MULTILINE)
+    assert command, "action.yml needs one run step"
+    assert '"${{ github.action_path }}/scripts/check.py" --root "${{ inputs.root }}"' in command.group(1)
+    assert "uses: Jimmycarroll2021/skill-factory@main" in _read("README.md")
+
+
+def test_action_command_passes_on_this_repository():
+    # The same command action.yml runs, with the action path and root both set to this repo.
+    result = subprocess.run(
+        [sys.executable, str(REPO / "scripts" / "check.py"), "--root", str(REPO)],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        timeout=300,
+        check=False,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert result.stdout.rstrip().splitlines()[-1] == "PASS"
 
 
 def test_dogfood_evidence_has_an_acceptable_verdict():
@@ -203,3 +285,33 @@ def test_captured_prompts_match_the_committed_meta_skill_description():
         case = evalcases.Case("cap", "positive", prompt, "captured")
         (grade,) = evalcases.grade_offline([case], meta["name"], meta["description"])
         assert grade.score >= evalcases.MATCH_THRESHOLD, prompt
+
+
+def _break_description(skill_dir: Path, description: str) -> None:
+    skill_md = skill_dir / "SKILL.md"
+    lines = skill_md.read_text(encoding="utf-8").split("\n")
+    out = [f"description: {description}" if ln.startswith("description:") else ln for ln in lines]
+    skill_md.write_text("\n".join(out), encoding="utf-8", newline="\n")
+
+
+def test_readme_receipt_sample_is_what_a_run_prints(tmp_path, monkeypatch):
+    """The README's receipt.md sample is real output: the foreign-skill fixture packaged at 0.1.0,
+    approved, its description replaced by an unrelated one, and packaged again at 0.1.1 with
+    ``--allow-regression``."""
+    from skill_factory import release
+
+    monkeypatch.setenv("HOME", str(tmp_path / "home"))
+    monkeypatch.setenv("USERPROFILE", str(tmp_path / "home"))
+    skill_dir = tmp_path / "skills" / "foreign-skill"
+    shutil.copytree(REPO / "tests" / "fixtures" / "foreign-skill", skill_dir)
+    release.package_skill(skill_dir)
+    release.approve(skill_dir, "0.1.0", user="t")
+    _break_description(skill_dir, "Plan a week of dinners from the ingredients left in the fridge.")
+    release.package_skill(skill_dir, allow_regression=True)
+    printed = (skill_dir / ".factory" / "versions" / "0.1.1" / "receipt.md").read_text(
+        encoding="utf-8"
+    )
+    readme = _read("README.md")
+    block = re.search(r"```markdown\n(# Receipt: foreign-skill 0\.1\.1.*?)```", readme, re.DOTALL)
+    assert block, "README needs the receipt.md sample from the foreign-skill run"
+    assert block.group(1) == printed

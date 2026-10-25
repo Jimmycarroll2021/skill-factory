@@ -1,19 +1,22 @@
-"""Evaluate a skill offline: generate cases, grade them heuristically, optionally run a baseline.
+"""Evaluate a skill offline: assemble cases, grade them heuristically, optionally run a baseline.
 
-Writes ``cases.json``, ``eval.json`` and ``eval.md`` into ``<skill>/.factory/``. The trigger
-grading is a lexical-overlap heuristic; the baseline needs an explicit ``--runner`` whose
-executable is on PATH, and is recorded as skipped otherwise. Eval is advisory.
+Cases come from the spec, the skill's ``evals/evals.json`` and captured failures
+(``evalcases.all_cases``), so a skill written by hand is graded on the evals it ships. Writes
+``cases.json``, ``eval.json`` and ``eval.md`` into ``<skill>/.factory/``. The trigger grading is a
+lexical-overlap heuristic; the baseline needs an explicit ``--runner`` whose executable is on
+PATH, and is recorded as skipped otherwise. Eval is advisory.
 """
 
 from __future__ import annotations
 
 import argparse
+import dataclasses
 import json
 import sys
 from collections.abc import Callable
 from pathlib import Path
 
-from skill_factory import captured, evalcases, render, runner
+from skill_factory import evalcases, render, runner
 from skill_factory.capture import NAME_RE, SkillSpec, SpecError
 from skill_factory.runner import EXECUTABLES, Runner
 
@@ -33,16 +36,18 @@ def _read_text(path: Path, label: str) -> str:
 
 
 def load_spec(skill_dir: Path) -> SkillSpec:
-    """Load ``.factory/spec.json``; without it, fall back to the SKILL.md name and description."""
+    """Load ``.factory/spec.json`` for the cases; the name and description graded are always the
+    ones SKILL.md carries, so an edited skill is never judged against a stale spec. Without a
+    spec.json the frontmatter alone is the spec."""
     skill_dir = Path(skill_dir)
     spec_path = skill_dir / FACTORY_DIR / "spec.json"
+    skill_md = skill_dir / "SKILL.md"
     if spec_path.exists() or spec_path.is_symlink():
         try:
             data = json.loads(_read_text(spec_path, "spec"))
         except json.JSONDecodeError as exc:
             raise SpecError(f"invalid JSON in {spec_path}: {exc}") from exc
-        return SkillSpec.from_dict(data)
-    skill_md = skill_dir / "SKILL.md"
+        return _from_skill_md(SkillSpec.from_dict(data), skill_md)
     _read_text(skill_md, "SKILL.md")
     try:
         data = render._frontmatter(skill_md)
@@ -54,6 +59,24 @@ def load_spec(skill_dir: Path) -> SkillSpec:
     if not isinstance(description, str) or not description.strip():
         raise SpecError("SKILL.md frontmatter needs a non-empty description")
     return SkillSpec(name=name, description=description, source_kind="yaml")
+
+
+def _from_skill_md(spec: SkillSpec, skill_md: Path) -> SkillSpec:
+    """``spec`` with the name and description the SKILL.md frontmatter actually carries."""
+    if not skill_md.is_file() or skill_md.is_symlink():
+        return spec
+    try:
+        meta = render._frontmatter(skill_md)
+    except render.RenderError:
+        return spec  # validation reports the unreadable frontmatter as an error
+    name, description = meta.get("name"), meta.get("description")
+    return dataclasses.replace(
+        spec,
+        name=name if isinstance(name, str) and name else spec.name,
+        description=description
+        if isinstance(description, str) and description.strip()
+        else spec.description,
+    )
 
 
 def _summary(grades: list[evalcases.Grade]) -> dict:
@@ -145,7 +168,7 @@ def evaluate_skill(
     if factory.is_symlink():
         raise SpecError(f"{factory} is a symlink; refusing to write through it")
 
-    cases = evalcases.generate_cases(spec) + captured.load_captured(skill_dir)
+    cases = evalcases.all_cases(skill_dir, spec)
     grades = evalcases.grade_offline(cases, spec.name, spec.description)
     weak_areas = evalcases.propose_improvements(spec, cases, grades)
 
