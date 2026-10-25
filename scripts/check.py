@@ -67,7 +67,9 @@ COUNT_RE = re.compile(r"\b\d+\s+(skills|agents|commands|scripts)\b", re.IGNORECA
 NEGATIVE_RE = re.compile(r"\b(NOT|never|must not|does not|doesn't|should not)\b")
 SKILL_DIR = "${CLAUDE_SKILL_DIR}/"
 _REL_START = r"(?:(?<![\w/.-])|(?<=\$\{CLAUDE_SKILL_DIR\}/))"
-PATH_RE = re.compile(_REL_START + r"((?:scripts|references|assets|evals)/[A-Za-z0-9_./-]+\.[A-Za-z0-9]+)")
+# The extension is optional (assets/Dockerfile); the path must end on a name character, so a
+# sentence's full stop is not part of it.
+PATH_RE = re.compile(_REL_START + r"((?:scripts|references|assets|evals)/[A-Za-z0-9_./-]*[A-Za-z0-9_-])")
 # A script reference inside a command: at a token start, or right after ${CLAUDE_SKILL_DIR}/.
 # `../other-skill/scripts/x.py` belongs to another skill and is not resolved here.
 SCRIPT_REF_RE = re.compile(r"(?:(?<![^\s\"'(=])|(?<=\$\{CLAUDE_SKILL_DIR\}/))(scripts/[A-Za-z0-9_./-]+\.py)((?:\s+[^\s|;&>#]+)*)")

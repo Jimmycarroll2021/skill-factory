@@ -349,6 +349,12 @@ class GateTest(unittest.TestCase):
         (self.skill / "evals" / "cases.json").write_text(json.dumps(cases), encoding="utf-8")
         self.assertFails("cases", "scripts/typo.py")
 
+    def test_documented_extensionless_resource_is_not_an_orphan(self):
+        (self.skill / "assets" / "Dockerfile").write_text("FROM scratch\n", encoding="utf-8")
+        self.edit("SKILL.md", "See `references/why.md`.", "See `references/why.md` and `assets/Dockerfile`.")
+        code, out = self.gate()
+        self.assertEqual(code, 0, out)
+
     # -- harness errors ------------------------------------------------------------
     def test_unknown_check_name_is_exit_2(self):
         code, out = self.gate("--only", "nonsense")
