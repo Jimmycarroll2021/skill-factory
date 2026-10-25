@@ -610,3 +610,10 @@ def test_a_pyz_archive_is_not_read_as_a_missing_py_script(tmp_path):
     _script(skill, "scripts/tool.pyz", "PK")
     assert "missing-script" not in _rules(val.validate_skill(skill))
 
+
+def test_a_pyw_helper_is_not_read_as_a_missing_py_script(tmp_path):
+    body = "```bash\npython scripts/tool.pyw --input notes.md\n```\n"
+    skill = _make(tmp_path, "pyw", BOUNDED, body)
+    _script(skill, "scripts/tool.pyw", "import argparse\nargparse.ArgumentParser().add_argument('--input')\n")
+    assert "missing-script" not in _rules(val.validate_skill(skill))
+
