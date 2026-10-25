@@ -320,6 +320,10 @@ class GateTest(unittest.TestCase):
                            capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=60, check=False, env=self.env())
         self.assertEqual(r.returncode, 3, r.stdout + r.stderr)
 
+    def test_null_evals_file_fails(self):
+        (self.skill / "evals" / "evals.json").write_text("null\n", encoding="utf-8")
+        self.assertFails("evals", "list")
+
     # -- harness errors ------------------------------------------------------------
     def test_unknown_check_name_is_exit_2(self):
         code, out = self.gate("--only", "nonsense")

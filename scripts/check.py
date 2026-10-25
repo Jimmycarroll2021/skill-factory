@@ -388,12 +388,15 @@ def check_reachability(root, skills, f):
                     f.add("reachability", s.path(rel), "not named in SKILL.md (orphan)")
 
 
+UNREADABLE = object()  # load_json's result for a file it could not parse; JSON null is None
+
+
 def load_json(path, f, check):
     try:
         return json.loads(path.read_text(encoding="utf-8"))
     except (OSError, ValueError) as e:
         f.add(check, path, f"unreadable JSON: {e}")
-        return None
+        return UNREADABLE
 
 
 def check_cases(root, skills, f):
@@ -407,13 +410,13 @@ def check_cases(root, skills, f):
             continue
         documented = documented_exit_codes(s.body)
         cases_path = s.dir / "evals" / "cases.json"
-        cases = load_json(cases_path, f, "cases") if cases_path.is_file() else None
-        if cases is None and not cases_path.is_file():
+        cases = load_json(cases_path, f, "cases") if cases_path.is_file() else UNREADABLE
+        if not cases_path.is_file():
             f.add("cases", s.path("evals/cases.json"), "missing; every script needs declared cases with expected exit codes")
-        if cases is not None and not isinstance(cases, list):
+        if cases is not UNREADABLE and not isinstance(cases, list):
             f.add("cases", s.path("evals/cases.json"), "must be a list of cases")
             cases = None
-        cases = cases or []
+        cases = cases if isinstance(cases, list) else []
         for p in s.scripts:
             rel = p.relative_to(s.dir).as_posix()
             if rel not in documented:
@@ -456,7 +459,7 @@ def check_evals(root, skills, f):
             f.add("evals", s.path("evals/evals.json"), "missing")
             continue
         data = load_json(p, f, "evals")
-        if data is None:
+        if data is UNREADABLE:
             continue
         if not isinstance(data, list) or len(data) < 3:
             f.add("evals", s.path("evals/evals.json"), "needs a list of at least 3 prompts")
