@@ -75,6 +75,10 @@ class RegressionFailed(ReleaseError):
         self.report = report
 
 
+class RegressionsNotAccepted(ReleaseError):
+    """The version's receipt lists regressions and no reason to accept them was given."""
+
+
 @dataclass
 class Version:
     name: str
@@ -560,8 +564,55 @@ def package_skill(
     return next(v for v in load_versions(skill_dir) if v.version == version)
 
 
-def approve(skill_dir: Path, version: str, user: str | None = None) -> Version:
-    """Record approval of a version after verifying its checksums; idempotent."""
+def _approval_record(
+    name: str, version_dir: Path, user: str | None, accept_regressions: str | None
+) -> dict:
+    """The approval.json dict, or RegressionsNotAccepted when the receipt needs a reason.
+
+    ``receipt`` is the receipt's status, or ``missing`` for a version packaged before receipts.
+    """
+    if accept_regressions is not None and not accept_regressions.strip():
+        raise ReleaseError("--accept-regressions needs a reason")
+    if user is None:
+        try:
+            user = getpass.getuser()
+        except Exception:  # noqa: BLE001  any getuser failure means unknown
+            user = "unknown"
+    record = {
+        "name": name,
+        "version": version_dir.name,
+        "status": APPROVED,
+        "approved_at": _now(),
+        "approved_by": user or "unknown",
+        "receipt": "missing",
+    }
+    data = receipt.load_receipt(version_dir)
+    if data is None:
+        return record
+    record["receipt"] = data.get("status")
+    if data.get("status") == receipt.REGRESSED:
+        ids = sorted(str(row.get("id")) for row in data.get("regressions", []))
+        if accept_regressions is None:
+            raise RegressionsNotAccepted(
+                f"version {version_dir.name} regressed against {data.get('baseline')}: "
+                f"{', '.join(ids)}; pass --accept-regressions \"<reason>\" to approve it anyway"
+            )
+        record["accepted_regressions"] = {"reason": accept_regressions.strip(), "ids": ids}
+    return record
+
+
+def approve(
+    skill_dir: Path,
+    version: str,
+    user: str | None = None,
+    accept_regressions: str | None = None,
+) -> Version:
+    """Record approval of a version after verifying its checksums; idempotent.
+
+    A version whose receipt lists regressions is refused unless ``accept_regressions`` gives the
+    reason, which approval.json then records with the accepted ids. The receipt itself is never
+    modified.
+    """
     skill_dir = Path(skill_dir)
     parse_semver(version)
     version_dir = _versions_root(skill_dir) / version
@@ -573,18 +624,7 @@ def approve(skill_dir: Path, version: str, user: str | None = None) -> Version:
             f"version {version} does not match its manifest: " + ", ".join(mismatched)
         )
     if _approval(version_dir) is None:
-        if user is None:
-            try:
-                user = getpass.getuser()
-            except Exception:  # noqa: BLE001  any getuser failure means unknown
-                user = "unknown"
-        record = {
-            "name": skill_dir.name,
-            "version": version,
-            "status": APPROVED,
-            "approved_at": _now(),
-            "approved_by": user or "unknown",
-        }
+        record = _approval_record(skill_dir.name, version_dir, user, accept_regressions)
         temp = version_dir / f".approval-{secrets.token_hex(4)}.tmp"
         try:
             _write(temp, _dumps(record))
@@ -678,11 +718,18 @@ def add_approve_parser(sub: argparse._SubParsersAction) -> None:
         help="approve a packaged version so it can be installed",
         description=(
             "Verify the version's checksums and record approval (UTC time and local user) in "
-            "approval.json. Approving an approved version changes nothing."
+            "approval.json. A version whose receipt lists regressions is refused unless "
+            "--accept-regressions gives the reason. Approving an approved version changes nothing."
         ),
     )
     parser.add_argument("name", help="skill name (the directory under skills/)")
     parser.add_argument("version", help="version to approve, MAJOR.MINOR.PATCH")
+    parser.add_argument(
+        "--accept-regressions",
+        default=None,
+        metavar="REASON",
+        help="approve despite the regressions in the receipt; the reason goes in approval.json",
+    )
     parser.add_argument(
         "--out", type=Path, default=None, help="root directory containing skills/ (default: cwd)"
     )
@@ -693,8 +740,8 @@ def run_approve(args: argparse.Namespace) -> int:
     if isinstance(skill_dir, int):
         return skill_dir
     try:
-        result = approve(skill_dir, args.version)
-    except IntegrityError as exc:
+        result = approve(skill_dir, args.version, accept_regressions=args.accept_regressions)
+    except (IntegrityError, RegressionsNotAccepted) as exc:
         return _fail(str(exc), 1)
     except (ReleaseError, OSError) as exc:  # includes VersionNotFound and invalid versions
         return _fail(str(exc))

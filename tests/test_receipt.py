@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pytest
 
-from skill_factory import receipt, release
+from skill_factory import cli, receipt, release
 from skill_factory.capture import capture_spec_file
 from skill_factory.generate import generate
 
@@ -272,3 +272,99 @@ def test_load_receipt_returns_none_for_a_version_without_one(root):
     (version.path / "receipt.json").unlink()
     assert receipt.load_receipt(version.path) is None
     assert receipt.load_receipt(version.path / "missing") is None
+
+
+# --- approval refuses regressions ---------------------------------------------------------------
+
+
+def regressed_version(root: Path) -> release.Version:
+    """Approve 0.1.0, then package a 0.1.1 whose trigger cases regressed."""
+    package(root)
+    release.approve(skill_dir(root), "0.1.0", user="tester")
+    set_description(root, "Helps with things.")
+    version = package(root, allow_regression=True)
+    assert receipt_of(version)["status"] == "regressed"
+    return version
+
+
+def strip_receipt(version: release.Version) -> None:
+    """Make a version look like one packaged before receipts existed."""
+    manifest = read_json(version.path / "manifest.json")
+    manifest["files"] = [f for f in manifest["files"] if not f["path"].startswith("receipt.")]
+    (version.path / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+    (version.path / "receipt.json").unlink()
+    (version.path / "receipt.md").unlink()
+    assert release.verify_version(version.path) == []
+
+
+def test_approve_refuses_a_regressed_version_without_a_reason(root, capsys):
+    version = regressed_version(root)
+    ids = [row["id"] for row in receipt_of(version)["regressions"]]
+    with pytest.raises(release.RegressionsNotAccepted) as info:
+        release.approve(skill_dir(root), "0.1.1", user="tester")
+    assert isinstance(info.value, release.ReleaseError)
+    message = str(info.value)
+    assert all(case_id in message for case_id in ids) and "--accept-regressions" in message
+    assert not (version.path / "approval.json").exists()
+    assert cli.main(["approve", NAME, "0.1.1", "--out", str(root)]) == 1
+    err = capsys.readouterr().err
+    assert "skillz: error:" in err and "--accept-regressions" in err
+    assert not (version.path / "approval.json").exists()
+    assert version.path.name not in [v.version for v in release.approved_versions(skill_dir(root))]
+
+
+def test_approve_with_a_reason_records_the_accepted_regressions(root, capsys):
+    version = regressed_version(root)
+    ids = sorted(row["id"] for row in receipt_of(version)["regressions"])
+    receipt_bytes = (version.path / "receipt.json").read_bytes()
+    code = cli.main(
+        ["approve", NAME, "0.1.1", "--accept-regressions", "  renamed the skill on purpose ", "--out", str(root)]
+    )
+    assert code == 0
+    assert "approved" in capsys.readouterr().out
+    approval = read_json(version.path / "approval.json")
+    assert approval["status"] == "approved"
+    assert approval["accepted_regressions"] == {"reason": "renamed the skill on purpose", "ids": ids}
+    assert approval["receipt"] == "regressed"
+    assert (version.path / "receipt.json").read_bytes() == receipt_bytes
+    assert release.verify_version(version.path) == []
+    assert [v.version for v in release.approved_versions(skill_dir(root))] == ["0.1.0", "0.1.1"]
+    # approving again changes nothing, with or without a reason
+    before = (version.path / "approval.json").read_bytes()
+    release.approve(skill_dir(root), "0.1.1", user="someone-else")
+    assert (version.path / "approval.json").read_bytes() == before
+
+
+def test_a_blank_reason_is_not_a_reason(root, capsys):
+    version = regressed_version(root)
+    with pytest.raises(release.ReleaseError):
+        release.approve(skill_dir(root), "0.1.1", user="tester", accept_regressions="   ")
+    assert cli.main(["approve", NAME, "0.1.1", "--accept-regressions", "", "--out", str(root)]) == 2
+    assert "reason" in capsys.readouterr().err
+    assert not (version.path / "approval.json").exists()
+
+
+def test_a_clean_version_approves_without_a_reason_and_records_its_receipt_status(root):
+    version = package(root)
+    release.approve(skill_dir(root), "0.1.0", user="tester", accept_regressions="not needed")
+    approval = read_json(version.path / "approval.json")
+    assert approval["receipt"] == "no-baseline" and "accepted_regressions" not in approval
+    second = package(root)
+    release.approve(skill_dir(root), "0.1.1", user="tester")
+    assert read_json(second.path / "approval.json")["receipt"] == "clean"
+
+
+def test_a_version_without_a_receipt_approves_with_receipt_missing(root, capsys):
+    version = package(root)
+    strip_receipt(version)
+    assert cli.main(["approve", NAME, "0.1.0", "--out", str(root)]) == 0
+    approval = read_json(version.path / "approval.json")
+    assert approval["status"] == "approved" and approval["receipt"] == "missing"
+    assert "accepted_regressions" not in approval
+
+
+def test_approve_help_documents_accept_regressions(capsys):
+    with pytest.raises(SystemExit) as info:
+        cli.main(["approve", "--help"])
+    assert info.value.code == 0
+    assert "--accept-regressions REASON" in capsys.readouterr().out
