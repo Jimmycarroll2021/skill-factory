@@ -9,6 +9,7 @@ from pathlib import Path
 
 from skill_factory import (
     __version__,
+    candidate,
     captured,
     challenge,
     evaluate,
@@ -60,6 +61,7 @@ SUBCOMMANDS: tuple[Callable[[argparse._SubParsersAction], None], ...] = (
     pipeline.add_parser,
     captured.add_parser,
     improve.add_parser,
+    candidate.add_parser,
     challenge.add_parser,
     promote.add_parser,
     judge.add_parser,
@@ -77,6 +79,7 @@ HANDLERS: dict[str, Callable[[argparse.Namespace], int]] = {
     "run": pipeline.run,
     "capture-failure": captured.run,
     "improve": improve.run,
+    "candidate": candidate.run,
     "challenge": challenge.run,
     "promote": promote.run,
     "judge": judge.run,
