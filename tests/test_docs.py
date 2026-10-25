@@ -141,7 +141,9 @@ def test_gitignore_hides_factory_output_of_skills():
 def test_readme_documents_the_challenger_loop():
     readme = _read("README.md")
     assert "## Self-improvement (the challenger loop)" in readme
-    for command in ("capture-failure", "improve", "challenge", "promote"):
+    # README is rewritten by the docs agent; until then this names the command that replaced
+    # `skillz improve`.
+    for command in ("capture-failure", "candidate", "challenge", "promote"):
         assert f"skillz {command}" in readme, command
     for verdict in ("candidate-unsafe", "candidate-worse", "candidate-better", "no-difference"):
         assert verdict in readme, verdict
@@ -182,7 +184,7 @@ def test_readme_command_table_lists_judge_and_runner_flags():
 
 def test_meta_skill_documents_the_loop_and_keeps_promote_human_only():
     body = (SKILL_DIR / "SKILL.md").read_text(encoding="utf-8")
-    for command in ("capture-failure", "improve", "challenge"):
+    for command in ("capture-failure", "candidate", "challenge"):
         assert f"skillz {command}" in body, command
     assert "Never run `skillz promote" in body
 

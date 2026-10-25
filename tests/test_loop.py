@@ -1,4 +1,4 @@
-"""The challenger loop end to end through `skillz`: capture-failure, improve, challenge, promote."""
+"""The challenger loop end to end through `skillz`: capture-failure, candidate, challenge, promote."""
 
 from __future__ import annotations
 
@@ -10,13 +10,13 @@ from pathlib import Path
 
 import pytest
 
-from skill_factory import candidates, release
+from skill_factory import candidates, release, render, yamlish
 from skill_factory.cli import main
 
 FIXTURES = Path(__file__).parent / "fixtures"
 NAME = "csv-data-cleaner"
 MISSED = "Help me tidy up my spreadsheet export before the quarterly review"
-LOOP_COMMANDS = ["capture-failure", "improve", "challenge", "promote"]
+LOOP_COMMANDS = ["capture-failure", "candidate", "challenge", "promote"]
 
 
 @pytest.fixture(autouse=True)
@@ -40,6 +40,15 @@ def _digests(root: Path) -> dict[str, str]:
         for path in sorted(root.rglob("*"))
         if path.is_file()
     }
+
+
+def _extend_description(skill: Path, cid: str, prompt: str) -> None:
+    """The human's edit: name the prompt in the candidate's description; the body stays."""
+    md = candidates.candidate_skill_dir(skill, cid) / "SKILL.md"
+    meta = render._frontmatter(md)
+    _head, body = md.read_text(encoding="utf-8").split("\n---\n", 1)
+    meta["description"] = f'{meta["description"]} Also use for requests like "{prompt}".'
+    md.write_text(yamlish.frontmatter_dumps(meta) + body, encoding="utf-8", newline="\n")
 
 
 def _packaged_and_approved(tmp_path: Path) -> tuple[str, Path]:
@@ -71,7 +80,8 @@ def test_the_whole_loop_through_main_ends_awaiting_approval(tmp_path):
     eval_json = json.loads((skill / ".factory" / "eval.json").read_text(encoding="utf-8"))
     assert "cap-001" in json.dumps(eval_json)
 
-    assert main(["improve", NAME, "--out", out]) == 0
+    assert main(["candidate", NAME, "--out", out]) == 0
+    _extend_description(skill, "c001", MISSED)
     assert main(["challenge", NAME, "c001", "--out", out]) == 0
     verdict = json.loads(
         (candidates.candidate_dir(skill, "c001") / "challenge.json").read_text(encoding="utf-8")
@@ -92,7 +102,7 @@ def test_the_whole_loop_through_main_ends_awaiting_approval(tmp_path):
 def test_promoting_a_worse_candidate_through_the_cli_exits_one(tmp_path):
     out, skill = _packaged_and_approved(tmp_path)
     assert main(["capture-failure", NAME, "--prompt", MISSED, "--should-trigger", "--out", out]) == 0
-    assert main(["improve", NAME, "--out", out]) == 0
+    assert main(["candidate", NAME, "--out", out]) == 0
 
     # Gut the candidate description so a trigger case that passes on stable now fails.
     cdir = candidates.candidate_dir(skill, "c001")

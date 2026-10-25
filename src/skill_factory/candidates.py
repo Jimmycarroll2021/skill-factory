@@ -1,6 +1,6 @@
 """Shared layout of challenger candidates under ``<skill>/.factory/candidates/<id>/``.
 
-improve, challenge and promote all locate candidates, check ids and fingerprint trees through
+candidate, challenge and promote all locate candidates, check ids and fingerprint trees through
 these helpers. Ids are ``c001``, ``c002``, ... and the id check also blocks path traversal.
 Nothing here writes a file or spawns a process.
 """
