@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1280" height="360" viewBox="0 0 1280 360" role="img" aria-labelledby="t d">
   <title id="t">skill-factory</title>
-  <desc id="d">A paragraph in, a tested and versioned Agent Skill out, a human at the gate. Describe, generate, validate, evaluate, package, approve, install, improve.</desc>
+  <desc id="d">Skills with receipts: every packaged version carries its gains and regressions against the last approved one, and a human at the gate reads them. Describe, generate, validate, evaluate, package, approve.</desc>
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#101820"/>
@@ -17,8 +17,8 @@
   <rect width="1280" height="360" rx="24" fill="url(#bg)"/>
   <g font-family="'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif">
     <text x="80" y="124" font-size="74" font-weight="700" fill="#eef4f2" letter-spacing="-1">skill<tspan fill="url(#accent)">-factory</tspan></text>
-    <text x="82" y="172" font-size="27" fill="#cfe0e6">A paragraph in. A tested, versioned Agent Skill out. A human at the gate.</text>
-    <text x="82" y="206" font-size="18" fill="#7fa3b5">One canonical SKILL.md for Claude Code and Codex, evaluated offline, packaged immutably, improved by challengers.</text>
+    <text x="82" y="172" font-size="27" fill="#cfe0e6">Skills with receipts. The regression layer for Agent Skills.</text>
+    <text x="82" y="206" font-size="18" fill="#7fa3b5">Every version records its gains and regressions against the last approved one; a human reads the receipt before anything installs.</text>
   </g>
   <g font-family="'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="17" font-weight="600" fill="#eef4f2" text-anchor="middle">
     <g>

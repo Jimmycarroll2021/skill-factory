@@ -8,6 +8,25 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- Receipt v1 (`skill-receipt/1`, defined in `docs/RECEIPT.md`): every packaged version carries
+  `receipt.json` and `receipt.md` under `.factory/versions/<semver>/`, covered by the manifest
+  checksums. A receipt records the evidence level (`verified` when a different model judged the
+  runner's transcripts, `self-judged` when the same model did, `unverified` when only the lexical
+  grading ran), the runner and judge, the baseline version, trigger and behaviour counts, and the
+  gains and regressions against the last approved version, each with id, kind, prompt, before and
+  after. `skillz receipt <name> [version] [--json]` prints it.
+- `evals/evals.json` as a case source: `skillz eval`, `judge`, `package` and `challenge` read the
+  standard's `{id, prompt, should_trigger, assertions}` entries. Each is a trigger case, and a
+  `should_trigger` entry with assertions is also a behaviour case whose rubric is the assertions,
+  so a hand-written skill with no `.factory/` is evaluated, judged, packaged and receipted.
+- `skillz candidate <name>`: copies the stable skill into `.factory/candidates/<id>/skill/` for a
+  human to edit, ahead of `skillz challenge` and the human's `skillz promote`.
+- `action.yml` at the repository root: a composite GitHub Action, "Skill standard gate", that
+  runs `scripts/check.py` over another repository's `skills/` (`uses:
+  Jimmycarroll2021/skill-factory@main`, after `actions/setup-python`).
+- `docs/RECEIPT.md`: the receipt standard, with the schema, the evidence levels, the definitions
+  of regression and gain, what refuses what, and the finding it rests on (Tank and Nama, 2026,
+  arXiv:2607.22520).
 - Moved in from `Jimmycarroll2021/skillz-factory`, with its history: the skill standard
   (`docs/SKILL-STANDARD.md`), the study behind it (`docs/research/claude-skills-study.md`), its
   stdlib gate `scripts/check.py` with `scripts/allowlist.txt` and self-tests in
@@ -39,7 +58,7 @@ All notable changes to this project are documented here. The format follows
   ladder.
 - The challenger loop (mission 06): `skillz capture-failure` records a failed prompt as a
   persistent eval case that every later eval, package, regression check and challenge includes;
-  `skillz improve` builds a candidate under `.factory/candidates/<id>/` without touching stable
+  a candidate is built under `.factory/candidates/<id>/` without touching stable
   files; `skillz challenge` validates both sides, grades the union of cases and gives a verdict
   (`candidate-unsafe`, `candidate-worse`, `candidate-better`, `no-difference`); `skillz promote`
   is the explicit human command that replaces the canonical files with an acceptable candidate
@@ -49,6 +68,21 @@ All notable changes to this project are documented here. The format follows
 
 ### Changed
 
+- `skillz approve` refuses a version whose receipt status is `regressed` unless
+  `--accept-regressions "<reason>"` is given; the reason and the regressed case ids are recorded in
+  `approval.json`.
+- The regression report splits the comparison into gains and regressions instead of one
+  `newly_failing` list; the pipeline's regression line reads like
+  `pass (2 gains, 0 regressions vs 0.1.0; 7 cases compared)`.
+- `skills/registry.json` records each installed version's evidence level and `skillz list` shows
+  it in an evidence column.
+- README repositioned around the receipt: it leads with getting a receipt for an existing skill,
+  the challenger loop uses `skillz candidate`, the quality tiers name the evidence level each
+  earns, the gate has a "use it in your own repo" snippet, and `skillz new`/`run` move to a short
+  section near the end. The illustrative pipeline summary is no longer presented as pasted from a
+  run. The banner and the loop and architecture diagrams are regenerated to match.
+- The meta-skill `skills/skill-factory/SKILL.md` starts from "Get a receipt for a skill", names
+  `skillz receipt` and `skillz candidate`, and its description says what it is NOT for.
 - `skillz validate` accepts an `evals/` directory in a skill, for committed eval prompts.
   Render never ships it, so installed skills are unchanged.
 - `skills/demo-spec-lint/SKILL.md` writes its description on one line, which `skillz validate`
@@ -66,11 +100,9 @@ All notable changes to this project are documented here. The format follows
 - The offline grader ignores the description's boundary sentences ("Do not use it for X",
   "Never Y", "It does not handle X") when collecting trigger words, so stating a boundary cannot make a request about
   X look like a match.
-- `skillz improve` extends a description with whole requests ("Also use for requests like
-  "..."") instead of a list of loose keywords. A keyword list such as "help, write, md, file"
-  makes a skill load on unrelated prompts. If no whole request fits, the first is cut to its
-  task words (dropping words the description or a should-not-trigger prompt already has) and
-  shortened from the end, down to three words; a request with no task words is skipped. The meta-skill's own keyword list is replaced.
+- The meta-skill's description carries the captured request "Help me write a SKILL.md file so my
+  agent learns this workflow" whole, instead of a keyword list such as "help, write, md, file",
+  which made it load on unrelated prompts.
 - `generate` no longer writes placeholder `README.md` files into resource directories; an
   empty directory is reported by the validator instead.
 - `.claude/settings.json` keeps every guardrail the harness had, without the harness: the
@@ -92,6 +124,10 @@ All notable changes to this project are documented here. The format follows
 
 ### Removed
 
+- `skillz improve`. It rewrote a skill's description from eval proposals and captured prompts, so
+  the candidate it built was the lexical grader's idea of a fix, judged by the same lexical grader.
+  A candidate is now a copy a human edits (`skillz candidate`), and the challenge and the receipt
+  say whether the edit regressed anything.
 - The quickship v0.3 agent harness that built the project: the controller and hook scripts
   under `scripts/`, its bash self-tests under `tests/`, `.quickship/`, `BRIEF*.yaml`,
   `IDEA*.md`, the `*.cmd` launchers, its subagent definitions, its `CLAUDE.md` contract and

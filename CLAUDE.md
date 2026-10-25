@@ -1,8 +1,9 @@
 # skill-factory
 
-`skillz` turns a paragraph into a tested, versioned Agent Skill for Claude Code and Codex. The package is `src/skill_factory/`; `skills/skill-factory/` is the meta-skill that drives it. Python 3.12, standard library only, offline by default.
+`skillz` is the regression layer for Agent Skills: it packages every version of a skill, hand-written or generated, with a receipt of its gains and regressions against the last approved version, for Claude Code and Codex. The package is `src/skill_factory/`; `skills/skill-factory/` is the meta-skill that drives it. Python 3.12, standard library only, offline by default.
 
 ## Where things are
+- `docs/RECEIPT.md`: the `skill-receipt/1` standard: what a receipt records, the evidence levels, what refuses a regressed version. Read it before touching package, approve, receipt or the regression report.
 - `docs/SKILL-STANDARD.md`: the rules for a committed skill, each tagged with what enforces it. Read it before writing or editing anything under `skills/`.
 - `docs/research/claude-skills-study.md`: the evidence behind the standard.
 - `scripts/check.py`: the skill-standard gate over `skills/<name>/`; `scripts/allowlist.txt` holds reasoned exceptions; `tests/test_check.py` is its self-tests, each check with a known-bad fixture that must fail.

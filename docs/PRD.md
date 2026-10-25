@@ -2,7 +2,7 @@
 
 ## Idea
 
-skill-factory is a meta-skill and CLI (`skillz`) that turns a one-paragraph description of a capability into a complete, statically validated, tested and versioned Agent Skill for Claude Code and Codex. One canonical skill source is rendered into thin platform-specific install variants, tested against trigger and behaviour cases (and, when asked, against a no-skill baseline via the `claude` or `codex` CLI), held as a versioned package until a human approves it, then installed and recorded in a registry of proven skills with rollback. The evaluation engine, regression suite, version history and registry are the product; the drafting prompt is not.
+skill-factory is the regression layer for Agent Skills: a CLI (`skillz`) and a meta-skill that give every version of a skill a receipt. A skill, hand-written or generated from a paragraph, is validated statically, graded on trigger and behaviour cases (offline by a lexical heuristic, and, when asked, by a model run that a different model judges), compared case by case with the last approved version into gains and regressions, and packaged as an immutable version whose `receipt.json` records all of that under the version's checksums. A regressed version cannot be approved without a written reason; nothing is installed until a human approves; every version stays available for rollback. One canonical skill source is rendered into thin Claude Code and Codex install variants. The receipt, the regression comparison, the version history and the registry are the product; the drafting prompt is a convenience.
 
 ## User and pain
 
@@ -28,14 +28,15 @@ skill-factory is a meta-skill and CLI (`skillz`) that turns a one-paragraph desc
 
 ## Product vision
 
-- **Capture:** turn a paragraph, YAML or JSON spec into a structured, editable skill specification with intent, triggers, non-triggers and expected behaviours.
-- **Generate:** draft a portable, progressive-disclosure skill (short `SKILL.md`, detail in `references/`, `scripts/` and `assets/` only when justified), optionally model-assisted.
+- **Receipt:** every packaged version carries `receipt.json` and `receipt.md`: what was checked, at which evidence level (`unverified`, `self-judged`, `verified`), and the gains and regressions against the last approved version, covered by the version's checksums. `skillz receipt` prints it; `skillz list` shows the level.
+- **Any skill:** a hand-written `skills/<name>/SKILL.md` with `evals/evals.json` is evaluated, judged, packaged and receipted like a generated one; the factory is not only for skills it drafted.
+- **Regress and release:** immutable versioned packages, a per-case comparison with the last approved version split into gains and regressions, a human approval gate that refuses a regressed version without a written reason, install, registry of proven skills and one-command rollback.
+- **Evaluate:** trigger and behaviour cases from the spec, `evals/evals.json` and captured failures, graded offline heuristically and, opt-in, run through a model and scored by a different model against the case rubric.
+- **Validate:** static structure, spec-compliance and security analysis with a clear, machine-readable verdict; a repo-level gate (`scripts/check.py`, also as a GitHub Action) for the skill standard.
 - **Render:** produce thin Claude and Codex install variants (and future platforms) from one canonical source, never forking it.
-- **Validate:** static structure, spec-compliance and security analysis with a clear, machine-readable verdict.
-- **Evaluate:** generated positive/negative trigger tests and behavioural cases, run offline heuristically and online against a no-skill baseline with graded outputs and concrete improvement proposals.
-- **Regress and release:** immutable versioned packages, regression comparison against the last approved version, human approval gate, install, registry of proven skills and one-command rollback.
-- **Self-improve:** run the factory on itself as a challenger: a candidate factory version passes the same meta-evaluations and regression comparison as the stable one before a human promotes it.
-- **Share:** export and import proven skills between projects and teams with their evaluation evidence attached.
+- **Fix without breaking:** a candidate copy of the stable skill, edited by a human, is challenged on the same cases as stable and promoted only by a human, only when it regressed nothing.
+- **Capture and generate:** turn a paragraph, YAML or JSON spec into a structured spec and a portable, progressive-disclosure `SKILL.md`, as a starting point that gets the same receipt as any other skill.
+- **Share:** export and import proven skills between projects and teams with their receipts attached.
 
 ## MVP scope
 
@@ -60,6 +61,7 @@ No design language section: the product is a CLI with no UI.
 - Sharing, publishing or syncing skills to any remote registry, marketplace or git remote; no `git push` ever.
 - Platforms other than Claude Code and Codex; a GUI or web dashboard.
 - Semantic (embedding-based) trigger matching.
+- Treating the lexical grader as evidence. It is a smoke check on the description's wording; a receipt built from it alone is `unverified`, and only a model run scored by a judge raises the level.
 
 ## Missions
 
@@ -95,7 +97,7 @@ No design language section: the product is a CLI with no UI.
 
 ## Post-MVP: self-improvement (added 2026-10-10 after the MVP shipped)
 
-- **REQ-009 Challenger loop:** `skillz improve <name>` builds a challenger candidate of a skill under `skills/<name>/.factory/candidates/<id>/` by applying the evaluation's improvement proposals and any captured failures, never touching the stable canonical skill; `skillz capture-failure <name>` records a real-world failure (a prompt that should or should not have triggered, or an expected behaviour marker) as a persistent case that every later eval, challenge and regression includes; `skillz challenge <name> <candidate>` runs the same validation and the union of stable and candidate evaluation cases against both, compares trigger grades, weak areas and security findings, and writes `challenge.json` and `challenge.md` with a verdict (candidate-better, no-difference, candidate-worse, candidate-unsafe); `skillz promote <name> <candidate>` is the only way a candidate replaces the stable skill, it refuses unless the challenge verdict is candidate-better or no-difference, it packages the result as a new version (the previous stable stays available for rollback) and it is an explicit human command, never run by the pipeline. The factory's own meta-skill `skills/skill-factory` is improved through the same loop.
+- **REQ-009 Challenger loop:** a candidate of a skill is built under `skills/<name>/.factory/candidates/<id>/`, never touching the stable canonical skill (originally `skillz improve`, which rewrote the description from eval proposals; replaced by `skillz candidate` in REQ-012, which copies the stable skill for a human to edit); `skillz capture-failure <name>` records a real-world failure (a prompt that should or should not have triggered, or an expected behaviour marker) as a persistent case that every later eval, challenge and regression includes; `skillz challenge <name> <candidate>` runs the same validation and the union of stable and candidate evaluation cases against both, compares trigger grades, weak areas and security findings, and writes `challenge.json` and `challenge.md` with a verdict (candidate-better, no-difference, candidate-worse, candidate-unsafe); `skillz promote <name> <candidate>` is the only way a candidate replaces the stable skill, it refuses unless the challenge verdict is candidate-better or no-difference, it packages the result as a new version (the previous stable stays available for rollback) and it is an explicit human command, never run by the pipeline. The factory's own meta-skill `skills/skill-factory` is improved through the same loop.
 
 | Mission | Requirements | Reviewable outcome |
 | --- | --- | --- |
@@ -108,3 +110,13 @@ No design language section: the product is a CLI with no UI.
 | Mission | Requirements | Reviewable outcome |
 | --- | --- | --- |
 | 07 quality-tier | REQ-010 | richer behaviour cases with rubrics, the judge stage with cross-model default, runner-backed challenge and regression, run integration, committed evidence from a real Claude run |
+
+## Post-MVP: the regression layer (added 2026-10-25)
+
+- **REQ-011 Receipt:** every version `skillz package` writes carries `receipt.json` and `receipt.md` under `skills/<name>/.factory/versions/<semver>/`, listed in `manifest.json`, with schema id `skill-receipt/1` as defined in `docs/RECEIPT.md`: skill, version, creation time, SHA-256 of `SKILL.md`, evidence level (`verified` when a judge model different from the runner scored the behaviour cases, `self-judged` when the same model did, `unverified` when only the lexical grading ran), runner and judge, the baseline version, trigger counts, behaviour counts, and two lists, `regressions` (cases that passed in the previous approved version and fail now, or behaviour cases whose judge score dropped) and `gains` (the reverse), each entry carrying id, kind, prompt, before and after, and a status of `clean`, `regressed` or `no-baseline`. `skillz approve` refuses a `regressed` receipt unless `--accept-regressions "<reason>"` is given and records the reason and the case ids in `approval.json`. `skillz receipt <name> [version] [--json]` prints a receipt; `skillz list` shows an evidence column; the pipeline's regression line reads like `pass (2 gains, 0 regressions vs 0.1.0; 7 cases compared)`.
+- **REQ-012 Any skill, from evals.json:** `skillz eval`, `judge`, `package` and `challenge` read `skills/<name>/evals/evals.json` (entries `{id, prompt, should_trigger, assertions}`) as a case source: each entry is a trigger case, and a `should_trigger` entry with assertions is also a behaviour case whose rubric is the assertions. A hand-written skill with `evals.json` and no `.factory/` is evaluated, judged, packaged and receipted. `skillz improve` is removed; `skillz candidate <name>` copies the stable skill into `.factory/candidates/<id>/skill/` for a human to edit, followed by `skillz challenge` and the human's `skillz promote`.
+- **REQ-013 Gate action:** a root `action.yml` composite GitHub Action, "Skill standard gate", with input `root` (default the workspace), runs `scripts/check.py --root <root>` with `shell: bash`, so another repository can run the skill standard over its own `skills/` with `uses: Jimmycarroll2021/skill-factory@main` after an `actions/setup-python` step (the script is standard library only and needs Python 3.10 or later).
+
+| Mission | Requirements | Reviewable outcome |
+| --- | --- | --- |
+| 08 regression-layer | REQ-011, REQ-012, REQ-013 | receipt files under the manifest, `skillz receipt`, approve refusing regressions without a reason, evals.json as a case source, `skillz candidate` replacing `skillz improve`, `action.yml`, README and docs repositioned |
