@@ -15,6 +15,18 @@ All notable changes to this project are documented here. The format follows
   `scripts/check.py`, and `CLAUDE.md` carries the standard's rules and lessons.
 - `skills/skill-factory/evals/evals.json`: prompts with assertions for the meta-skill, which the
   gate requires.
+- Validator quality rules, from a study of a 398-skill public collection in which these
+  signals separated stronger skills from weaker ones. Errors (the skill cannot work as
+  written): `reserved-name` (a name that replaces a bundled Claude Code command, such as
+  `verify`), `missing-script` (a fenced command runs a script that does not exist) and
+  `script-flag-missing` (a fenced command passes an option the Python script never declares;
+  read with `ast`, never executed; `--no-x` from `BooleanOptionalAction` and unambiguous
+  prefixes count as declared). Both look only at script paths in command position, not at a
+  path inside a string literal. Warnings: `description-no-boundary`,
+  `description-keyword-list`, `persona-opener`, `brochure-heading`, `phantom-path` (SKILL.md
+  names a file that does not exist, which is fine if the skill creates it), `orphan-file` and
+  `empty-resource-dir`.
+
 - The model-backed quality tier (mission 07): behaviour cases now carry a task prompt, a rubric
   and expected markers, one per spec behaviour and per trigger. `skillz judge` runs each case
   with and without the skill through a runner, has a judge model score both transcripts 0 to 5
@@ -34,15 +46,6 @@ All notable changes to this project are documented here. The format follows
   and packages a new awaiting-approval version. The pipeline and `skillz run` never promote.
 - The meta-skill documents the loop and was improved through it; the challenge report is
   committed under `docs/evidence/`.
-- Validator quality rules, from a study of a 398-skill public collection in which these
-  signals separated stronger skills from weaker ones. Errors (the skill cannot work as
-  written): `reserved-name` (a name that replaces a bundled Claude Code command, such as
-  `verify`), `missing-script` (a fenced command runs a script that does not exist) and
-  `script-flag-missing` (a fenced command passes an option the Python script never declares;
-  read with `ast`, never executed). Warnings: `description-no-boundary`,
-  `description-keyword-list`, `persona-opener`, `brochure-heading`, `phantom-path` (SKILL.md
-  names a file that does not exist, which is fine if the skill creates it), `orphan-file` and
-  `empty-resource-dir`.
 
 ### Changed
 
@@ -50,29 +53,34 @@ All notable changes to this project are documented here. The format follows
   Render never ships it, so installed skills are unchanged.
 - `skills/demo-spec-lint/SKILL.md` writes its description on one line, which `skillz validate`
   can parse; the text is unchanged.
-- `.claude/settings.json` keeps every guardrail the harness had, without the harness: the
-  sandbox stays on with unsandboxed commands off, and its network allowlist drops only the npm
-  and Playwright hosts this Python project never used. The deny list still blocks force pushes,
-  pushes to `main`, history rewrites, `git branch -D`, `git checkout --`, merges, `rm -rf`,
-  `pip install`, `PowerShell` and `.env` files. Its six harness hook scripts (guard, idempotency,
-  budget, anchor, stop gate, subagent check) are replaced by one stdlib hook, `.claude/hooks/guard.py`, which
-  catches what a prefix rule cannot: `push -uf`, `HEAD:main`, `rm -r -f`, `cat .env`, `cd`
-  before `git`, and the same commands inside `bash -c` or `eval`. `defaultMode: acceptEdits` and
-  the broad allow rules (`npm`, `python`, `cat`, `cd`) are gone, so more calls ask first.
 - Generated descriptions now carry the paragraph's "use it when" and "do not use it" sentences.
   Claude reads only the frontmatter description when choosing a skill, so `capture` composes
   them into the description (first trigger and first boundary before any others, each kept
   whole and only if it fits 1,024 characters), and the body no longer repeats them. On the
   README example the evaluation goes from 6 passed, 2 failed to 7 passed, 1 failed.
 - The offline grader ignores the description's boundary sentences ("Do not use it for X",
-  "Never Y") when collecting trigger words, so stating a boundary cannot make a request about
+  "Never Y", "It does not handle X") when collecting trigger words, so stating a boundary cannot make a request about
   X look like a match.
 - `skillz improve` extends a description with whole requests ("Also use for requests like
   "..."") instead of a list of loose keywords. A keyword list such as "help, write, md, file"
-  makes a skill load on unrelated prompts. If no whole request fits, the first is shortened
-  word by word, down to three words. The meta-skill's own keyword list is replaced.
+  makes a skill load on unrelated prompts. If no whole request fits, the first is cut to its
+  task words (dropping words the description or a should-not-trigger prompt already has) and
+  shortened from the end, down to three words; a request with no task words is skipped. The meta-skill's own keyword list is replaced.
 - `generate` no longer writes placeholder `README.md` files into resource directories; an
   empty directory is reported by the validator instead.
+- `.claude/settings.json` keeps every guardrail the harness had, without the harness: the
+  sandbox stays on with unsandboxed commands off, and its network allowlist drops only the npm
+  and Playwright hosts this Python project never used. The deny list still blocks force pushes,
+  pushes to `main`, history rewrites, `git branch -D`, `git checkout --`, merges, `rm -rf`,
+  `pip install`, `PowerShell` and `.env` files. Its six harness hook scripts (guard, idempotency,
+  budget, anchor, stop gate, subagent check) are replaced by one stdlib hook, `.claude/hooks/guard.py`, which
+  catches what a prefix rule cannot: `push -uf`, `HEAD:main`, `rm -r -f`, `cat .env` (any
+  case), `cd` before `git`, and the same commands behind wrappers (`env -i`, `sudo`, `find -exec`),
+  inside `if`/`for`/`{ }` bodies, `$(...)`, backticks, `bash -c` or `eval`, across line
+  continuations, or spelled `git.exe`. It also denies PowerShell and `cmd` run from Bash, `gh`
+  PR merges with `--repo` anywhere, writes to hosting, infra and deploy config, and any hook
+  event with a missing or mistyped field. `defaultMode: acceptEdits` and
+  the broad allow rules (`npm`, `python`, `cat`, `cd`) are gone, so more calls ask first.
 
 ### Removed
 

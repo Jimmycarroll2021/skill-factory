@@ -281,3 +281,15 @@ def test_words_only_in_a_boundary_sentence_still_count_as_missing(vague):
     improve.improve_skill(vague)
     improved = candidates.load_candidate_spec(vague, "c001").description
     assert '"Spreadsheet exports"' in improved
+
+
+def test_shortening_keeps_task_words_not_a_generic_prefix():
+    request = "Please help me deduplicate spreadsheet rows"
+    avoid = {"please", "help", "compose", "wedding", "vows"}  # also in a negative prompt
+    room = len(improve._SENTENCE.format(phrases=improve._quoted(["deduplicate spreadsheet rows"])))
+    description = "x" * (MAX_DESCRIPTION - room)
+    kept = improve._fit(description, [(request, "trigger-vocabulary")], avoid)
+    assert kept == [("deduplicate spreadsheet rows", "trigger-vocabulary")]
+    # Too long to fit whole, and nothing but words the negatives share once shortened.
+    generic = "Please help me, please help, please help"
+    assert improve._fit(description, [(generic, "trigger-vocabulary")], avoid) == []

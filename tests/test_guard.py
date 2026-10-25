@@ -48,6 +48,30 @@ _spec.loader.exec_module(guard)
         "uv run pytest -q; git -C /repo push -f",
         "bash -c 'git push --force'",
         "eval git push origin main",
+        # Codex review: bypasses the first version allowed
+        "git -C /repo --work-tree /repo push -uf origin HEAD:topic",
+        "env -i rm -r -f build",
+        "sudo -u me git push --force",
+        "git.exe -C . push -uf origin topic",
+        "pwsh -Command \"git push origin HEAD:main\"",
+        "cmd /c dir",
+        "true # comment\nrm -r -f build",
+        "printf x#y; cat .env",
+        "cat .en\\\nv",
+        "git -C . push \\\n origin HEAD:main",
+        "if true; then rm -r -f build; fi",
+        "for d in a b; do git push -f origin $d; done",
+        "{ rm -rf build; }",
+        "find . -name x -exec rm -rf {} +",
+        "gh --repo o/r pr merge 4",
+        "gh pr --repo o/r merge 4",
+        "gh api -X PUT repos/o/r/pulls/4/merge",
+        "cat .ENV",
+        "cat config/.Env.Production",
+        "echo $(git push -f origin topic)",
+        'echo "$(cat .env)"',
+        "echo `rm -rf build`",
+        "echo deploy > infra/main.tf",
     ],
 )
 def test_denied(command):
@@ -69,10 +93,35 @@ def test_denied(command):
         'git -C /repo commit -m "Deny git push --force and cat .env"',
         "git -C /repo commit -m \"$(cat <<'EOF'\nsubject\n\nbody\nEOF\n)\"",
         "cat <<EOF > notes.txt\ndon't stop\nEOF",
+        "git -C /repo log --grep '#123'",
+        "cat infra/main.tf",
+        "uv run pytest -q tests/test_guard.py",
+        "git -C /repo rev-parse HEAD # where are we",
     ],
 )
 def test_allowed(command):
     assert guard.bash_reason(command) is None
+
+
+def test_write_tools_cannot_touch_production_config():
+    for path in ("infra/main.tf", "vercel.json", ".github/workflows/deploy.yml", "Dockerfile.prod"):
+        assert guard.reason_for({"tool_name": "Write", "tool_input": {"file_path": path}})
+        assert guard.reason_for({"tool_name": "Read", "tool_input": {"file_path": path}}) is None
+
+
+@pytest.mark.parametrize(
+    "event",
+    [
+        {"tool_name": "Bash", "tool_input": {}},
+        {"tool_name": "Bash", "tool_input": {"command": ["git", "push", "-f"]}},
+        {"tool_name": "Read", "tool_input": {}},
+        {"tool_name": "Edit", "tool_input": {"file_path": 7}},
+        {"tool_name": "Bash"},
+        {"tool_input": {"command": "ls"}},
+    ],
+)
+def test_malformed_events_are_denied(event):
+    assert _run(json.dumps(event)).returncode == 2
 
 
 @pytest.mark.parametrize(

@@ -523,3 +523,26 @@ def test_caches_and_imported_helpers_are_not_orphans(tmp_path):
 def test_a_plain_negative_sentence_counts_as_a_boundary(tmp_path):
     report = val.validate_skill(_make(tmp_path, "limits", "Converts CSV to JSON. It does not handle PDFs."))
     assert "description-no-boundary" not in _rules(report)
+
+
+# -- Codex review round ---------------------------------------------------------------
+
+
+def test_a_script_path_written_by_example_code_is_not_a_missing_script(tmp_path):
+    body = '```python\nPath("scripts/generated.py").write_text("print(123)\\n")\n```\n'
+    report = val.validate_skill(_make(tmp_path, "writes-a-script", BOUNDED, body))
+    assert "missing-script" not in _rules(report)
+    assert report.ok
+
+
+def test_boolean_optional_action_and_abbreviated_flags_are_declared(tmp_path):
+    body = "```bash\npython3 scripts/tool.py --no-cache --verb\n```\n"
+    skill = _make(tmp_path, "bool-flags", BOUNDED, body)
+    _script(
+        skill,
+        "scripts/tool.py",
+        "import argparse\np = argparse.ArgumentParser()\n"
+        "p.add_argument('--cache', action=argparse.BooleanOptionalAction)\n"
+        "p.add_argument('--verbose', action='store_true')\np.parse_args()\n",
+    )
+    assert "script-flag-missing" not in _rules(val.validate_skill(skill))
