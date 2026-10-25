@@ -342,6 +342,13 @@ class GateTest(unittest.TestCase):
                   "python3 ${CLAUDE_SKILL_DIR}/scripts/tiny.py \\\n  --also-missing")
         self.assertFails("contract", "--also-missing")
 
+    # -- Codex review round 3 ---------------------------------------------------------
+    def test_case_for_an_unknown_script_fails(self):
+        cases = json.loads((self.skill / "evals" / "cases.json").read_text(encoding="utf-8"))
+        cases.append({"script": "scripts/typo.py", "args": [], "expect_exit": 4, "why": "stale path"})
+        (self.skill / "evals" / "cases.json").write_text(json.dumps(cases), encoding="utf-8")
+        self.assertFails("cases", "scripts/typo.py")
+
     # -- harness errors ------------------------------------------------------------
     def test_unknown_check_name_is_exit_2(self):
         code, out = self.gate("--only", "nonsense")
