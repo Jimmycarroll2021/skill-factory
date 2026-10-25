@@ -25,7 +25,12 @@ def _copy(tmp_path: Path, case: str) -> Path:
     return dest
 
 
-def _make(tmp_path: Path, name: str, description: str = "Does a thing.", body: str = "# Body\n"):
+def _make(
+    tmp_path: Path,
+    name: str,
+    description: str = "Does a thing. NOT for anything else.",
+    body: str = "# Body\n",
+):
     skill = tmp_path / "skills" / name
     skill.mkdir(parents=True)
     text = f"---\nname: {name}\ndescription: {description}\n---\n\n{body}"
@@ -151,7 +156,8 @@ def test_file_too_large(tmp_path):
 
 
 def test_skill_too_large(tmp_path):
-    skill = _make(tmp_path, "big-skill")
+    body = "".join(f"See `references/part{index}.md`.\n" for index in range(6))
+    skill = _make(tmp_path, "big-skill", body=body)
     (skill / "references").mkdir()
     for index in range(6):  # six files of exactly 1 MB: each is fine, the sum is over 5 MB
         (skill / "references" / f"part{index}.md").write_bytes(b"x" * MB)
@@ -302,7 +308,7 @@ def test_report_json_round_trips_and_markdown_names_rules(tmp_path):
     assert data == report.to_dict()
     assert data["skill"] == "network-call"
     assert data["ok"] is False
-    assert data["errors"] == len(report.findings)
+    assert data["errors"] == sum(f.severity == "error" for f in report.findings)
     assert [val.Finding(**f) for f in data["findings"]] == report.findings
     markdown = md_path.read_text(encoding="utf-8")
     for rule in _rules(report):
@@ -361,3 +367,253 @@ def test_unreadable_encoding_is_frontmatter_invalid(tmp_path):
     skill.mkdir(parents=True)
     (skill / "SKILL.md").write_bytes(b"---\nname: bad-utf8\n---\n\xff\xfe\n")
     assert "frontmatter-invalid" in _rules(val.validate_skill(skill))
+
+
+# -- quality rules from the claude-skills study --------------------------------------
+# Warnings are signals that predicted weaker skills; errors are skills that are broken.
+
+BOUNDED = "Summarise notes. Use when the user pastes notes. NOT for writing minutes."
+
+
+def _warned(report: val.Report, rule: str) -> bool:
+    return any(f.rule == rule and f.severity == "warning" for f in report.findings)
+
+
+def _errored(report: val.Report, rule: str) -> bool:
+    return any(f.rule == rule and f.severity == "error" for f in report.findings)
+
+
+def test_description_without_a_boundary_warns(tmp_path):
+    report = val.validate_skill(_make(tmp_path, "no-bound", "Summarise notes. Use when asked."))
+    assert _warned(report, "description-no-boundary")
+    assert report.ok
+    clean = val.validate_skill(_make(tmp_path, "bounded", BOUNDED))
+    assert "description-no-boundary" not in _rules(clean)
+
+
+def test_sentence_initial_never_counts_as_a_boundary(tmp_path):
+    report = val.validate_skill(_make(tmp_path, "never-skill", "Builds X. Never approves Y."))
+    assert "description-no-boundary" not in _rules(report)
+
+
+def test_keyword_list_in_description_warns(tmp_path):
+    desc = BOUNDED + " Also use when the user mentions: help, write, md, file, learn."
+    report = val.validate_skill(_make(tmp_path, "stuffed", f'"{desc}"'))
+    assert _warned(report, "description-keyword-list")
+
+
+def test_persona_opener_warns(tmp_path):
+    report = val.validate_skill(_make(tmp_path, "persona", BOUNDED, "You are an expert note taker.\n"))
+    assert _warned(report, "persona-opener")
+
+
+def test_brochure_heading_warns(tmp_path):
+    report = val.validate_skill(_make(tmp_path, "brochure", BOUNDED, "## Overview\n\nNotes.\n"))
+    assert _warned(report, "brochure-heading")
+
+
+def test_reserved_name_is_an_error(tmp_path):
+    report = val.validate_skill(_make(tmp_path, "verify", BOUNDED))
+    assert _errored(report, "reserved-name")
+    assert not report.ok
+
+
+def test_phantom_path_in_prose_warns(tmp_path):
+    report = val.validate_skill(_make(tmp_path, "phantom", BOUNDED, "See `references/gone.md`.\n"))
+    assert _warned(report, "phantom-path")
+
+
+def test_orphan_resource_file_warns(tmp_path):
+    skill = _make(tmp_path, "orphan", BOUNDED, "No files named here.\n")
+    (skill / "references").mkdir()
+    (skill / "references" / "notes.md").write_text("x\n", encoding="utf-8")
+    report = val.validate_skill(skill)
+    assert _warned(report, "orphan-file")
+    named = _make(tmp_path, "named", BOUNDED, "See `references/notes.md`.\n")
+    (named / "references").mkdir()
+    (named / "references" / "notes.md").write_text("x\n", encoding="utf-8")
+    assert "orphan-file" not in _rules(val.validate_skill(named))
+
+
+def test_empty_resource_directory_warns(tmp_path):
+    skill = _make(tmp_path, "empty-dir", BOUNDED)
+    (skill / "scripts").mkdir()
+    assert _warned(val.validate_skill(skill), "empty-resource-dir")
+
+
+def test_documented_flag_missing_from_script_is_an_error(tmp_path):
+    body = "```bash\npython3 scripts/tool.py --input notes.md --nope\n```\n"
+    skill = _make(tmp_path, "flags", BOUNDED, body)
+    (skill / "scripts").mkdir()
+    (skill / "scripts" / "tool.py").write_text(
+        "import argparse\np = argparse.ArgumentParser()\np.add_argument('--input')\np.parse_args()\n",
+        encoding="utf-8",
+    )
+    report = val.validate_skill(skill)
+    hits = [f for f in report.findings if f.rule == "script-flag-missing"]
+    assert hits and "--nope" in hits[0].message and hits[0].severity == "error"
+    assert not any("--input" in f.message for f in hits)
+
+
+# -- review round: false errors and escapes --------------------------------------------
+
+
+def _script(skill: Path, rel: str, text: str) -> None:
+    path = skill / rel
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(text, encoding="utf-8")
+
+
+def test_script_without_argparse_is_not_flag_checked(tmp_path):
+    body = "```bash\npython3 scripts/raw.py --in x\n```\n"
+    skill = _make(tmp_path, "raw-argv", BOUNDED, body)
+    _script(skill, "scripts/raw.py", "import sys\nprint(sys.argv)\n")
+    report = val.validate_skill(skill)
+    assert "script-flag-missing" not in _rules(report)
+    assert report.ok
+
+
+def test_dot_slash_script_paths_are_named_and_checked(tmp_path):
+    body = "```bash\npython3 ./scripts/run.py --in x\n```\n"
+    skill = _make(tmp_path, "dot-slash", BOUNDED, body)
+    _script(skill, "scripts/run.py", "import argparse\nargparse.ArgumentParser().add_argument('--out')\n")
+    report = val.validate_skill(skill)
+    assert "orphan-file" not in _rules(report)
+    assert _errored(report, "script-flag-missing")
+
+
+def test_script_paths_outside_the_skill_are_never_read(tmp_path):
+    outside = tmp_path / "outside.py"
+    outside.write_text("import argparse\nargparse.ArgumentParser().add_argument('--y')\n", encoding="utf-8")
+    body = "```bash\npython3 scripts/../../../outside.py --x\n```\n"
+    skill = _make(tmp_path, "escape", BOUNDED, body)
+    (skill / "scripts").mkdir()  # so the ../ path resolves to the outside file
+    assert (skill / "scripts" / ".." / ".." / ".." / "outside.py").is_file()
+    report = val.validate_skill(skill)
+    assert "script-flag-missing" not in _rules(report)
+
+
+def test_missing_script_in_a_command_is_an_error_but_a_prose_output_path_only_warns(tmp_path):
+    cmd = _make(tmp_path, "no-script", BOUNDED, "```bash\npython3 scripts/gone.py\n```\n")
+    assert _errored(val.validate_skill(cmd), "missing-script")
+    prose = _make(tmp_path, "output-path", BOUNDED, "The script writes `assets/report.png`.\n")
+    report = val.validate_skill(prose)
+    assert _warned(report, "phantom-path")
+    assert report.ok
+
+
+def test_caches_and_imported_helpers_are_not_orphans(tmp_path):
+    skill = _make(tmp_path, "helpers", BOUNDED, "```bash\npython3 scripts/main.py\n```\n")
+    _script(skill, "scripts/main.py", "import argparse\nimport helper\nargparse.ArgumentParser().parse_args()\n")
+    _script(skill, "scripts/helper.py", "X = 1\n")
+    (skill / "scripts" / "__pycache__").mkdir()
+    (skill / "scripts" / "__pycache__" / "helper.cpython-312.pyc").write_bytes(b"\0")
+    (skill / "scripts" / ".DS_Store").write_bytes(b"\0")
+    assert "orphan-file" not in _rules(val.validate_skill(skill))
+
+
+def test_a_plain_negative_sentence_counts_as_a_boundary(tmp_path):
+    report = val.validate_skill(_make(tmp_path, "limits", "Converts CSV to JSON. It does not handle PDFs."))
+    assert "description-no-boundary" not in _rules(report)
+
+
+# -- Codex review round ---------------------------------------------------------------
+
+
+def test_a_script_path_written_by_example_code_is_not_a_missing_script(tmp_path):
+    body = '```python\nPath("scripts/generated.py").write_text("print(123)\\n")\n```\n'
+    report = val.validate_skill(_make(tmp_path, "writes-a-script", BOUNDED, body))
+    assert "missing-script" not in _rules(report)
+    assert report.ok
+
+
+def test_boolean_optional_action_and_abbreviated_flags_are_declared(tmp_path):
+    body = "```bash\npython3 scripts/tool.py --no-cache --verb\n```\n"
+    skill = _make(tmp_path, "bool-flags", BOUNDED, body)
+    _script(
+        skill,
+        "scripts/tool.py",
+        "import argparse\np = argparse.ArgumentParser()\n"
+        "p.add_argument('--cache', action=argparse.BooleanOptionalAction)\n"
+        "p.add_argument('--verbose', action='store_true')\np.parse_args()\n",
+    )
+    assert "script-flag-missing" not in _rules(val.validate_skill(skill))
+
+
+def test_a_quoted_value_that_looks_like_a_flag_is_not_one(tmp_path):
+    body = '```bash\npython3 scripts/tool.py --title "notes --draft"\n```\n'
+    skill = _make(tmp_path, "quoted-value", BOUNDED, body)
+    _script(skill, "scripts/tool.py", "import argparse\np = argparse.ArgumentParser()\np.add_argument('--title')\n")
+    assert "script-flag-missing" not in _rules(val.validate_skill(skill))
+
+
+def test_options_declared_through_a_variable_are_not_flag_checked(tmp_path):
+    body = "```bash\npython3 scripts/tool.py --input notes.md\n```\n"
+    skill = _make(tmp_path, "var-flag", BOUNDED, body)
+    _script(
+        skill,
+        "scripts/tool.py",
+        "import argparse\nflag = '--input'\np = argparse.ArgumentParser()\np.add_argument(flag)\n",
+    )
+    assert "script-flag-missing" not in _rules(val.validate_skill(skill))
+    inherited = _make(tmp_path, "parent-flag", BOUNDED, body)
+    _script(
+        inherited,
+        "scripts/tool.py",
+        "import argparse\nfrom common import base\n"
+        "p = argparse.ArgumentParser(parents=[base])\np.add_argument('--out')\n",
+    )
+    assert "script-flag-missing" not in _rules(val.validate_skill(inherited))
+
+
+def test_words_after_a_double_dash_are_not_flags(tmp_path):
+    body = "```bash\npython3 scripts/tool.py -- --draft\n```\n"
+    skill = _make(tmp_path, "double-dash", BOUNDED, body)
+    _script(skill, "scripts/tool.py", "import argparse\np = argparse.ArgumentParser()\np.add_argument('values', nargs='*')\n")
+    assert "script-flag-missing" not in _rules(val.validate_skill(skill))
+
+
+def test_a_remainder_argument_is_not_flag_checked(tmp_path):
+    body = "```bash\npython3 scripts/tool.py echo --draft\n```\n"
+    skill = _make(tmp_path, "remainder", BOUNDED, body)
+    _script(
+        skill,
+        "scripts/tool.py",
+        "import argparse\np = argparse.ArgumentParser()\n"
+        "p.add_argument('command', nargs=argparse.REMAINDER)\n",
+    )
+    assert "script-flag-missing" not in _rules(val.validate_skill(skill))
+
+
+def test_a_quoted_script_path_still_has_its_flags_checked(tmp_path):
+    body = '```bash\npython3 "${CLAUDE_SKILL_DIR}/scripts/tool.py" --bogus\n```\n'
+    skill = _make(tmp_path, "quoted-path", BOUNDED, body)
+    _script(skill, "scripts/tool.py", "import argparse\np = argparse.ArgumentParser()\np.add_argument('--input')\n")
+    assert _errored(val.validate_skill(skill), "script-flag-missing")
+
+
+def test_a_parser_using_parse_known_args_is_not_flag_checked(tmp_path):
+    body = "```bash\npython3 scripts/tool.py --verbose --draft\n```\n"
+    skill = _make(tmp_path, "known-args", BOUNDED, body)
+    _script(
+        skill,
+        "scripts/tool.py",
+        "import argparse\np = argparse.ArgumentParser()\np.add_argument('--verbose', action='store_true')\n"
+        "args, remaining = p.parse_known_args()\n",
+    )
+    assert "script-flag-missing" not in _rules(val.validate_skill(skill))
+
+
+def test_a_pyz_archive_is_not_read_as_a_missing_py_script(tmp_path):
+    body = "Run the bundled tool:\n\n```bash\npython3 scripts/tool.pyz\n```\n"
+    skill = _make(tmp_path, "zipapp", BOUNDED, body)
+    _script(skill, "scripts/tool.pyz", "PK")
+    assert "missing-script" not in _rules(val.validate_skill(skill))
+
+
+def test_a_pyw_helper_is_not_read_as_a_missing_py_script(tmp_path):
+    body = "```bash\npython scripts/tool.pyw --input notes.md\n```\n"
+    skill = _make(tmp_path, "pyw", BOUNDED, body)
+    _script(skill, "scripts/tool.pyw", "import argparse\nargparse.ArgumentParser().add_argument('--input')\n")
+    assert "missing-script" not in _rules(val.validate_skill(skill))
+

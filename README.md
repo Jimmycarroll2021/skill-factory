@@ -42,10 +42,15 @@ Status: **awaiting approval**
 - generate: generated skills/draft-release-notes-software/ (report: `SKILL.md`)
 - validate: pass (report: `.factory/validate.json`)
 - render: rendered claude, codex (report: `.factory/render.json`)
-- evaluate: 6 passed, 2 failed (heuristic); baseline: skipped: no runner (report: `.factory/eval.json`)
+- evaluate: 7 passed, 1 failed (heuristic); baseline: skipped: no runner (report: `.factory/eval.json`)
+- judge: skipped: no runner
 - regression: no-baseline (report: `.factory/regression.json`)
 - package: created 0.1.0 (report: `.factory/versions/0.1.0/manifest.json`)
 - approval: awaiting approval
+
+## Notes
+
+Offline grading is a heuristic (lexical overlap between test prompts and the description), not proof that a model triggers the skill. Review the reports before approving.
 
 ## Next steps
 
@@ -53,7 +58,7 @@ Status: **awaiting approval**
 2. `skillz install draft-release-notes-software --platform claude|codex --scope project|user`
 ```
 
-The two failed cases are the point: the evaluation found trigger prompts the description does not cover, and `.factory/eval.md` proposes the words to add. You can fix the description by hand, or let the [challenger loop](#self-improvement-the-challenger-loop) do it and prove the fix.
+The failed case is the point: a prompt that should not trigger the skill still shares words with the description, and `.factory/eval.md` proposes how to narrow it. You can fix the description by hand, or let the [challenger loop](#self-improvement-the-challenger-loop) do it and prove the fix.
 
 ## The pipeline
 

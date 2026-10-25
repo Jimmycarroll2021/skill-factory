@@ -1,6 +1,6 @@
 ---
 name: skill-factory
-description: "Turns a plain-language description into a validated, tested and versioned agent skill for Claude Code or Codex, using the skillz CLI. Use when the user asks to create a skill, make a skill for a task, test or evaluate a skill, package a skill, or install a skill for Claude Code or Codex. Also covers listing installed skills and rolling back to an earlier version. Never approves a version without the human's explicit say-so. Also use when the user mentions: help, write, md, file, learn, workflow."
+description: "Turns a plain-language description into a validated, tested and versioned agent skill for Claude Code or Codex, using the skillz CLI. Use when the user asks to create a skill, make a skill for a task, test or evaluate a skill, package a skill, or install a skill for Claude Code or Codex. Also covers listing installed skills and rolling back to an earlier version. Never approves a version without the human's explicit say-so. Also use for requests like 'Help me write a SKILL.md file so my agent learns this workflow'."
 license: MIT
 ---
 

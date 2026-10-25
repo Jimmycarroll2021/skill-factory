@@ -31,6 +31,19 @@ _STOP_WORDS = frozenset(
 )
 
 _NEGATIVE_RE = re.compile(r"\b(?:not|never|nor|cannot)\b|n't\b", re.IGNORECASE)
+# Any negative statement: what capture files as a non-trigger and what the validator accepts
+# as the description saying where the skill stops.
+NEGATIVE_RE = _NEGATIVE_RE
+# An explicit exclusion ("Do not use it for X", "NOT for X", "Never Y", "It does not handle X"). The grader drops these
+# sentences from a description's trigger words; a plain negation such as "files that do not
+# parse" describes the job and stays.
+EXCLUSION_RE = re.compile(
+    r"\bNOT\b|(?:^|[.!?]\s+)Never\b|(?i:\bnot for\b|\bdo not use\b|\bdon't use\b"
+    r"|\bnever use\b|\brefuses? to\b|\bdistinct from\b|\b(?:use|see) [a-z0-9-]+ instead\b"
+    # "It does not handle PDFs": what the skill will not take. "files that do not parse" stays.
+    r"|\b(?:(?:does|do|will|can) not|doesn't|don't|won't|can't|cannot)"
+    r" (?:handle|support|cover|accept|process|work (?:on|with)|apply to|deal with)\b)"
+)
 _TRIGGER_RE = re.compile(
     r"\bwhen(?:ever)?\b|\buse (?:it|this)\b|\bif the user\b|\btriggers? (?:on|when)\b",
     re.IGNORECASE,
@@ -213,6 +226,26 @@ def extract_phrases(text: str) -> tuple[list[str], list[str], list[str]]:
     return triggers, non_triggers, behaviours
 
 
+def compose_description(base: str, triggers: list[str], non_triggers: list[str]) -> str:
+    """The description Claude reads when deciding whether to load the skill.
+
+    Claude sees only the frontmatter description at that point, so the "use it when" and
+    "do not use it" sentences belong in it, not only in the body. The first trigger and the
+    first boundary go in before any others; each sentence is kept whole and added only if
+    it fits within MAX_DESCRIPTION.
+    """
+    ordered = [*triggers[:1], *non_triggers[:1], *triggers[1:], *non_triggers[1:]]
+    text = " ".join(base.split())
+    for phrase in ordered:
+        phrase = " ".join(phrase.split()).rstrip(".!?")
+        if not phrase or phrase in text:
+            continue
+        candidate = f"{text} {phrase}.".strip()
+        if len(candidate) <= MAX_DESCRIPTION:
+            text = candidate
+    return text
+
+
 def capture_paragraph(text: str, name: str | None = None) -> SkillSpec:
     """Build a validated spec from free-form paragraph text."""
     if not text or not text.strip():
@@ -220,7 +253,7 @@ def capture_paragraph(text: str, name: str | None = None) -> SkillSpec:
     triggers, non_triggers, behaviours = extract_phrases(text)
     spec = SkillSpec(
         name=name if name is not None else derive_name(text),
-        description=derive_description(text),
+        description=compose_description(derive_description(text), triggers, non_triggers),
         triggers=triggers,
         non_triggers=non_triggers,
         behaviours=behaviours,

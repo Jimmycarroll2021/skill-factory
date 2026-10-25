@@ -43,6 +43,24 @@ def test_paragraph_phrase_extraction():
     assert any("internal design documents" in n for n in spec.non_triggers)
 
 
+def test_paragraph_description_carries_triggers_and_boundary():
+    # Claude decides whether to load a skill from the description alone, so the
+    # "use it when" and "do not use it" sentences must be in it, not only in the body.
+    spec = cap.capture_paragraph(_paragraph())
+    assert spec.description.startswith("Draft release notes")
+    assert "Use it when the user asks for a changelog entry" in spec.description
+    assert "Do not use it for internal design documents" in spec.description
+    assert len(spec.description) <= cap.MAX_DESCRIPTION
+
+
+def test_composed_description_drops_what_does_not_fit():
+    base = "Summarise notes. " + "word " * 150
+    trigger = "Use it when the user pastes meeting notes " + "and more " * 100
+    spec = cap.capture_paragraph(f"{base}. {trigger}. Never invent action items.")
+    assert len(spec.description) <= cap.MAX_DESCRIPTION
+    assert "Never invent action items" in spec.description
+
+
 def test_capture_accepts_path_and_text():
     from_path = cap.capture(str(FIXTURES / "paragraph.txt"))
     from_text = cap.capture(_paragraph())

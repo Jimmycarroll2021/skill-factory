@@ -178,3 +178,54 @@ def test_content_words_are_ordered_unique_and_without_stop_words():
 def test_method_says_heuristic():
     assert "heuristic" in ev.METHOD
     assert "lexical overlap" in ev.METHOD
+
+
+def test_boundary_sentences_in_the_description_are_not_trigger_words():
+    # "Do not use it for X" tells the model to stay away from X; its words must not make
+    # a request about X look like a match.
+    description = (
+        "Draft release notes from merged pull requests. Use it when the user asks for a "
+        "changelog entry. Do not use it for internal design documents."
+    )
+    off_topic = "Write internal design documents for the team"
+    on_topic = "Write a changelog entry from the merged pull requests"
+    assert ev.match_score(off_topic, "release-notes", description) < ev.MATCH_THRESHOLD
+    assert ev.match_score(on_topic, "release-notes", description) >= ev.MATCH_THRESHOLD
+
+
+def test_a_negation_in_the_main_sentence_keeps_its_trigger_words():
+    description = "Fixes CSV files that do not parse. Use when asked."
+    assert ev.match_score("fix csv files", "tool", description) >= ev.MATCH_THRESHOLD
+
+
+def test_vague_proposal_suggests_whole_requests_not_a_keyword_list():
+    spec = SkillSpec(
+        name="general-helper",
+        description="Helps.",
+        triggers=["Remove duplicate rows from a spreadsheet"],
+    )
+    cases = ev.generate_cases(spec)
+    proposals = {p.area: p for p in ev.propose_improvements(spec, cases, ev.grade_offline(cases, spec))}
+    text = proposals["vague-description"].proposal
+    assert "trigger words such as" not in text
+    assert '"Remove duplicate rows from a spreadsheet"' in text
+
+
+def test_an_unsupported_input_sentence_is_not_trigger_vocabulary():
+    description = "Convert tabular exports. Use it when processing CSV tables. It does not handle PDF documents."
+    assert ev.match_score("Handle PDF documents", "tabular", description) < ev.MATCH_THRESHOLD
+    assert ev.match_score("Process CSV tables", "tabular", description) >= ev.MATCH_THRESHOLD
+
+
+def test_a_boundary_clause_keeps_the_positive_clause_before_it():
+    description = "Convert spreadsheet exports to CSV; not for PDF documents."
+    assert ev.match_score("Convert spreadsheet exports to CSV", "table-tool", description) >= ev.MATCH_THRESHOLD
+    assert ev.match_score("Read PDF documents", "table-tool", description) < ev.MATCH_THRESHOLD
+
+
+def test_refuse_describing_the_problem_is_not_a_boundary():
+    description = "Troubleshoot servers that refuse TCP connections."
+    assert ev.match_score("Investigate TCP connection failures", "network-debugger", description) >= ev.MATCH_THRESHOLD
+    bounded = "Draft release notes. Refuses to invent changes that are not in the input."
+    assert ev.match_score("invent changes", "release-notes", bounded) < ev.MATCH_THRESHOLD
+

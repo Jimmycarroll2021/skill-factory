@@ -9,7 +9,13 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass, field
 
-from skill_factory.capture import _STOP_WORDS, SkillSpec, _sentences, _words
+from skill_factory.capture import (
+    _STOP_WORDS,
+    EXCLUSION_RE,
+    SkillSpec,
+    _sentences,
+    _words,
+)
 
 MATCH_THRESHOLD = 0.3
 MIN_DESCRIPTION_WORDS = 6
@@ -28,7 +34,7 @@ GENERIC_NEGATIVES: tuple[str, ...] = (
 
 _MAX_MARKERS = 3
 _MAX_MISSING_WORDS = 8
-_MAX_SUGGESTED_WORDS = 6
+_MAX_SUGGESTED_REQUESTS = 3
 
 
 def _normalise(word: str) -> str:
@@ -50,12 +56,28 @@ def content_words(text: str) -> list[str]:
     return seen
 
 
+def trigger_text(description: str) -> str:
+    """The description without its boundaries ("Do not use it for X", "Never Y"), each cut from
+    where the boundary starts to the end of its sentence.
+
+    Those sentences tell the model to stay away from X, so their words are not trigger
+    vocabulary and must not make a request about X look like a match.
+    """
+    kept = []
+    for sentence in _sentences(description):
+        match = EXCLUSION_RE.search(sentence)
+        # "Convert exports to CSV; not for PDFs": the clause before the boundary still counts.
+        kept.append(sentence[: match.start()] if match else sentence)
+    return " ".join(k for k in kept if k.strip())
+
+
 def match_score(prompt: str, name: str, description: str) -> float:
-    """Share of the prompt's content words that also occur in the name plus description."""
+    """Share of the prompt's content words that also occur in the name plus description,
+    leaving out the description's boundary sentences."""
     prompt_words = content_words(prompt)
     if not prompt_words:
         return 0.0
-    skill_words = set(content_words(f"{name} {description}"))
+    skill_words = set(content_words(f"{name} {trigger_text(description)}"))
     hits = sum(1 for word in prompt_words if word in skill_words)
     return round(hits / len(prompt_words), 4)
 
@@ -235,7 +257,7 @@ def propose_improvements(
 ) -> list[Proposal]:
     """Weak areas with concrete changes, in a fixed order; empty when nothing is weak."""
     by_id = {case.id: case for case in cases}
-    skill_words = set(content_words(f"{spec.name} {spec.description}"))
+    skill_words = set(content_words(f"{spec.name} {trigger_text(spec.description)}"))
     proposals: list[Proposal] = []
 
     failing = [g for g in grades if g.kind == "positive" and g.status == "fail"]
@@ -276,10 +298,10 @@ def propose_improvements(
         )
 
     if len(content_words(spec.description)) < MIN_DESCRIPTION_WORDS:
-        wanted = content_words(" ".join(spec.triggers))[:_MAX_SUGGESTED_WORDS]
+        wanted = [t for t in spec.triggers if t.strip()][:_MAX_SUGGESTED_REQUESTS]
         direction = (
-            f"Rewrite the description to say what the skill does and when to use it, "
-            f"including trigger words such as: {_join(wanted)}"
+            "Rewrite the description to say what the skill does and when to use it, "
+            "naming whole requests such as: " + "; ".join(f'"{t.strip()}"' for t in wanted)
             if wanted
             else "Rewrite the description to say what the skill does and when to use it, "
             "including the words users will say when they need it"

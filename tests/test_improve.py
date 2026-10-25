@@ -93,7 +93,10 @@ def test_vague_skill_gets_vocabulary_and_stable_files_stay_identical(vague):
     meta = render._frontmatter(cskill / "SKILL.md")
     assert meta["name"] == "general-helper"
     assert meta["description"].startswith("Helps with things.")
-    assert "Also use when the user mentions:" in meta["description"]
+    # a whole trigger situation, not a list of loose keywords
+    assert "Also use for requests like " in meta["description"]
+    assert f'"{MISSED}"' in meta["description"]
+    assert "mentions:" not in meta["description"]
     assert len(meta["description"]) <= MAX_DESCRIPTION
     spec = candidates.load_candidate_spec(vague, "c001")
     assert spec.description == meta["description"]
@@ -262,3 +265,50 @@ def test_a_symlinked_candidates_dir_is_refused(vague, tmp_path):
     candidates.candidates_root(vague).symlink_to(elsewhere, target_is_directory=True)
     assert cli(tmp_path / "project", "general-helper") == 2
     assert list(elsewhere.iterdir()) == []
+
+
+def test_words_only_in_a_boundary_sentence_still_count_as_missing(vague):
+    # The grader ignores boundary sentences, so improve must too: a request whose words
+    # appear only in "Do not use it for ..." is still a missing trigger.
+    base = "Helps with things."
+    description = base + " Do not use it for spreadsheet exports."
+    spec = read_json(vague / ".factory" / "spec.json")
+    spec["description"] = description
+    (vague / ".factory" / "spec.json").write_text(json.dumps(spec), encoding="utf-8")
+    text = (vague / "SKILL.md").read_text(encoding="utf-8").replace(base, description, 1)
+    (vague / "SKILL.md").write_text(text, encoding="utf-8")
+    captured.append_captured(vague, "Spreadsheet exports", "positive")
+    improve.improve_skill(vague)
+    improved = candidates.load_candidate_spec(vague, "c001").description
+    assert '"Spreadsheet exports"' in improved
+
+
+def test_shortening_keeps_task_words_not_a_generic_prefix():
+    request = "Please help me deduplicate spreadsheet rows"
+    avoid = {"please", "help", "compose", "wedding", "vows"}  # also in a negative prompt
+    room = len(improve._SENTENCE.format(phrases=improve._quoted(["deduplicate spreadsheet rows"])))
+    description = "x" * (MAX_DESCRIPTION - room - 1) + "."  # a real description ends a sentence
+    kept = improve._fit(description, [(request, "trigger-vocabulary")], avoid)
+    assert kept == [("deduplicate spreadsheet rows", "trigger-vocabulary")]
+    # Too long to fit whole, and nothing but words the negatives share once shortened.
+    generic = "Please help me, please help, please help"
+    assert improve._fit(description, [(generic, "trigger-vocabulary")], avoid) == []
+
+
+def test_appended_requests_start_a_new_sentence_after_an_unterminated_boundary():
+    # Without a full stop the requests joined "Not for PDF documents" and were cut with it.
+    extended = improve._extend("Convert CSV tables. Not for PDF documents", ["Deduplicate spreadsheet rows"])
+    assert "documents. Also use" in extended
+    score = evalcases.match_score("Deduplicate spreadsheet rows", "csv-tool", extended)
+    assert score >= evalcases.MATCH_THRESHOLD
+
+
+def test_a_long_request_keeps_its_task_not_its_preamble():
+    prompt = (
+        "I would like you to help me with this if you can: deduplicate spreadsheet "
+        "exports and identify duplicate invoice identifiers"
+    )
+    situation = improve._situation(prompt)
+    assert "deduplicate" in situation and "invoice" in situation
+    assert len(situation.split()) <= improve._MAX_SITUATION_WORDS
+

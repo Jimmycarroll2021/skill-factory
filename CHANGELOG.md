@@ -6,7 +6,37 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
+### Changed
+
+- Generated descriptions now carry the paragraph's "use it when" and "do not use it" sentences.
+  Claude reads only the frontmatter description when choosing a skill, so `capture` composes
+  them into the description (first trigger and first boundary before any others, each kept
+  whole and only if it fits 1,024 characters), and the body no longer repeats them. On the
+  README example the evaluation goes from 6 passed, 2 failed to 7 passed, 1 failed.
+- The offline grader ignores the description's boundary sentences ("Do not use it for X",
+  "Never Y", "It does not handle X") when collecting trigger words, so stating a boundary cannot make a request about
+  X look like a match.
+- `skillz improve` extends a description with whole requests ("Also use for requests like
+  "..."") instead of a list of loose keywords. A keyword list such as "help, write, md, file"
+  makes a skill load on unrelated prompts. If no whole request fits, the first is cut to its
+  task words (dropping words the description or a should-not-trigger prompt already has) and
+  shortened from the end, down to three words; a request with no task words is skipped. The meta-skill's own keyword list is replaced.
+- `generate` no longer writes placeholder `README.md` files into resource directories; an
+  empty directory is reported by the validator instead.
+
 ### Added
+
+- Validator quality rules, from a study of a 398-skill public collection in which these
+  signals separated stronger skills from weaker ones. Errors (the skill cannot work as
+  written): `reserved-name` (a name that replaces a bundled Claude Code command, such as
+  `verify`), `missing-script` (a fenced command runs a script that does not exist) and
+  `script-flag-missing` (a fenced command passes an option the Python script never declares;
+  read with `ast`, never executed; `--no-x` from `BooleanOptionalAction` and unambiguous
+  prefixes count as declared). Both look only at script paths in command position, not at a
+  path inside a string literal. Warnings: `description-no-boundary`,
+  `description-keyword-list`, `persona-opener`, `brochure-heading`, `phantom-path` (SKILL.md
+  names a file that does not exist, which is fine if the skill creates it), `orphan-file` and
+  `empty-resource-dir`.
 
 - The model-backed quality tier (mission 07): behaviour cases now carry a task prompt, a rubric
   and expected markers, one per spec behaviour and per trigger. `skillz judge` runs each case
