@@ -28,8 +28,12 @@ All notable changes to this project are documented here. The format follows
   pushes to `main`, history rewrites, `git branch -D`, `git checkout --`, merges, `rm -rf`,
   `pip install`, `PowerShell` and `.env` files. Its six harness hook scripts (guard, idempotency,
   budget, anchor, stop gate, subagent check) are replaced by one stdlib hook, `.claude/hooks/guard.py`, which
-  catches what a prefix rule cannot: `push -uf`, `HEAD:main`, `rm -r -f`, `cat .env`, `cd`
-  before `git`, and the same commands inside `bash -c` or `eval`. `defaultMode: acceptEdits` and
+  catches what a prefix rule cannot: `push -uf`, `HEAD:main`, `rm -r -f`, `cat .env` (any
+  case), `cd` before `git`, and the same commands behind wrappers (`env -i`, `sudo`, `find -exec`),
+  inside `if`/`for`/`{ }` bodies, `$(...)`, backticks, `bash -c` or `eval`, across line
+  continuations, or spelled `git.exe`. It also denies PowerShell and `cmd` run from Bash, `gh`
+  PR merges with `--repo` anywhere, writes to hosting, infra and deploy config, and any hook
+  event with a missing or mistyped field. `defaultMode: acceptEdits` and
   the broad allow rules (`npm`, `python`, `cat`, `cd`) are gone, so more calls ask first.
 
 ### Added
