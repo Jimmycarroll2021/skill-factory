@@ -28,10 +28,11 @@ All notable changes to this project are documented here. The format follows
 - Validator quality rules, from a study of a 398-skill public collection in which these
   signals separated stronger skills from weaker ones. Errors (the skill cannot work as
   written): `reserved-name` (a name that replaces a bundled Claude Code command, such as
-  `verify`), `phantom-path` (SKILL.md names a resource file that does not exist) and
+  `verify`), `missing-script` (a fenced command runs a script that does not exist) and
   `script-flag-missing` (a fenced command passes an option the Python script never declares;
   read with `ast`, never executed). Warnings: `description-no-boundary`,
-  `description-keyword-list`, `persona-opener`, `brochure-heading`, `orphan-file` and
+  `description-keyword-list`, `persona-opener`, `brochure-heading`, `phantom-path` (SKILL.md
+  names a file that does not exist, which is fine if the skill creates it), `orphan-file` and
   `empty-resource-dir`.
 
 - The model-backed quality tier (mission 07): behaviour cases now carry a task prompt, a rubric
